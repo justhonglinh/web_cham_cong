@@ -8,8 +8,12 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth','role:employee','verified'])->name('dashboard');
+    return view('dashboard_employee.dashboard');
+})->middleware(['auth', 'verified', 'role:employee'])->name('dashboard');
+
+Route::get('/dashboard', function () {
+    return view('dashboard_manager.dashboard');
+})->middleware(['auth', 'verified', 'role:manager'])->name('dashboard');
 
 Route::middleware(['auth','role:employee'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -17,11 +21,7 @@ Route::middleware(['auth','role:employee'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth','verified'])->name('dashboard');
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','role:manager'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
