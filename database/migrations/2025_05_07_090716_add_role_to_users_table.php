@@ -14,8 +14,9 @@ class AddRoleToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            // Thêm cột 'role' với giá trị chỉ có thể là 'manager' hoặc 'employee'
-            $table->enum('role', ['manager', 'employee'])->default('employee'); // Mặc định là 'employee'
+            $table->enum('role', ['manager', 'employee'])->default('employee'); // thêm role
+            $table->unsignedBigInteger('id_manager')->nullable();  // Thêm cột id_manager
+            $table->unsignedBigInteger('id_position')->nullable();  // Thêm cột id_position
         });
     }
 
