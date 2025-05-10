@@ -22,7 +22,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // user
-Route::get('/employees', [UserController::class, 'getEmployees']);
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
 require __DIR__.'/auth.php';

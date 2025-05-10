@@ -31,14 +31,14 @@
                         <!-- Bảng dữ liệu -->
                         <table class="min-w-full table-auto border-separate border-spacing-0.5">
                             <thead>
-                            <tr class="bg-gray-100 text-left text-gray-700">
-                                <th class="px-4 py-2 border-b font-semibold">ID</th>
-                                <th class="px-4 py-2 border-b font-semibold">Name</th>
-                                <th class="px-4 py-2 border-b font-semibold">Email</th>
-                                <th class="px-4 py-2 border-b font-semibold">Position</th>
-                                <th class="px-4 py-2 border-b font-semibold">Manager</th>
-                                <th class="px-4 py-2 border-b font-semibold">Actions</th>
-                            </tr>
+                                <tr class="bg-gray-100 text-left text-gray-700">
+                                    <th class="px-4 py-2 border-b font-semibold">ID</th>
+                                    <th class="px-4 py-2 border-b font-semibold">Name</th>
+                                    <th class="px-4 py-2 border-b font-semibold">Email</th>
+                                    <th class="px-4 py-2 border-b font-semibold">Position</th>
+                                    <th class="px-4 py-2 border-b font-semibold">Manager</th>
+                                    <th class="px-4 py-2 border-b font-semibold text-center">Actions</th>
+                                </tr>
                             </thead>
 
                             <tbody>
@@ -49,8 +49,8 @@
                                 <td class="border-b px-4 py-2 text-gray-700">{{$employee->id}}</td>
                                 <td class="border-b px-4 py-2 text-gray-700">{{$employee->name}}</td>
                                 <td class="border-b px-4 py-2 text-gray-700">{{$employee->email}}</td>
-                                <td class="border-b px-4 py-2 text-gray-700">{{$employee->position}}</td>
-                                <td class="border-b px-4 py-2 text-gray-700">{{$employee->manager}}</td>
+                                <td class="border-b px-4 py-2 text-gray-700">{{$employee->id_position}}</td>
+                                <td class="border-b px-4 py-2 text-gray-700">{{$employee->id_manager}}</td>
 
                                 <td class="border-b px-4 py-2">
                                     <div class="flex space-x-3 justify-center">
@@ -62,7 +62,9 @@
                                         </a>
 
                                         <!-- Nút Sửa (Màu vàng) -->
-                                        <a href="" class="inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400 transition duration-200">
+                                        <a href="#"
+                                           data-user='@json($employee)'
+                                           class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400 transition duration-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path>
                                             </svg>
@@ -106,28 +108,58 @@
                 </div>
             </div>
 
-            <script>
-                // Mở modal khi nhấn nút "Add New"
-                const openUserModalButton = document.getElementById('openUserModal');
-                const userModal = document.getElementById('userModal');
-                const closeUserModalButton = document.getElementById('closeUserModal');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // === CREATE USER MODAL ===
+            const openUserModalButton  = document.getElementById('openUserModal');
+            const userModal            = document.getElementById('userModal');
+            const closeUserModalButton = document.getElementById('closeUserModal');
 
-                openUserModalButton.addEventListener('click', function (e) {
-                e.preventDefault(); // Ngăn không cho link thực hiện hành động mặc định
-                userModal.classList.remove('hidden'); // Hiển thị modal
+            openUserModalButton.addEventListener('click', e => {
+                e.preventDefault();
+                userModal.classList.remove('hidden');
             });
 
-                // Đóng modal khi nhấn nút "Cancel"
-                closeUserModalButton.addEventListener('click', function () {
-                userModal.classList.add('hidden'); // Ẩn modal
+            closeUserModalButton.addEventListener('click', () => {
+                userModal.classList.add('hidden');
             });
 
-                // Đóng modal nếu người dùng nhấp bên ngoài modal
-                window.addEventListener('click', function (e) {
+            // === EDIT USER MODAL ===
+            const editModal            = document.getElementById('userEditModal');
+            const closeEditModalButton = document.getElementById('closeEditModal');
+            const editUserForm         = document.getElementById('editUserForm');
+
+            document.querySelectorAll('.openEditModal').forEach(button => {
+                button.addEventListener('click', e => {
+                    e.preventDefault();
+                    const user = JSON.parse(button.getAttribute('data-user'));
+
+                    // Fill form with existing data
+                    document.getElementById('editUserId').value    = user.id;
+                    document.getElementById('editName').value      = user.name;
+                    document.getElementById('editEmail').value     = user.email;
+                    document.getElementById('editPosition').value  = user.position;
+
+                    // Set the action URL (ví dụ: /users/{id})
+                    editUserForm.action = `/users/${user.id}`;
+
+                    editModal.classList.remove('hidden');
+                });
+            });
+
+            closeEditModalButton.addEventListener('click', () => {
+                editModal.classList.add('hidden');
+            });
+
+            // === CLICK OUTSIDE ĐỂ ĐÓNG CẢ HAI MODAL ===
+            window.addEventListener('click', e => {
                 if (e.target === userModal) {
-                userModal.classList.add('hidden'); // Ẩn modal khi click bên ngoài
-            }
+                    userModal.classList.add('hidden');
+                }
+                if (e.target === editModal) {
+                    editModal.classList.add('hidden');
+                }
             });
+        });
     </script>
-
 </x-app-layout>

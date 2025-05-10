@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
 {
@@ -14,23 +16,24 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+//        dd($request->all());
         // Validate dữ liệu
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',  // Mật khẩu phải có ít nhất 8 ký tự và xác nhận
-            'position' => 'required|string',  // Giả sử position là một giá trị chuỗi (ví dụ: 'manager', 'employee')
-        ]);
-        dd("hello");
         // Tạo người dùng mới
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = Hash::make($request->password); // Mã hóa mật khẩu
-        $user->role = $request->position; // Gán role từ position
+
+        // Hardcoded values for testing
+        $user->id_manager = 1;   // Assuming "1" is the manager's ID
+        $user->id_position = 2;  // Assuming "2" is the position ID for "developer"
+        $user->role = "employee"; // Gán role mặc định
+
         $user->save();
 
         // Quay lại trang dashboard với thông báo
-        return redirect()->route('dashboard')->with('success', 'User created successfully');
+        return Redirect::route('dashboard')->with('success', 'Tạo tài khoản thành công!');
+
     }
+
 }
