@@ -7,6 +7,17 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+        <!-- 2) CSS của DataTables -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.datatables.net/2.3.0/css/dataTables.dataTables.css"
+        />
+
+        <!-- 3) DataTables JS (sau jQuery) -->
+        <script src="https://cdn.datatables.net/2.3.0/js/dataTables.js"></script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

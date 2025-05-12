@@ -9,27 +9,22 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white dark:bg-gray-800">
-
-                        <!-- Form Tìm kiếm và Thêm mới -->
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="p-6 bg-white dark:bg-gray-800">
-                                <!-- Nút "Add New" -->
-                                <div class="flex space-x-4">
-                                    <a href="#" id="openUserModal" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition ease-in-out duration-300">Add New</a>
-                                </div>
-
-                                <!-- Bao gồm Modal -->
-                                <x-user-model />
-
-                            </div>
-                            <form method="GET" action="" class="flex items-center space-x-2">
-                                <input type="text" name="search" class="form-input rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Search..." value="">
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition ease-in-out duration-300">Search</button>
-                            </form>
-                        </div>
-
                         <!-- Bảng dữ liệu -->
-                        <table class="min-w-full table-auto border-separate border-spacing-0.5">
+                        <table class="min-w-full table-auto border-separate border-spacing-0.5" id="myTable">
+
+                            <!-- Form Tìm kiếm và Thêm mới -->
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="p-6 bg-white dark:bg-gray-800">
+                                    <!-- Nút "Add New" -->
+                                    <div class="flex space-x-4">
+                                        <a href="#" id="openUserModal" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition ease-in-out duration-300">Add New</a>
+                                    </div>
+
+                                    <!-- Bao gồm Modal -->
+                                    <x-user-model />
+
+                                </div>
+                            </div>
                             <thead>
                                 <tr class="bg-gray-100 text-left text-gray-700">
                                     <th class="px-4 py-2 border-b font-semibold">ID</th>
@@ -89,24 +84,16 @@
                             </tbody>
                         </table>
 
-                        <!-- Phân trang (Nếu cần) -->
-                        <div class="mt-4 flex justify-between items-center">
-                            <div class="text-sm text-gray-500">
-                                <!-- Dòng thông tin phân trang -->
-                                Showing 1 to 10 of 50 results
-                                </div>
-                                <div>
-                                    <!-- Liên kết phân trang -->
-                                    <nav class="flex space-x-2">
-                                        <a href="#" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500">Previous</a>
-                                        <a href="#" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500">Next</a>
-                                    </nav>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+    <script>
+        $(function(){
+            $('#myTable').DataTable();
+        });
+    </script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
