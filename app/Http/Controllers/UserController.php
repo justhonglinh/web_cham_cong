@@ -16,24 +16,63 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-//        dd($request->all());
-        // Validate dữ liệu
-        // Tạo người dùng mới
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = Hash::make($request->password); // Mã hóa mật khẩu
+        $user->password = Hash::make($request->password);
+        $user->role = "employee";
 
-        // Hardcoded values for testing
-        $user->id_manager = 1;   // Assuming "1" is the manager's ID
-        $user->id_position = 2;  // Assuming "2" is the position ID for "developer"
-        $user->role = "employee"; // Gán role mặc định
+        // Xử lý upload avatar nếu có
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public'); // Lưu vào storage/app/public/avatars
+            $user->avatar = $avatarPath; // Giả sử bạn có trường avatar trong bảng users
+        }
 
         $user->save();
 
-        // Quay lại trang dashboard với thông báo
         return Redirect::route('dashboard')->with('success', 'Tạo tài khoản thành công!');
-
     }
 
+    public function update(Request $request, $id)
+    {
+        // Tìm user theo id
+        $user = User::findOrFail($id);
+
+        // Cập nhật thông tin user
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // Nếu có mật khẩu mới thì cập nhật
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Xử lý upload avatar nếu có file mới
+        if ($request->hasFile('avatar')) {
+            // Xóa file avatar cũ nếu cần, ví dụ:
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Lưu file mới
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $avatarPath;
+        }
+
+        $user->save();
+
+        return redirect()->route('dashboard')->with('success', 'Cập nhật tài khoản thành công!');
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        // Xóa avatar nếu có
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+        $user->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Xóa user thành công!');
+    }
 }
