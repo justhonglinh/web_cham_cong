@@ -5,42 +5,42 @@
         </h2>
     </x-slot>
 
-       <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 bg-white dark:bg-gray-800">
-                        <div class="flex space-x-3">
-                            <button class="flex items-center bg-white border border-gray-300 rounded px-4 py-2 text-gray-700 hover:bg-gray-100">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"></path>
-                                </svg>
-                                Export to Excel
-                            </button>
+   <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white dark:bg-gray-800">
+                    <div class="flex space-x-3">
+                        <button class="flex items-center bg-white border border-gray-300 rounded px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"></path>
+                            </svg>
+                            Export to Excel
+                        </button>
 
-                            <button class="flex items-center bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                <a href="#" id="openUserModal">Add New</a>
-                            </button>
-                        </div>
+                        <button class="flex items-center bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <a href="#" id="openUserModal">Add New</a>
+                        </button>
+                    </div>
 
-                        <!-- Bảng dữ liệu -->
-                        <table class="min-w-full table-auto border-separate border-spacing-0.5" id="myTable">
-                            <thead>
-                                <tr class="bg-gray-100 text-left text-gray-700">
-                                    <th class="px-4 py-2 border-b font-semibold">Avatar</th>
-                                    <th class="px-4 py-2 border-b font-semibold">Name</th>
-                                    <th class="px-4 py-2 border-b font-semibold">Email</th>
-                                    <th class="px-4 py-2 border-b font-semibold">Manager</th>
-                                    <th class="px-4 py-2 border-b font-semibold text-center">Actions</th>
-                                </tr>
-                            </thead>
+                    <!-- Bảng dữ liệu -->
+                    <table class="min-w-full table-auto border-separate border-spacing-0.5" id="myTable">
+                        <thead>
+                            <tr class="bg-gray-100 text-left text-gray-700">
+                                <th class="px-4 py-2 border-b font-semibold">Avatar</th>
+                                <th class="px-4 py-2 border-b font-semibold">Name</th>
+                                <th class="px-4 py-2 border-b font-semibold">Email</th>
+                                <th class="px-4 py-2 border-b font-semibold">Manager</th>
+                                <th class="px-4 py-2 border-b font-semibold text-center">Actions</th>
+                            </tr>
+                        </thead>
 
-                            <tbody>
+                        <tbody>
                             @foreach($employees as $employee)
 
-                            <!-- Row dữ liệu -->
+                        <!-- Row dữ liệu -->
                             <tr class="bg-white hover:bg-gray-50">
                                 <td class="border-b px-4 py-2 text-gray-700">
                                     @if($employee->avatar)
@@ -92,14 +92,14 @@
                                     </div>
                                 </td>
                             </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-
-                        </div>
-                    </div>
+                        @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+   </div>
+
     <script>
         let table = new DataTable('#myTable');
     </script>
