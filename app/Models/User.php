@@ -51,9 +51,29 @@ class User extends Authenticatable
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function manager()
+    public function attendances(): HasMany
     {
-        return $this->belongsTo(User::class, 'id_manager');
+        return $this->hasMany(Attendance::class);
+    }
+
+    // Nhân viên có nhiều bản tổng hợp công việc (work summary)
+    public function workSummaries(): HasMany
+    {
+        return $this->hasMany(WorkSummary::class);
+    }
+
+    // Nhân viên có nhiều yêu cầu làm thêm
+    public function overtimeRequests(): HasMany
+    {
+        return $this->hasMany(OvertimeRequest::class);
+    }
+
+    // Manager có nhiều nhân viên
+    public function employees(): HasMany
+    {
+        return $this->hasMany(User::class, 'manager', 'name');
+        // 'manager' là tên cột trong bảng users lưu tên manager
+        // 'name' là khóa chính để đối chiếu
     }
 
     /**
@@ -61,8 +81,4 @@ class User extends Authenticatable
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-//    public function position()
-//    {
-//        return $this->belongsTo(Position::class, 'id_position');
-//    }
 }

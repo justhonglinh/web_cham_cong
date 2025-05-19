@@ -15,7 +15,7 @@ class AddRoleToUsersTable extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->enum('role', ['manager', 'employee'])->default('employee'); // thêm role
-            $table->unsignedBigInteger('id_manager')->nullable();  // Thêm cột id_manager
+            $table->string('manager')->nullable();  // Thêm cột id_manager
             $table->string('avatar')->nullable(); // Thêm cột avatar lưu ảnh, cho phép null
         });
     }

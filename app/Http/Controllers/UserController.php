@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 
@@ -11,7 +12,11 @@ class UserController extends Controller
 {
     public function getEmployees()
     {
-        return User::where('role', 'employee')->get();
+        $managerName = Auth::user()->name;
+
+        return User::where('role', 'employee')
+            ->where('manager', $managerName)
+            ->get();
     }
 
     public function store(Request $request)
@@ -21,6 +26,7 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
         $user->role = "employee";
+        $user->manager = $request->manager;
 
         // Xử lý upload avatar nếu có
         if ($request->hasFile('avatar')) {

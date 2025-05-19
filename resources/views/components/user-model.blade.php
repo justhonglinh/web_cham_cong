@@ -25,6 +25,7 @@
             <div class="mb-4">
                 <label for="avatar" class="block text-sm font-medium text-gray-700">Upload Avatar</label>
                 <input
+                    required
                     type="file"
                     id="avatar"
                     name="avatar"
@@ -37,6 +38,7 @@
                hover:file:bg-green-100"
                 />
             </div>
+            <input type="hidden" name="manager" value="{{ Auth::user()->name }}">
 
             <div class="flex justify-between items-center">
                 <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Submit</button>
@@ -102,29 +104,38 @@
 </div>
 
 <!-- Detail User Modal -->
-<div id="userDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center hidden z-50">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-1/3 max-w-lg">
-        <h2 class="text-xl font-semibold mb-4">User Details</h2>
+<div id="userDetailModal" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center hidden z-50 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md relative">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Thông tin nhân viên</h2>
 
-        <div class="mb-4">
-            <strong>Name:</strong>
-            <p id="detailName" class="mt-1 text-gray-700"></p>
-        </div>
-
-        <div class="mb-4">
-            <strong>Email:</strong>
-            <p id="detailEmail" class="mt-1 text-gray-700"></p>
-        </div>
-
-        <div class="mb-4">
-            <strong>Avatar:</strong>
-            <div class="mt-1">
-                <img id="detailAvatar" src="" alt="Avatar" class="w-20 h-20 rounded-full object-cover">
+        <div class="flex flex-col items-center mb-6">
+            <img id="detailAvatar" src="" alt="Avatar"
+                 class="w-24 h-24 rounded-full object-cover shadow-md border border-gray-300 mb-4">
+            <div class="text-center">
+                <p class="text-lg font-semibold text-gray-800 dark:text-gray-200" id="detailName"></p>
+                <p class="text-sm text-gray-500 dark:text-gray-400" id="detailEmail"></p>
             </div>
         </div>
 
-        <div class="flex justify-end">
-            <button id="closeDetailModal" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-300">Close</button>
+        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg space-y-2">
+            <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
+                <strong>Ngày tạo:</strong>
+                <span>
+            <span id="detailCreatedDate" class="ml-1 text-gray-800 dark:text-white italic"></span>
+        </span>
+                <span>
+            <span class="text-gray-500">Giờ:</span>
+            <span id="detailCreatedTime" class="ml-1 text-gray-800 dark:text-white italic"></span>
+        </span>
+            </p>
+        </div>
+
+
+        <div class="mt-6 text-right">
+            <button id="closeDetailModal"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition duration-200">
+                Đóng
+            </button>
         </div>
     </div>
 </div>
