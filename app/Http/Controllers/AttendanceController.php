@@ -20,7 +20,7 @@ class AttendanceController extends Controller
         $employeeIds = User::where('role', 'employee')
             ->where('manager', $managerName)
             ->pluck('id');
-
+//        dd($employeeIds);
         foreach ($employeeIds as $employeeId) {
             // Kiểm tra Attendance ngày hôm nay của từng nhân viên
             $attendance = Attendance::where('user_id', $employeeId)
@@ -32,7 +32,6 @@ class AttendanceController extends Controller
                 Attendance::create([
                     'user_id' => $employeeId,
                     'date' => $today,
-                    // Thêm các trường khác bạn muốn lưu với giá trị rỗng hoặc mặc định
                     'shift_id' => null,
                     'check_in' => null,
                     'check_out' => null,
@@ -41,13 +40,12 @@ class AttendanceController extends Controller
             }
         }
 
-
         // Lấy lại danh sách Attendance sau khi đảm bảo đã có bản ghi ngày hôm nay
         $attendances = Attendance::with('shift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->where('date', $today)
             ->paginate(10);
-
+//        dd("hi");
         return view('attendence_management', compact('attendances'));
     }
 }
