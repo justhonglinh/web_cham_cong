@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -25,7 +26,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
-        $user->role = "employee";
+        $user->role = "employees";
         $user->manager = $request->manager;
 
         // Xử lý upload avatar nếu có
@@ -36,7 +37,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return Redirect::route('dashboard')->with('success', 'Tạo tài khoản thành công!');
+        return Redirect::route('/employees/management')->with('success', 'Tạo tài khoản thành công!');
     }
 
     public function update(Request $request, $id)
@@ -67,7 +68,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('dashboard')->with('success', 'Cập nhật tài khoản thành công!');
+        return redirect()->route('employees.management')->with('success', 'Cập nhật tài khoản thành công!');
     }
 
     public function destroy($id)
@@ -79,6 +80,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('dashboard')->with('success', 'Xóa user thành công!');
+        return redirect()->route('/employees/management')->with('success', 'Xóa user thành công!');
     }
 }
