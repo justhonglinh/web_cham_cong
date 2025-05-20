@@ -1,21 +1,40 @@
 <x-app-layout>
+
+    {{-- Hiển thị thông báo success nếu có --}}
+    @if (session('success'))
+        <div
+            x-data="{ show: true }"
+            x-show="show"
+            x-init="setTimeout(() => { show = false; window.location.href = '{{ route('login') }}'; })"
+            class="w-full max-w-md mx-auto my-4 p-4 rounded-lg bg-green-100 text-green-800 text-sm text-center border border-green-300 shadow-sm"
+            role="alert"
+        >
+            <span class="font-semibold">✅ Thành công:</span> {{ session('success') }}
+        </div>
+    @endif
+
     <x-slot name="header">
+        <link rel="stylesheet" href="{{ asset('css/custom-datatable.css') }}">
+        <script src="{{ asset('js/model-employees.js') }}"></script>
+
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Employees Management') }}
         </h2>
     </x-slot>
-
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white dark:bg-gray-800">
                     <div class="flex space-x-3">
-                        <button class="flex items-center bg-white border border-gray-300 rounded px-4 py-2 text-gray-700 hover:bg-gray-100">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"></path>
-                            </svg>
-                            Export to Excel
-                        </button>
+                        {{-- nút tạo file excel --}}
+                        {{--
+                            <button class="flex items-center bg-white border border-gray-300 rounded px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"></path>
+                                </svg>
+                                Export to Excel
+                            </button>
+                        --}}
 
                         <button class="flex items-center bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg">
@@ -33,7 +52,7 @@
                             <th class="px-4 py-2 border-b font-semibold">Name</th>
                             <th class="px-4 py-2 border-b font-semibold">Email</th>
                             <th class="px-4 py-2 border-b font-semibold">Manager</th>
-                            <th class="px-4 py-2 border-b font-semibold text-center">Actions</th>
+                            <th class="px-4 py-2 border-b font-semibold">Actions</th>
                         </tr>
                         </thead>
 

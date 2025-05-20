@@ -46,11 +46,13 @@ class DemoDatabaseSeeder extends Seeder
         $shiftIds[] = DB::table('shifts')->insertGetId([
             'start_time' => '08:00:00',
             'end_time' => '12:00:00',
+            'name'=> 'A',
             'created_at' => now(),
             'updated_at' => now()
         ]);
         $shiftIds[] = DB::table('shifts')->insertGetId([
             'start_time' => '13:00:00',
+            'name'=> 'A',
             'end_time' => '17:00:00',
             'created_at' => now(),
             'updated_at' => now()

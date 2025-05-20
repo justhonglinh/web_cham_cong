@@ -19,7 +19,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',        // Keep role as is
-        'id_manager',  // Added id_manager
+        'manager',  // Added id_manager
         'id_position', // Changed position to id_position to match DB
     ];
 

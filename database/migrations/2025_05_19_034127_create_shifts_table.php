@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('shifts', function (Blueprint $table) {
             $table->id();
+            $table->string('name'); // tên ca làm việc
             $table->time('start_time'); // Giờ bắt đầu
             $table->time('end_time');   // Giờ kết thúc
             $table->timestamps();
