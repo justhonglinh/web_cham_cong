@@ -21,20 +21,22 @@
 
                     {{-- Form sửa hoặc thêm --}}
                     @if(isset($editMode) && $editMode)
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Chỉnh sửa ca làm</h3>
-                        <form action="{{ route('shifts.update', $shift->id) }}" method="POST" class="space-y-4 mb-6">
-                            @csrf
-                            @method('PUT')
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <input type="text" name="name" value="{{ $shift->name }}" required class="border rounded p-2 w-full" placeholder="Tên ca">
-                                <input type="time" name="start_time" value="{{ $shift->start_time }}" required class="border rounded p-2 w-full">
-                                <input type="time" name="end_time" value="{{ $shift->end_time }}" required class="border rounded p-2 w-full">
-                            </div>
-                            <button type="submit" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Cập nhật
-                            </button>
-                            <a href="{{ route('shifts.index') }}" class="ml-4 text-sm text-gray-500 hover:underline">Hủy</a>
-                        </form>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Chỉnh sửa ca làm</h3>
+                    <form action="{{ route('shifts.update', $shift->id) }}" method="POST" class="space-y-4 mb-6">
+                        @csrf
+                        @method('PUT')
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" name="name" value="{{ $shift->name }}" required class="border rounded p-2 w-full" placeholder="Tên ca">
+                            
+                            {{-- Sửa ở đây để đảm bảo format giờ đúng --}}
+                            <input type="time" name="start_time" value="{{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }}" required class="border rounded p-2 w-full">
+                            <input type="time" name="end_time" value="{{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}" required class="border rounded p-2 w-full">
+                        </div>
+                        <button type="submit" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                            Cập nhật
+                        </button>
+                        <a href="{{ route('shifts.index') }}" class="ml-4 text-sm text-gray-500 hover:underline">Hủy</a>
+                    </form>
                     @else
                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Thêm mới ca làm</h3>
                         <form action="{{ route('shifts.store') }}" method="POST" class="space-y-4 mb-6">
