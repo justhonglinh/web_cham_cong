@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -24,13 +25,14 @@ Route::get('/dashboard', function () {
     }
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Các route chung cho user đã đăng nhập
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
 });
 
+// Các route chỉ dành cho manager
 Route::middleware(['auth', 'role:manager'])->group(function () {
     // employees management page
     Route::get('/employees/management', function () {
@@ -48,6 +50,14 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     // overtime
     Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');
+
+    // shift management 
+    Route::get('/shifts/management', [ShiftController::class, 'index'])->name('shifts.management');
+    Route::get('/shifts/management', [ShiftController::class, 'index'])->name('shifts.index');
+    Route::post('/shifts/management', [ShiftController::class, 'store'])->name('shifts.store');
+    Route::get('/shifts/{id}/edit', [ShiftController::class, 'edit'])->name('shifts.edit');
+    Route::put('/shifts/{id}', [ShiftController::class, 'update'])->name('shifts.update');
+    Route::delete('/shifts/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
 });
 
 
