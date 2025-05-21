@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    public function getEmployees()
+    public function show()
     {
         $managerName = Auth::user()->name;
 
@@ -26,7 +26,7 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
-        $user->role = "employees";
+        $user->role = "employee";
         $user->manager = $request->manager;
 
         // Xử lý upload avatar nếu có
@@ -37,7 +37,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return Redirect::route('/employees/management')->with('success', 'Tạo tài khoản thành công!');
+        return Redirect::route('employees.management')->with('success', 'Tạo tài khoản thành công!');
     }
 
     public function update(Request $request, $id)
@@ -80,6 +80,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('/employees/management')->with('success', 'Xóa user thành công!');
+        return redirect()->route('dashboard')->with('success', 'Xóa user thành công!');
     }
 }

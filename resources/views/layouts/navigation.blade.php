@@ -24,9 +24,7 @@
                         </x-nav-link>
 
                         {{-- Chấm công --}}
-{{--                        <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">--}}
-                        <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('dashboard')">
-
+                        <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
                           {{ __('Attendance') }}
                         </x-nav-link>
 
@@ -36,7 +34,7 @@
                         </x-nav-link>
 
                         {{-- Làm thêm giờ --}}
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        <x-nav-link :href="route('overtime.index')" :active="request()->routeIs('overtime.*')">
                             {{ __('Overtime') }}
                         </x-nav-link>
 

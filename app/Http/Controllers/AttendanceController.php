@@ -20,7 +20,7 @@ class AttendanceController extends Controller
         $employeeIds = User::where('role', 'employee')
             ->where('manager', $managerName)
             ->pluck('id');
-//        dd($employeeIds);
+
         foreach ($employeeIds as $employeeId) {
             // Kiểm tra Attendance ngày hôm nay của từng nhân viên
             $attendance = Attendance::where('user_id', $employeeId)
@@ -32,10 +32,10 @@ class AttendanceController extends Controller
                 Attendance::create([
                     'user_id' => $employeeId,
                     'date' => $today,
-                    'shift_id' => null,
+                    'shift_id' => '1',
                     'check_in' => null,
                     'check_out' => null,
-                    'status' => 'absent', // ví dụ trường trạng thái
+                    'status' => 'absent', // trạng thái mặc định
                 ]);
             }
         }
@@ -45,7 +45,7 @@ class AttendanceController extends Controller
             ->whereIn('user_id', $employeeIds)
             ->where('date', $today)
             ->paginate(10);
-//        dd("hi");
+
         return view('attendence_management', compact('attendances'));
     }
 }

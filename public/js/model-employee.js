@@ -1,4 +1,5 @@
-    document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', () => {
     // === Các biến modal ===
     const userModal = document.getElementById('userModal');
     const editModal = document.getElementById('userEditModal');
