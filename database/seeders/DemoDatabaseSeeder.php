@@ -31,12 +31,23 @@ class DemoDatabaseSeeder extends Seeder
                 'email' => "employee$i@example.com",
                 'password' => Hash::make('password'),
                 'role' => 'employee',
-                'manager' => null,
+                'manager' => 'Manager',
                 'avatar' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
+
+        DB::table('users')->insert([
+            'name' => "Manager",
+            'email' => "manager@gmail.com",
+            'password' => Hash::make('manager@gmail.com'),
+            'role' => 'manager',
+            'manager' => null,
+            'avatar' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         // Lấy danh sách user ids
         $userIds = DB::table('users')->pluck('id')->toArray();

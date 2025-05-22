@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('date');
             $table->unsignedBigInteger('overtime_shift_id'); // FK
             $table->float('requested_hours');
-            $table->string('status')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('reason')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('approved_at')->nullable();
