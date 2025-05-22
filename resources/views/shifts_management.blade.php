@@ -1,7 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
         <link rel="stylesheet" href="{{ asset('css/custom-datatable.css') }}">
-
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Quản lý ca làm') }}
         </h2>
@@ -14,43 +13,15 @@
 
                     {{-- Hiển thị thông báo thành công --}}
                     @if(session('success'))
-                        <div class="text-green-600 mb-4">
+                        <div id="success-alert" class="text-green-600 mb-4">
                             {{ session('success') }}
                         </div>
                     @endif
 
-                    {{-- Form sửa hoặc thêm --}}
-                    @if(isset($editMode) && $editMode)
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Chỉnh sửa ca làm</h3>
-                    <form action="{{ route('shifts.update', $shift->id) }}" method="POST" class="space-y-4 mb-6">
-                        @csrf
-                        @method('PUT')
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" name="name" value="{{ $shift->name }}" required class="border rounded p-2 w-full" placeholder="Tên ca">
-                            
-                            {{-- Sửa ở đây để đảm bảo format giờ đúng --}}
-                            <input type="time" name="start_time" value="{{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }}" required class="border rounded p-2 w-full">
-                            <input type="time" name="end_time" value="{{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}" required class="border rounded p-2 w-full">
-                        </div>
-                        <button type="submit" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                            Cập nhật
-                        </button>
-                        <a href="{{ route('shifts.index') }}" class="ml-4 text-sm text-gray-500 hover:underline">Hủy</a>
-                    </form>
-                    @else
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Thêm mới ca làm</h3>
-                        <form action="{{ route('shifts.store') }}" method="POST" class="space-y-4 mb-6">
-                            @csrf
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <input type="text" name="name" placeholder="Tên ca" required class="border rounded p-2 w-full">
-                                <input type="time" name="start_time" required class="border rounded p-2 w-full">
-                                <input type="time" name="end_time" required class="border rounded p-2 w-full">
-                            </div>
-                            <button type="submit" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                                Thêm mới
-                            </button>
-                        </form>
-                    @endif
+                    {{-- Nút mở modal thêm mới --}}
+                    <button onclick="openAddModal()" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Thêm mới
+                    </button>
 
                     {{-- Bảng danh sách --}}
                     <table class="min-w-full table-auto border-separate border-spacing-0.5" id="shiftTable">
@@ -71,13 +42,13 @@
                                     <td class="border-b px-4 py-2 text-center">
                                         <div class="flex justify-center space-x-3">
                                             {{-- Nút sửa --}}
-                                            <a href="{{ route('shifts.edit', $shiftItem->id) }}"
-                                               class="inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400"
-                                               title="Sửa">
+                                            <button onclick="openEditModal({{ $shiftItem->id }}, '{{ $shiftItem->name }}', '{{ $shiftItem->start_time }}', '{{ $shiftItem->end_time }}')" 
+                                                class="inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400"
+                                                title="Sửa">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 17v5h5l11-11-5-5L3 17z"></path>
                                                 </svg>
-                                            </a>
+                                            </button>
 
                                             {{-- Nút xóa --}}
                                             <form action="{{ route('shifts.destroy', $shiftItem->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ca này?');">
@@ -96,6 +67,26 @@
                         </tbody>
                     </table>
 
+                    <!-- Modal Thêm/Sửa Ca Làm -->
+                    <div id="shiftModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+                        <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+                            <button type="button" onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+                            <h3 id="modalTitle" class="text-lg font-bold mb-4">Thêm mới ca làm</h3>
+                            <form id="shiftForm" method="POST">
+                                @csrf
+                                <input type="hidden" name="_method" id="formMethod" value="POST">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <input type="text" name="name" id="shiftName" placeholder="Tên ca" required class="border rounded p-2 w-full">
+                                    <input type="time" name="start_time" id="shiftStart" required class="border rounded p-2 w-full">
+                                    <input type="time" name="end_time" id="shiftEnd" required class="border rounded p-2 w-full">
+                                </div>
+                                <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full">
+                                    Lưu
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -103,5 +94,39 @@
 
     <script>
         new DataTable('#shiftTable');
+
+        // Ẩn thông báo thành công sau 3 giây
+        window.onload = function() {
+            const alert = document.getElementById('success-alert');
+            if(alert) {
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = 'Thêm mới ca làm';
+            document.getElementById('shiftForm').action = "{{ route('shifts.store') }}";
+            document.getElementById('formMethod').value = 'POST';
+            document.getElementById('shiftName').value = '';
+            document.getElementById('shiftStart').value = '';
+            document.getElementById('shiftEnd').value = '';
+            document.getElementById('shiftModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id, name, start, end) {
+            document.getElementById('modalTitle').innerText = 'Chỉnh sửa ca làm';
+            document.getElementById('shiftForm').action = "/shifts/" + id;
+            document.getElementById('formMethod').value = 'PUT';
+            document.getElementById('shiftName').value = name;
+            document.getElementById('shiftStart').value = start.substring(0,5);
+            document.getElementById('shiftEnd').value = end.substring(0,5);
+            document.getElementById('shiftModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('shiftModal').classList.add('hidden');
+        }
     </script>
 </x-app-layout>
