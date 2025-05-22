@@ -18,6 +18,12 @@
         <!-- 3) DataTables JS (sau jQuery) -->
         <script src="https://cdn.datatables.net/2.3.0/js/dataTables.js"></script>
 
+        {{-- css tự custom--}}
+        <link rel="stylesheet" href="{{ asset('css/custom-datatable.css') }}">
+
+        {{-- js model--}}
+        <script src="{{ asset('js/model-employee.js') }}"></script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

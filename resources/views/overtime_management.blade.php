@@ -1,12 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <link rel="stylesheet" href="{{ asset('css/custom-datatable.css') }}">
-        <script src="{{ asset('js/model-employee.js') }}"></script>
-
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Employees Management') }}
         </h2>
     </x-slot>
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -17,6 +15,7 @@
                         <tr class="bg-gray-100 text-left text-gray-700">
                             <th class="px-4 py-2 border-b font-semibold">Tên</th>
                             <th class="px-4 py-2 border-b font-semibold">Tăng Ca</th>
+                            <th class="px-4 py-2 border-b font-semibold">Thời Gian</th>
                             <th class="px-4 py-2 border-b font-semibold">Thời Gian</th>
                             <th class="px-4 py-2 border-b font-semibold">Lý Do</th>
                             <th class="px-4 py-2 border-b font-semibold">Actions</th>
@@ -81,7 +80,7 @@
         </div>
     </div>
 
-{{--    <script>--}}
-{{--        let table = new DataTable('#myTable');--}}
-{{--    </script>--}}
+    <script>
+        let table = new DataTable('#myTable');
+    </script>
 </x-app-layout>

@@ -12,8 +12,8 @@ class Attendance extends Model
     protected $fillable = [
         'user_id',
         'shift_id',    // nếu bạn muốn mass assign shift_id
-        'date',        // ví dụ thêm trường ngày
-        'status',      // ví dụ thêm trạng thái điểm danh
+        'date',        // thêm trường ngày
+        'status',      // thêm trạng thái điểm danh
     ];
     public function user(): BelongsTo
     {
