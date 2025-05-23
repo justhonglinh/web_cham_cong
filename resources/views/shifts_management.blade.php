@@ -71,6 +71,8 @@
                 </table>
             </div>
         </section>
+    </div>
+
     <script>
         new DataTable('#shiftTable');
     </script>
