@@ -12,12 +12,21 @@ class OvertimeRequestController extends Controller
         // Tìm yêu cầu overtime theo ID
         $requestData = OvertimeRequest::findOrFail($id);
 
-        // Kiểm tra và cập nhật trạng thái
+        // Cập nhật trạng thái mới
         $requestData->status = $request->status;
+        $requestData->save();
 
-        $requestData->save(); // Lưu thay đổi
+        // Nếu trạng thái mới là approved và trước đó chưa phải approved thì tăng current_registrations
+        if ($request->status === 'approved') {
+            $shift = $requestData->overtimeShift; // cần quan hệ overtimeShift trong model OvertimeRequest
 
-        // Trở về trang trước đó với thông báo thành công
+            if ($shift) {
+                $shift->current_registrations = $shift->current_registrations + 1;
+                $shift->save();
+            }
+        }
+
         return redirect()->back()->with('success', 'Cập nhật trạng thái thành công!')->with('delayReload', true);
     }
+
 }
