@@ -51,13 +51,11 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     // overtime
     Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');
 
-    // shift management 
-    Route::get('/shifts/management', [ShiftController::class, 'index'])->name('shifts.management');
-    Route::get('/shifts/management', [ShiftController::class, 'index'])->name('shifts.index');
-    Route::post('/shifts/management', [ShiftController::class, 'store'])->name('shifts.store');
-    Route::get('/shifts/{id}/edit', [ShiftController::class, 'edit'])->name('shifts.edit');
-    Route::put('/shifts/{id}', [ShiftController::class, 'update'])->name('shifts.update');
-    Route::delete('/shifts/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+    // shift management
+    Route::get('/shift/management', [ShiftController::class, 'show'])->name('shifts.index');
+    Route::post('/shift/management', [ShiftController::class, 'store'])->name('shifts.store');
+    Route::put('/shift/management/{id}', [ShiftController::class, 'update'])->name('shifts.update');
+    Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
 });
 
 

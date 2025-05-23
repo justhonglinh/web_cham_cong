@@ -23,6 +23,7 @@
 
         {{-- js model--}}
         <script src="{{ asset('js/model-employee.js') }}"></script>
+        <script src="{{ asset('js/model-shift.js') }}"></script>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -30,6 +31,10 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Success popup -->
+        <x-success-model />
+
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">

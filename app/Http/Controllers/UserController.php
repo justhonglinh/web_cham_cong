@@ -80,6 +80,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('dashboard')->with('success', 'Xóa user thành công!');
+        return redirect()->route('employees.management')->with('success', 'Xóa user thành công!');
     }
 }
