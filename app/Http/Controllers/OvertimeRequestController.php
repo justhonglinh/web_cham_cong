@@ -14,6 +14,7 @@ class OvertimeRequestController extends Controller
 
         // Kiểm tra và cập nhật trạng thái
         $requestData->status = $request->status;
+
         $requestData->save(); // Lưu thay đổi
 
         // Trở về trang trước đó với thông báo thành công

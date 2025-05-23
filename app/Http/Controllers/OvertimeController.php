@@ -22,10 +22,9 @@ class OvertimeController extends Controller
         // Lấy ca làm thêm giờ, kèm các yêu cầu của nhân viên dưới quyền, cùng user info trong yêu cầu
         $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
             $query->whereIn('user_id', $employeeIds)
-                ->with('user')  // eager load thông tin user trong yêu cầu
+                ->with('user')                  // eager load user
                 ->orderBy('created_at', 'asc');
-        }])
-            ->paginate(10);
+        }])->paginate(10);
 
         return view('overtime_management', compact('overtimeShifts'));
     }

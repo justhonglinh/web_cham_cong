@@ -36,8 +36,9 @@
                     <p class="mb-1 text-sm"><strong>Mô tả:</strong> {{ $shift->description }}</p>
                     <p class="mb-1 text-sm"><strong>Thời gian:</strong> {{ formatDateTime($shift->start_time) }} - {{ formatDateTime($shift->end_time) }}</p>
                     <p class="mb-3 text-sm"><strong>Số lượng tối đa:</strong> {{ $shift->max_registrations }}</p>
+                    <p class="mb-3 text-sm"><strong>Nhóm gồm:</strong> {{ $shift->overtimeRequests->where('status', 'approved')->pluck('user.name')->unique()->implode(', ') }}</p>
 
-                    @if($shift->overtimeRequests->isEmpty())
+                @if($shift->overtimeRequests->isEmpty())
                         <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có yêu cầu làm thêm giờ nào.</p>
                     @else
                         <table class="w-full text-sm border-collapse border border-gray-300 dark:border-gray-700">
@@ -45,46 +46,42 @@
                             <tr class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                 <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Nhân viên</th>
                                 <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Thời gian tạo</th>
-                                <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Trạng thái</th>
+                                <th class="border border-gray-300 dark:border-gray-600 p-2 text-center">Trạng thái</th>
                             </tr>
                             </thead>
 
                             <tbody>
-                            @foreach ($shift->overtimeRequests as $request)
+                            @foreach ($shift->overtimeRequests->where('status', 'pending') as $request)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="border border-gray-300 dark:border-gray-600 p-2">{{ $request->user->name }}</td>
                                     <td class="border border-gray-300 dark:border-gray-600 p-2">
                                         Vào lúc {{ \Carbon\Carbon::parse($request->created_at)->format('H:i') }} ngày {{ \Carbon\Carbon::parse($request->created_at)->format('d/m') }}
                                     </td>
 
-                                    @php
-                                        $status = $request->status;
-                                        if ($status === 'pending') {
-                                            $class = 'bg-yellow-200 text-yellow-800';
-                                        } elseif ($status === 'approved') {
-                                            $class = 'bg-green-200 text-green-800';
-                                        } elseif ($status === 'rejected') {
-                                            $class = 'bg-red-200 text-red-800';
-                                        } else {
-                                            $class = 'bg-gray-200 text-gray-800';
-                                        }
-                                    @endphp
-
-                                    <td class="border border-gray-300 dark:border-gray-600 p-2">
-                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}">
+                                    <td class="border border-gray-300 dark:border-gray-600 p-2 text-center">
+                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block mr-2">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="status"
-                                                    onchange="this.form.submit()"
-                                                    class="rounded-lg block w-full p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500
-                       border border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
-                       dark:focus:ring-blue-500 dark:focus:border-blue-500 {{ $class }}"
-                                            >
-                                                <option value="pending" @selected($status === 'pending')>Pending</option>
-                                                <option value="approved" @selected($status === 'approved')>Approved</option>
-                                                <option value="rejected" @selected($status === 'rejected')>Rejected</option>
-                                            </select>
+                                            <input type="hidden" name="status" value="approved" />
+                                            <button type="submit"
+                                                    class="px-3 py-1 rounded text-white text-sm
+                {{ $request->status === 'approved' ? 'bg-green-600' : 'bg-green-400 hover:bg-green-500' }}">
+                                                Approved
+                                            </button>
                                         </form>
+
+                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status" value="rejected" />
+                                            <button type="submit"
+                                                    class="px-3 py-1 rounded text-white text-sm
+                {{ $request->status === 'rejected' ? 'bg-red-600' : 'bg-red-400 hover:bg-red-500' }}">
+                                                Rejected
+                                            </button>
+                                        </form>
+                                    </td>
+
                                     </td>
                                 </tr>
                             @endforeach
