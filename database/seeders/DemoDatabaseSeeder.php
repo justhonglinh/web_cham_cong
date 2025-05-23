@@ -136,11 +136,8 @@ class DemoDatabaseSeeder extends Seeder
         foreach ($userIds as $userId) {
             DB::table('overtime_requests')->insert([
                 'user_id' => $userId,
-                'date' => Carbon::today()->format('Y-m-d'),
                 'overtime_shift_id' => $otShiftId,
-                'requested_hours' => rand(2, 3),
                 'status' => 'pending',
-                'reason' => 'Hoàn thành task gấp',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'approved_at' => null,

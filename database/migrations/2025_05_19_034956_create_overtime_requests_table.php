@@ -14,11 +14,8 @@ return new class extends Migration
         Schema::create('overtime_requests', function (Blueprint $table) {
             $table->id(); // id (PK)
             $table->unsignedBigInteger('user_id'); // FK
-            $table->date('date');
             $table->unsignedBigInteger('overtime_shift_id'); // FK
-            $table->float('requested_hours');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->text('reason')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();

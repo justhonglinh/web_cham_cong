@@ -1,86 +1,102 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Employees Management') }}
+            {{ __('Quản lý Yêu cầu Làm thêm giờ') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white dark:bg-gray-800">
-                    <!-- Bảng dữ liệu -->
-                    <table class="min-w-full table-auto border-separate border-spacing-0.5" id="myTable">
-                        <thead>
-                        <tr class="bg-gray-100 text-left text-gray-700">
-                            <th class="px-4 py-2 border-b font-semibold">Tên</th>
-                            <th class="px-4 py-2 border-b font-semibold">Tăng Ca</th>
-                            <th class="px-4 py-2 border-b font-semibold">Thời Gian</th>
-                            <th class="px-4 py-2 border-b font-semibold">Thời Gian</th>
-                            <th class="px-4 py-2 border-b font-semibold">Lý Do</th>
-                            <th class="px-4 py-2 border-b font-semibold">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($overtimeRequests as $overtimeRequest)
+    <div class="py-12 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
-                            <!-- Row dữ liệu -->
-                            <tr class="bg-white hover:bg-gray-50">
-                                <td class="border-b px-4 py-2 text-gray-700">{{ $overtimeRequest->user->name }}</td>
-                                <td class="border-b px-4 py-2 text-gray-700">{{ $overtimeRequest->overtimeShift->name }}</td>
-                                <!-- Thêm các cột khác nếu muốn -->
-                                <td class="border-b px-4 py-2 text-gray-700">{{ $overtimeRequest->date }}</td>
-                                <td class="border-b px-4 py-2 text-gray-700">{{ $overtimeRequest->requested_hour }}</td>
-                                <td class="border-b px-4 py-2 text-gray-700">{{ $overtimeRequest->status }}</td>
+        {{-- Header + nút --}}
+        <section class="flex justify-between items-center mb-6">
+            <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Danh sách Ca làm</h3>
+            <button id="openCreateShiftModal"
+                    class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-5 py-2 transition shadow-md">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Tạo yêu cầu làm thêm giờ
+            </button>
+        </section>
 
-                                <td class="border-b px-4 py-2">
-                                    <div class="flex space-x-3 justify-center">
-                                        <!-- Nút Chi Tiết (Màu xanh nước biển) -->
-{{--                                        <a href="javascript:void(0);"--}}
-{{--                                           data-user='@json($employee)'--}}
-{{--                                           class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200"--}}
-{{--                                           title="View Details" aria-label="View Details">--}}
-{{--                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">--}}
-{{--                                                <path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>--}}
-{{--                                            </svg>--}}
-{{--                                        </a>--}}
+        {{-- Danh sách ca làm + yêu cầu OT --}}
+        <section class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h3 class="text-2xl font-semibold mb-8 text-gray-900 dark:text-gray-100">Danh sách Ca làm và Yêu cầu OT</h3>
 
+            @php
+                function formatDateTime($datetime) {
+                    return \Carbon\Carbon::parse($datetime)->format('d/m/Y H:i');
+                }
+            @endphp
 
-                                        <!-- Nút Sửa (Màu vàng) -->
-{{--                                        <a href="javascript:void(0);"--}}
-{{--                                           data-user='@json($employee)'--}}
-{{--                                           class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400 transition duration-200"--}}
-{{--                                           title="Edit User"--}}
-{{--                                           aria-label="Edit User">--}}
-{{--                                            <!-- Icon bút sửa -->--}}
-{{--                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">--}}
-{{--                                                <path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path>--}}
-{{--                                            </svg>--}}
-{{--                                        </a>--}}
+            @forelse ($overtimeShifts as $shift)
+                <div class="mb-6 border border-gray-300 dark:border-gray-700 rounded-lg p-4 hover:shadow transition-shadow duration-200">
+                    <h4 class="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">Ca làm: {{ $shift->name }}</h4>
+                    <p class="mb-1 text-sm"><strong>Mô tả:</strong> {{ $shift->description }}</p>
+                    <p class="mb-1 text-sm"><strong>Thời gian:</strong> {{ formatDateTime($shift->start_time) }} - {{ formatDateTime($shift->end_time) }}</p>
+                    <p class="mb-3 text-sm"><strong>Số lượng tối đa:</strong> {{ $shift->max_registrations }}</p>
 
-                                        <!-- Nút Xóa (Màu đỏ) -->
-{{--                                        <form action="{{ route('users.destroy', $employee->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn xóa không?');">--}}
-{{--                                            @csrf--}}
-{{--                                            @method('DELETE')--}}
-{{--                                            <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition duration-200" title="Delete User" aria-label="Delete User">--}}
-{{--                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">--}}
-{{--                                                    <path d="M3 6h18M9 6V4a2 2 0 0 1 4 0v2h-4zM5 6l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12H5z"></path>--}}
-{{--                                                </svg>--}}
-{{--                                            </button>--}}
-{{--                                        </form>--}}
-
-                                    </div>
-                                </td>
+                    @if($shift->overtimeRequests->isEmpty())
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có yêu cầu làm thêm giờ nào.</p>
+                    @else
+                        <table class="w-full text-sm border-collapse border border-gray-300 dark:border-gray-700">
+                            <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Nhân viên</th>
+                                <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Thời gian tạo</th>
+                                <th class="border border-gray-300 dark:border-gray-600 p-2 text-left">Trạng thái</th>
                             </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+                            </thead>
 
-    <script>
-        let table = new DataTable('#myTable');
-    </script>
+                            <tbody>
+                            @foreach ($shift->overtimeRequests as $request)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-600">
+                                    <td class="border border-gray-300 dark:border-gray-600 p-2">{{ $request->user->name }}</td>
+                                    <td class="border border-gray-300 dark:border-gray-600 p-2">
+                                        Vào lúc {{ \Carbon\Carbon::parse($request->created_at)->format('H:i') }} ngày {{ \Carbon\Carbon::parse($request->created_at)->format('d/m') }}
+                                    </td>
+
+                                    @php
+                                        $status = $request->status;
+                                        if ($status === 'pending') {
+                                            $class = 'bg-yellow-200 text-yellow-800';
+                                        } elseif ($status === 'approved') {
+                                            $class = 'bg-green-200 text-green-800';
+                                        } elseif ($status === 'rejected') {
+                                            $class = 'bg-red-200 text-red-800';
+                                        } else {
+                                            $class = 'bg-gray-200 text-gray-800';
+                                        }
+                                    @endphp
+
+                                    <td class="border border-gray-300 dark:border-gray-600 p-2">
+                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="status"
+                                                    onchange="this.form.submit()"
+                                                    class="rounded-lg block w-full p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500
+                       border border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
+                       dark:focus:ring-blue-500 dark:focus:border-blue-500 {{ $class }}"
+                                            >
+                                                <option value="pending" @selected($status === 'pending')>Pending</option>
+                                                <option value="approved" @selected($status === 'approved')>Approved</option>
+                                                <option value="rejected" @selected($status === 'rejected')>Rejected</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+            @empty
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có ca làm thêm giờ nào.</p>
+            @endforelse
+        </section>
+    </div>
 </x-app-layout>
+

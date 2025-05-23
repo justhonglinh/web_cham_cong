@@ -16,12 +16,18 @@ class OvertimeShift extends Model
         'end_time',
         'description',
     ];
+    public function overtimeRequests()
+    {
+        return $this->hasMany(OvertimeRequest::class, 'overtime_shift_id', 'id');
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
-    public function overtimeRequests(): HasMany
-    {
-        return $this->hasMany(OvertimeRequest::class);
-    }
+
 }

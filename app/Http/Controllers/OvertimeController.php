@@ -12,20 +12,22 @@ class OvertimeController extends Controller
 {
     public function show()
     {
-        // lấy tên quản lý
         $managerName = Auth::user()->name;
 
-        // lấy tên nhân viên dưới quản lý
+        // Lấy danh sách id nhân viên dưới quyền quản lý
         $employeeIds = User::where('role', 'employee')
             ->where('manager', $managerName)
             ->pluck('id');
 
-        $overtimeRequests = OvertimeRequest::with('user', 'overtimeShift')
-            ->whereIn('user_id', $employeeIds)
-            ->orderBy('created_at', 'asc')   // theo thứ tự từ cũ nhất đến mới nhất
+        // Lấy ca làm thêm giờ, kèm các yêu cầu của nhân viên dưới quyền, cùng user info trong yêu cầu
+        $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
+            $query->whereIn('user_id', $employeeIds)
+                ->with('user')  // eager load thông tin user trong yêu cầu
+                ->orderBy('created_at', 'asc');
+        }])
             ->paginate(10);
 
-        return view('overtime_management', compact('overtimeRequests'));
+        return view('overtime_management', compact('overtimeShifts'));
     }
 
     // Lưu overtime mới (từ modal Create)

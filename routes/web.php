@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\OvertimeRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\UserController;
@@ -56,6 +57,9 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::post('/shift/management', [ShiftController::class, 'store'])->name('shifts.store');
     Route::put('/shift/management/{id}', [ShiftController::class, 'update'])->name('shifts.update');
     Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+
+    // overtime request
+    Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
 });
 
 
