@@ -39,7 +39,7 @@
                         </x-nav-link>
 
                         {{-- Phân ca --}}
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        <x-nav-link :href="route('shifts.index')" :active="request()->routeIs('shifts.*')">
                             {{ __('Shifts') }}
                         </x-nav-link>
                     </div>
