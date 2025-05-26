@@ -8,7 +8,6 @@
     </x-slot>
 
     <div class="py-12 max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-16">
-
         {{-- Card quản lý Shift --}}
         <section class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <header class="flex justify-between items-center mb-6">
@@ -27,13 +26,14 @@
                 <table class="min-w-full border-collapse border border-gray-200 dark:border-gray-700 rounded-md"
                        id="shiftTable">
                     <thead class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Tên ca</th>
-                        <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Giờ bắt đầu</th>
-                        <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Giờ kết thúc</th>
-                        <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-center text-sm font-semibold uppercase tracking-wide">Hành động</th>
-                    </tr>
+                        <tr>
+                            <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Tên ca</th>
+                            <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Giờ bắt đầu</th>
+                            <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-left text-sm font-semibold uppercase tracking-wide">Giờ kết thúc</th>
+                            <th class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-center text-sm font-semibold uppercase tracking-wide">Hành động</th>
+                        </tr>
                     </thead>
+
                     <tbody>
                     @foreach($shifts as $shift)
                         <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-700 transition">

@@ -54,40 +54,37 @@
 
                             <tbody>
                                 @foreach ($shift->overtimeRequests->where('status', 'pending') as $request)
-
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td class="border border-gray-300 dark:border-gray-600 p-2">{{ $request->user->name }}</td>
-                                    <td class="border border-gray-300 dark:border-gray-600 p-2">
-                                        Vào lúc {{ \Carbon\Carbon::parse($request->created_at)->format('H:i') }} ngày {{ \Carbon\Carbon::parse($request->created_at)->format('d/m') }}
-                                    </td>
+                                        <td class="border border-gray-300 dark:border-gray-600 p-2">{{ $request->user->name }}</td>
+                                        <td class="border border-gray-300 dark:border-gray-600 p-2">
+                                            Vào lúc {{ \Carbon\Carbon::parse($request->created_at)->format('H:i') }} ngày {{ \Carbon\Carbon::parse($request->created_at)->format('d/m') }}
+                                        </td>
 
-                                    <td class="border border-gray-300 dark:border-gray-600 p-2 text-center">
-                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block mr-2">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="status" value="approved" />
-                                            <button type="submit"
-                                                    class="px-3 py-1 rounded text-white text-sm
-                {{ $request->status === 'approved' ? 'bg-green-600' : 'bg-green-400 hover:bg-green-500' }}">
-                                                Approved
-                                            </button>
-                                        </form>
+                                       <td class="border border-gray-300 dark:border-gray-600 p-2 text-center">
+                                            <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block mr-2">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="approved" />
+                                                <button type="submit"
+                                                        class="px-3 py-1 rounded text-white text-sm
+                                                        {{ $request->status === 'approved' ? 'bg-green-600' : 'bg-green-400 hover:bg-green-500' }}">
+                                                    Approved
+                                                </button>
+                                            </form>
 
-                                        <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="status" value="rejected" />
-                                            <button type="submit"
-                                                    class="px-3 py-1 rounded text-white text-sm
-                {{ $request->status === 'rejected' ? 'bg-red-600' : 'bg-red-400 hover:bg-red-500' }}">
-                                                Rejected
-                                            </button>
-                                        </form>
-                                    </td>
-
-                                    </td>
-                                </tr>
-                            @endforeach
+                                            <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="rejected" />
+                                                <button type="submit"
+                                                        class="px-3 py-1 rounded text-white text-sm
+                                                        {{ $request->status === 'rejected' ? 'bg-red-600' : 'bg-red-400 hover:bg-red-500' }}">
+                                                    Rejected
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     @else

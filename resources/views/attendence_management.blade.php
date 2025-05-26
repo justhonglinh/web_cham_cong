@@ -12,15 +12,16 @@
                     <h1 class="text-2xl font-bold mb-6">Bảng chấm công nhân viên</h1>
                     <table id="myTable" class="min-w-full border border-gray-300 rounded">
                         <thead class="bg-gray-100">
-                        <tr>
-                            <th class="p-3 border">Nhân viên</th>
-                            <th class="p-3 border">Ngày</th>
-                            <th class="p-3 border">Ca làm</th>
-                            <th class="p-3 border">Giờ vào</th>
-                            <th class="p-3 border">Giờ ra</th>
-                            <th class="p-3 border">Trạng thái</th>
-                        </tr>
+                            <tr>
+                                <th class="p-3 border">Nhân viên</th>
+                                <th class="p-3 border">Ngày</th>
+                                <th class="p-3 border">Ca làm</th>
+                                <th class="p-3 border">Giờ vào</th>
+                                <th class="p-3 border">Giờ ra</th>
+                                <th class="p-3 border">Trạng thái</th>
+                            </tr>
                         </thead>
+
                         <tbody>
                         @foreach($attendances as $att)
                             <tr class="hover:bg-gray-50">
@@ -44,5 +45,4 @@
             </div>
         </div>
     </div>
-
 </x-app-layout>
