@@ -40,7 +40,7 @@
 
                 @if($shift->overtimeRequests->isEmpty())
                         <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có yêu cầu làm thêm giờ nào.</p>
-                    @else
+                @else
                     @if($shift->current_registrations < $shift->max_registrations)
 
                         <table class="w-full text-sm border-collapse border border-gray-300 dark:border-gray-700">
@@ -53,7 +53,7 @@
                             </thead>
 
                             <tbody>
-                            @foreach ($shift->overtimeRequests->where('status', 'pending') as $request)
+                                @foreach ($shift->overtimeRequests->where('status', 'pending') as $request)
 
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-600">
                                     <td class="border border-gray-300 dark:border-gray-600 p-2">{{ $request->user->name }}</td>
@@ -88,11 +88,12 @@
                                     </td>
                                 </tr>
                             @endforeach
-
                             </tbody>
                         </table>
+                    @else
+                        <p class="text-gray-500 dark:text-gray-400 text-sm">Đã đủ thành viên cho dự án</p>
                     @endif
-                    @endif
+                @endif
                 </div>
             @empty
                 <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có ca làm thêm giờ nào.</p>
