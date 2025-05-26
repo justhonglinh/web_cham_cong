@@ -62,5 +62,9 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
 });
 
+// Các route chỉ dành cho employee
 
+Route::middleware(['auth', 'role:employee'])->group(function () {
+
+});
 require __DIR__.'/auth.php';
