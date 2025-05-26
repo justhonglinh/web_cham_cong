@@ -1,25 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Quản lý Yêu cầu Làm thêm giờ') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-
-        {{-- Header + nút --}}
-        <section class="flex justify-between items-center mb-6">
-            <h3 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Danh sách Ca làm</h3>
-            <button id="openCreateShiftModal"
-                    class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-5 py-2 transition shadow-md">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                {{ __('Quản lý Yêu cầu Làm thêm giờ') }}
+            </h2>
+            <span>
+                <button id="openCreateShiftModal"
+                        class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-5 py-2 transition shadow-md">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                      xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                 </svg>
                 Tạo yêu cầu làm thêm giờ
             </button>
-        </section>
+            </span>
+        </div>
+    </x-slot>
 
+    <div class="py-12 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {{-- Danh sách ca làm + yêu cầu OT --}}
         <section class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <h3 class="text-2xl font-semibold mb-8 text-gray-900 dark:text-gray-100">Danh sách Ca làm và Yêu cầu OT</h3>
