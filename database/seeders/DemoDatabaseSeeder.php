@@ -70,7 +70,7 @@ class DemoDatabaseSeeder extends Seeder
         ]);
 
         // Chấm công 3 ngày gần nhất với các trạng thái
-        $statuses = ['present', 'half-day', 'leave', 'absent', 'late', 'early_leave'];
+        $statuses = ['present', 'leave', 'absent', 'late', 'early_leave'];
 
         foreach ($userIds as $userId) {
             foreach (range(0, 2) as $d) {
