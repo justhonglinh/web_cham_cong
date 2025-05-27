@@ -4,7 +4,6 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
-    {{-- Lấy tọa độ và địa chỉ hiện tại --}}
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
@@ -24,16 +23,16 @@
         document.getElementById('getLocationBtn').addEventListener('click', () => {
             const locationResult = document.getElementById('locationResult');
             const addressResult = document.getElementById('addressResult');
-            addressResult.textContent = ''; // reset địa chỉ trước khi lấy mới
+            locationResult.textContent = 'Đang lấy vị trí...';
+            addressResult.textContent = '';
 
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        locationResult.textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
+                        const { latitude, longitude } = position.coords;
+                        locationResult.textContent = `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
 
-                        // Gọi API Nominatim để lấy địa chỉ
+                        // Gọi API Nominatim lấy địa chỉ
                         fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
                             .then(response => response.json())
                             .then(data => {
@@ -49,12 +48,28 @@
                             });
                     },
                     (error) => {
-                        locationResult.textContent = `Lỗi lấy vị trí: ${error.message}`;
-                    }
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                locationResult.textContent = "Bạn đã từ chối cấp quyền vị trí.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                locationResult.textContent = "Không thể lấy vị trí hiện tại.";
+                                break;
+                            case error.TIMEOUT:
+                                locationResult.textContent = "Hết thời gian lấy vị trí.";
+                                break;
+                            default:
+                                locationResult.textContent = `Lỗi lấy vị trí: ${error.message}`;
+                        }
+                        addressResult.textContent = '';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             } else {
                 locationResult.textContent = "Trình duyệt không hỗ trợ Geolocation.";
+                addressResult.textContent = '';
             }
         });
     </script>
+
 </x-app-layout>
