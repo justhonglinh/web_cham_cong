@@ -13,7 +13,7 @@ class AddOvertimeIdToAttendancesTable extends Migration
             $table->unsignedBigInteger('overtime_id')->nullable()->after('shift_id');
 
             // Thêm ràng buộc khóa ngoại
-            $table->foreign('overtime_id')->references('id')->on('overtime_requests')->onDelete('set null');
+            $table->foreign('overtime_id')->references('id')->on('overtime_shifts')->onDelete('set null');
         });
     }
 
