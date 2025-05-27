@@ -9,6 +9,12 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\FaceCompareController;
+
+// route call api so sánh khuôn mặt
+Route::get('/face-compare', [FaceCompareController::class, 'showForm']);
+Route::post('/face-compare', [FaceCompareController::class, 'compare']);
+
 // giao diện ban đầu
 Route::get('/', function () {
     return view('welcome');
@@ -62,5 +68,9 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
 });
 
+// Các route chỉ dành cho employee
 
+Route::middleware(['auth', 'role:employee'])->group(function () {
+
+});
 require __DIR__.'/auth.php';

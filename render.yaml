@@ -1,53 +1,27 @@
-# render.yaml
-
-# 1) Định nghĩa Web Service chính
 services:
   - type: web
-    name: laravel-web               # Tên service trên Render
-    env: docker                     # Dùng Dockerfile có sẵn trong repo
-    plan: free                      # Chọn Free tier
-    branch: master                    # Branch sẽ deploy (thay thành branch bạn dùng)
-    buildCommand: |                 # Các lệnh build chạy khi render build image
+    name: laravel-web
+    env: php                     # **bắt buộc** chọn PHP, không phải Docker
+    plan: free
+    branch: main
+    buildCommand:               # build Laravel
       composer install --no-dev --optimize-autoloader
       npm install && npm run production
       php artisan migrate --force
       php artisan storage:link
-      php artisan config:cache
-      php artisan route:cache
-      php artisan view:cache
-    startCommand:                   # Lệnh chạy khi container khởi động
+    startCommand:               # server sẽ nghe đúng port do Render cấp
       php artisan serve --host=0.0.0.0 --port=$PORT
-    envVars:                        # Các biến môi trường cần cho Laravel
+    envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
       - key: APP_KEY
-        fromSecret: LARAVEL_APP_KEY  # Tạo secret LARAVEL_APP_KEY trong UI hoặc CLI
-      - key: DATABASE_URL
-        fromDatabase: laravel-db     # Liên kết với database bên dưới
-
-# 2) Định nghĩa Postgres database
-databases:
-  - name: laravel-db                # Tên bạn sẽ thấy trong Dashboard
-    engine: postgresql
-    version: "13"                   # Hoặc version mới hơn nếu muốn
-    plan: free                      # Free tier (1 GB)
-
-  # (Tuỳ chọn) 3) Background Worker cho queue (nếu bạn dùng)
-  - type: worker
-    name: laravel-worker
-    env: docker
-    plan: free
-    branch: main
-    buildCommand:
-      composer install --no-dev --optimize-autoloader
-    startCommand:
-      php artisan queue:work --sleep=3 --tries=3
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_KEY
         fromSecret: LARAVEL_APP_KEY
       - key: DATABASE_URL
         fromDatabase: laravel-db
+databases:
+  - name: laravel-db
+    engine: postgresql
+    version: "13"
+    plan: free

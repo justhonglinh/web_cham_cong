@@ -22,13 +22,13 @@
                     <!-- Bảng dữ liệu -->
                     <table class="min-w-full table-auto border-separate border-spacing-0.5" id="myTable">
                         <thead>
-                        <tr class="bg-gray-100 text-left text-gray-700">
-                            <th class="px-4 py-2 border-b font-semibold">Avatar</th>
-                            <th class="px-4 py-2 border-b font-semibold">Name</th>
-                            <th class="px-4 py-2 border-b font-semibold">Email</th>
-                            <th class="px-4 py-2 border-b font-semibold">Manager</th>
-                            <th class="px-4 py-2 border-b font-semibold">Actions</th>
-                        </tr>
+                            <tr class="bg-gray-100 text-left text-gray-700">
+                                <th class="px-4 py-2 border-b font-semibold">Avatar</th>
+                                <th class="px-4 py-2 border-b font-semibold">Name</th>
+                                <th class="px-4 py-2 border-b font-semibold">Email</th>
+                                <th class="px-4 py-2 border-b font-semibold">Manager</th>
+                                <th class="px-4 py-2 border-b font-semibold">Actions</th>
+                            </tr>
                         </thead>
 
                         <tbody>
@@ -58,7 +58,6 @@
                                             </svg>
                                         </a>
 
-
                                         <!-- Nút Sửa (Màu vàng) -->
                                         <a href="javascript:void(0);"
                                            data-user='@json($employee)'
@@ -81,7 +80,6 @@
                                                 </svg>
                                             </button>
                                         </form>
-
                                     </div>
                                 </td>
                             </tr>
