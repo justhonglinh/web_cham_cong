@@ -54,6 +54,7 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     // attendance
     Route::get('/attendance/management', [AttendanceController::class, 'show'])->name('attendance.index');
+    Route::patch('/attendance/management/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
 
     // overtime
     Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');

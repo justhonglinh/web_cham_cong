@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('shift_id')->nullable(); // FK tới shifts
             $table->dateTime('check_in_time')->nullable(); // giờ vào
             $table->dateTime('check_out_time')->nullable(); // giờ ra
-            $table->enum('status', ['present', 'half-day', 'leave', 'absent', 'late', 'early_leave'])->nullable(); // KHÔNG dùng ->change()
+            $table->enum('status', ['present', 'leave', 'absent', 'late', 'early_leave'])->nullable(); // KHÔNG dùng ->change()
             $table->timestamps(); // created_at, updated_at
 
             // Foreign keys

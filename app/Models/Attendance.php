@@ -12,6 +12,7 @@ class Attendance extends Model
     protected $fillable = [
         'user_id',
         'shift_id',    // nếu bạn muốn mass assign shift_id
+        'overtime_id', // nếu bạn muốn mass assign overtime_shift_id
         'date',        // thêm trường ngày
         'status',      // thêm trạng thái điểm danh
     ];
@@ -23,5 +24,10 @@ class Attendance extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function overtimeShift()
+    {
+        return $this->belongsTo(OvertimeShift::class, 'overtime_id');
     }
 }
