@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Attendance Management') }}
+            {{ __('Quản lý chấm công') }}
         </h2>
     </x-slot>
 
@@ -103,7 +103,7 @@
                 <div class="p-6">
 
                     <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-                        Bảng chấm công nhân viên
+                        Bảng tăng ca nhân viên
                     </h1>
 
                     <div class="overflow-x-auto">
