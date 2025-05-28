@@ -72,6 +72,10 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 // Các route chỉ dành cho employee
 
 Route::middleware(['auth', 'role:employee'])->group(function () {
-
+    // Route chấm công cho nhân viên (giao diện bật cam chụp ảnh)
+    Route::get('/employees/attendance', function () {
+        return view('employees.attendance');
+    })->name('employees.attendance');
 });
+
 require __DIR__.'/auth.php';
