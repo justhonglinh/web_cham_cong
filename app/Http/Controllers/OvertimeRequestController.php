@@ -7,26 +7,25 @@ use Illuminate\Http\Request;
 
 class OvertimeRequestController extends Controller
 {
-    public function updateStatus(Request $request, $id)
+    // Nhân viên xác nhận tham gia hoặc từ chối ca OT
+    public function respond(Request $request)
     {
-        // Tìm yêu cầu overtime theo ID
-        $requestData = OvertimeRequest::findOrFail($id);
+        $request->validate([
+            'overtime_shift_id' => 'required|exists:overtime_shifts,id',
+            'status' => 'required|in:accepted,declined',
+        ]);
 
-        // Cập nhật trạng thái mới
-        $requestData->status = $request->status;
-        $requestData->save();
+        // Tìm hoặc tạo mới bản ghi đăng ký OT cho user với ca này
+        OvertimeRequest::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'overtime_shift_id' => $request->overtime_shift_id,
+            ],
+            [
+                'status' => $request->status,
+            ]
+        );
 
-        // Nếu trạng thái mới là approved và trước đó chưa phải approved thì tăng current_registrations
-        if ($request->status === 'approved') {
-            $shift = $requestData->overtimeShift; // cần quan hệ overtimeShift trong model OvertimeRequest
-
-            if ($shift) {
-                $shift->current_registrations = $shift->current_registrations + 1;
-                $shift->save();
-            }
-        }
-
-        return redirect()->back()->with('success', 'Cập nhật trạng thái thành công!')->with('delayReload', true);
+        return redirect()->route('overtime.index')->with('success', 'Cập nhật trạng thái OT thành công!');
     }
-
 }

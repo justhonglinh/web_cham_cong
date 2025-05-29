@@ -15,19 +15,17 @@ class OvertimeShift extends Model
         'start_time',
         'end_time',
         'description',
+        'current_registrations', // nếu có cột này trong DB
+        'max_registrations',     // nếu có cột này trong DB
     ];
-    public function overtimeRequests()
+
+    public function overtimeRequests(): HasMany
     {
         return $this->hasMany(OvertimeRequest::class, 'overtime_shift_id', 'id');
-    }
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
-
 }
