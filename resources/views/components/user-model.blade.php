@@ -51,7 +51,7 @@
 <!-- Edit User Modal -->
 <div id="userEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center hidden z-50">
     <div class="bg-white p-8 rounded-lg shadow-lg w-1/3 max-w-lg">
-        <h2 class="text-xl font-semibold mb-4">Edit User</h2>
+        <h2 class="text-xl font-semibold mb-4">Chỉnh Sửa Thông Tin</h2>
 
         <form id="editUserForm" action="" method="POST" enctype="multipart/form-data">
             @csrf
@@ -60,7 +60,7 @@
             <input type="hidden" name="id" id="editUserId" />
 
             <div class="mb-4">
-                <label for="editName" class="block text-sm font-medium text-gray-700">Name</label>
+                <label for="editName" class="block text-sm font-medium text-gray-700">Tên Đầy Đủ</label>
                 <input type="text" id="editName" name="name" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
@@ -74,14 +74,14 @@
             </div>
 
             <div class="mb-4">
-                <label for="editPassword" class="block text-sm font-medium text-gray-700">Password <small>(để trống nếu không đổi)</small></label>
+                <label for="editPassword" class="block text-sm font-medium text-gray-700">Mật Khẩu<small>(để trống nếu không đổi)</small></label>
                 <input type="password" id="editPassword" name="password"
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
 
             <div class="mb-4">
-                <label for="editAvatar" class="block text-sm font-medium text-gray-700">Upload Avatar</label>
+                <label for="editAvatar" class="block text-sm font-medium text-gray-700">Tải ảnh đại diện</label>
                 <input type="file" id="editAvatar" name="avatar" accept="image/*"
                        class="mt-1 block w-full text-sm text-gray-500
                       file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
@@ -92,11 +92,11 @@
             <div class="flex justify-between items-center">
                 <button type="submit"
                         class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition duration-300">
-                    Update
+                    Xác Nhận
                 </button>
                 <button type="button" id="closeEditModal"
                         class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-300">
-                    Cancel
+                    Huỷ
                 </button>
             </div>
         </form>

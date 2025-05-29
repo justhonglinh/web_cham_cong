@@ -26,9 +26,6 @@ return new class extends Migration
             $table->foreign('shift_id')->references('id')->on('shifts')->onDelete('cascade');
         });
     }
-
-
-
     /**
      * Reverse the migrations.
      */
