@@ -28,19 +28,19 @@
                             <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Avatar
+                                    Ảnh Đại Diện
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Name
+                                    Tên Đầy Đủ
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Email
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Manager
+                                    Tên Quản Lý
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
-                                    Actions
+                                    Hành Động
                                 </th>
                             </tr>
                             </thead>

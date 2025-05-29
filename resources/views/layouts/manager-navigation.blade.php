@@ -15,32 +15,32 @@
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         {{-- Dashboard --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('Dashboard') }}
+                            {{ __('Trang Chủ') }}
                         </x-nav-link>
 
                         {{-- Nhân viên --}}
                         <x-nav-link :href="route('employees.management')" :active="request()->routeIs('employees.*')">
-                            {{ __('Employees') }}
+                            {{ __('Nhân Viên') }}
                         </x-nav-link>
 
                         {{-- Chấm công --}}
                         <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
-                          {{ __('Attendance') }}
+                          {{ __('Chấm Công') }}
                         </x-nav-link>
 
                         {{-- Tổng hợp giờ làm --}}
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('Work Summary') }}
+                            {{ __('Báo cáo công việc') }}
                         </x-nav-link>
 
                         {{-- Làm thêm giờ --}}
                         <x-nav-link :href="route('overtime.index')" :active="request()->routeIs('overtime.*')">
-                            {{ __('Overtime') }}
+                            {{ __('Tăng Ca') }}
                         </x-nav-link>
 
                         {{-- Phân ca --}}
                         <x-nav-link :href="route('shifts.index')" :active="request()->routeIs('shifts.*')">
-                            {{ __('Shifts') }}
+                            {{ __('Ca làm việc') }}
                         </x-nav-link>
                     </div>
 
@@ -64,7 +64,7 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
+                            {{ __('Hồ sơ') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -74,7 +74,7 @@
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
-                                {{ __('Log Out') }}
+                                {{ __('Đăng xuất') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
@@ -97,7 +97,7 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('Trang Chủ') }}
             </x-responsive-nav-link>
         </div>
 
@@ -110,7 +110,7 @@
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+                    {{ __('Hồ sơ') }}
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->

@@ -15,9 +15,9 @@
         href="https://cdn.datatables.net/2.3.0/css/dataTables.dataTables.css"
     />
 
-
     <!-- 3) DataTables JS (sau jQuery) -->
     <script src="https://cdn.datatables.net/2.3.0/js/dataTables.js"></script>
+    <script src="{{ asset('js/dataTables.js')  }}"></script>
 
     {{-- css tự custom--}}
     <link rel="stylesheet" href="{{ asset('css/custom-datatable.css') }}">

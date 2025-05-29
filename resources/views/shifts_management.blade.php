@@ -28,7 +28,7 @@
                             <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                    Tên ca
+                                    Ca Làm Việc
                                 </th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Giờ bắt đầu
