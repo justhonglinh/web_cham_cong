@@ -62,15 +62,24 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                        <span class="inline-block px-2 py-1 rounded-full
-                                            {{ $att->status === 'present'     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : '' }}
-                                            {{ $att->status === 'late'      ? 'bg-red-100   text-red-800   dark:bg-red-900   dark:text-red-200' : '' }}
-                                            {{ $att->status === 'early_leave' ? 'bg-red-100   text-red-800   dark:bg-red-900   dark:text-red-200' : '' }}
-                                            {{ $att->status === 'absent'        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : '' }}
-                                            {{ !$att->status                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}
-                                        ">
-
-                                        {{ $att->status ? ucfirst($att->status) : '—' }}
-                                      </span>
+                                            {{ $att->status === 'present'      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : '' }}
+                                            {{ $att->status === 'late'         ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : '' }}
+                                            {{ $att->status === 'early_leave'  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : '' }}
+                                            {{ $att->status === 'absent'       ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : '' }}
+                                            {{ $att->status === 'leave'       ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}
+                                       ">
+                                            @if($att->status === 'present')
+                                               Có mặt
+                                            @elseif($att->status === 'late')
+                                               Đi muộn
+                                            @elseif($att->status === 'early_leave')
+                                               Về sớm
+                                            @elseif($att->status === 'absent')
+                                               Vắng mặt
+                                            @elseif($att->status === 'leave')
+                                                  Nghỉ phép
+                                            @endif
+                                       </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <form method="POST" action=" {{route('attendance.update', $att->id)}} ">

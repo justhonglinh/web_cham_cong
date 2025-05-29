@@ -66,7 +66,7 @@
                                                 <button type="submit"
                                                         class="px-3 py-1 rounded text-white text-sm
                                                         {{ $request->status === 'approved' ? 'bg-green-600' : 'bg-green-400 hover:bg-green-500' }}">
-                                                    Approved
+                                                    Phê duyệt
                                                 </button>
                                             </form>
 
@@ -77,7 +77,7 @@
                                                 <button type="submit"
                                                         class="px-3 py-1 rounded text-white text-sm
                                                         {{ $request->status === 'rejected' ? 'bg-red-600' : 'bg-red-400 hover:bg-red-500' }}">
-                                                    Rejected
+                                                    Từ chối
                                                 </button>
                                             </form>
                                         </td>
