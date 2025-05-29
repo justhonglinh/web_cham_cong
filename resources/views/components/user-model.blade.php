@@ -1,14 +1,14 @@
 <!-- resources/views/components/user-model.blade.php -->
 <div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center hidden z-50">
     <div class="bg-white p-8 rounded-lg shadow-lg w-1/3">
-        <h2 class="text-xl font-semibold mb-4">Create New User</h2>
+        <h2 class="text-xl font-semibold mb-4">Tạo Thông Tin Nhân Viên</h2>
 
         <!-- Form tạo mới người dùng -->
         <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data">
 
             @csrf
             <div class="mb-4">
-                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                <label for="name" class="block text-sm font-medium text-gray-700">Tên đầy đủ</label>
                 <input type="text" id="name" name="name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" required>
             </div>
 
@@ -18,12 +18,12 @@
             </div>
 
             <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <label for="password" class="block text-sm font-medium text-gray-700">Mật khẩu</label>
                 <input type="password" id="password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" required>
             </div>
 
             <div class="mb-4">
-                <label for="avatar" class="block text-sm font-medium text-gray-700">Upload Avatar</label>
+                <label for="avatar" class="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
                 <input
                     required
                     type="file"
@@ -41,8 +41,8 @@
             <input type="hidden" name="manager" value="{{ Auth::user()->name }}">
 
             <div class="flex justify-between items-center">
-                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Submit</button>
-                <button type="button" id="closeUserModal" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-300">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Xác nhận</button>
+                <button type="button" id="closeUserModal" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-300">Huỷ</button>
             </div>
         </form>
     </div>

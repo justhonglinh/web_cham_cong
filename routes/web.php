@@ -17,7 +17,7 @@ Route::post('/face-compare', [FaceCompareController::class, 'compare']);
 
 // giao diện ban đầu
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 // chia luồng sau khi login success
