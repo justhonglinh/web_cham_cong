@@ -37,9 +37,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Cho phép cả manager và employee truy cập trang quản lý OT
-    Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');
 });
 
 // Các route chỉ dành cho manager
@@ -59,25 +56,22 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::get('/attendance/management', [AttendanceController::class, 'show'])->name('attendance.index');
     Route::patch('/attendance/management/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
 
+    // overtime
+    Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');
+
     // shift management
     Route::get('/shift/management', [ShiftController::class, 'show'])->name('shifts.index');
     Route::post('/shift/management', [ShiftController::class, 'store'])->name('shifts.store');
     Route::put('/shift/management/{id}', [ShiftController::class, 'update'])->name('shifts.update');
     Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
 
-    // overtime management (manager tạo ca OT)
-    Route::post('/overtime/management', [OvertimeController::class, 'store'])->name('overtime.store');
-    Route::put('/overtime/management/{id}', [OvertimeController::class, 'update'])->name('overtime.update');
-    Route::delete('/overtime/management/{id}', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
-
-    // overtime request (nếu cần duyệt trạng thái cho manager)
+    // overtime request
     Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
 });
 
 // Các route chỉ dành cho employee
-Route::middleware(['auth', 'role:employee'])->group(function () {
-    // Nhân viên xác nhận đồng ý hoặc từ chối ca OT
-    Route::post('/overtime-requests/respond', [OvertimeRequestController::class, 'respond'])->name('overtimeRequests.respond');
-});
 
+Route::middleware(['auth', 'role:employee'])->group(function () {
+
+});
 require __DIR__.'/auth.php';
