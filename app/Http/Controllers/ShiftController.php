@@ -21,23 +21,14 @@ class ShiftController extends Controller
             'end_time' => 'required|date_format:H:i',
         ]);
 
-        Shift::create([
-            'name' => $request->name,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-        ]);
-
+        Shift::create($request->all());
         return redirect()->route('shifts.index')->with('success', 'Thêm ca làm thành công');
     }
 
     public function update(Request $request, $id)
     {
         $shift = Shift::findOrFail($id);
-
-        $shift->name = $request->name;
-        $shift->start_time = $request->start_time;
-        $shift->end_time = $request->end_time;
-        $shift->save();
+        $shift->update($request->all());
 
         return redirect()->route('shifts.index')->with('success', 'Cập nhật thành công!');
     }

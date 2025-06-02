@@ -29,26 +29,20 @@ class OvertimeController extends Controller
         return view('overtime_management', compact('overtimeShifts'));
     }
 
-    // Lưu overtime mới (từ modal Create)
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i',
+            'start_time' => 'required',
+            'end_time' => 'required',
             'description' => 'nullable|string',
+            'max_registrations' => 'required|integer|min:1',
+            'date' => 'required|date',
         ]);
 
-        OvertimeShift::create([
-            'name' => $request->name,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'description' => $request->description,
-        ]);
+        OvertimeShift::create($request->all());
 
-        return redirect()->route('shifts.index')->with('success', 'Thêm làm thêm giờ thành công!');
+        return redirect()->route('overtime.index')->with('success', 'Thêm làm thêm giờ thành công!');
     }
 
     // Cập nhật overtime (từ modal Edit)
@@ -56,22 +50,17 @@ class OvertimeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i',
+            'start_time' => 'required',
+            'end_time' => 'required',
             'description' => 'nullable|string',
+            'max_registrations' => 'required|integer|min:1',
+            'date' => 'required|date',
         ]);
 
         $overtime = OvertimeShift::findOrFail($id);
-        $overtime->update([
-            'name' => $request->name,
-            'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'description' => $request->description,
-        ]);
+        $overtime->update($request->all());
 
-        return redirect()->route('overtimes.index')->with('success', 'Cập nhật làm thêm giờ thành công!');
+        return redirect()->route('overtime.index')->with('success', 'Cập nhật làm thêm giờ thành công!');
     }
 
     // Xóa overtime
@@ -80,6 +69,6 @@ class OvertimeController extends Controller
         $overtime = OvertimeShift::findOrFail($id);
         $overtime->delete();
 
-        return redirect()->route('overtimes.index')->with('success', 'Xóa làm thêm giờ thành công!');
+        return redirect()->route('overtime.index')->with('success', 'Xóa làm thêm giờ thành công!');
     }
 }

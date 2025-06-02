@@ -58,6 +58,9 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     // overtime
     Route::get('/overtime/management', [OvertimeController::class, 'show'])->name('overtime.index');
+    Route::post('/overtime/management', [OvertimeController::class, 'store'])->name('overtime.store');
+    Route::put('overtime/management/{id}', [OvertimeController::class, 'update'])->name('overtime.update');
+    Route::delete('/overtime/management/{id}', [OvertimeController::class, 'destroy'])->name('overtime.destroy');
 
     // shift management
     Route::get('/shift/management', [ShiftController::class, 'show'])->name('shifts.index');

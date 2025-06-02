@@ -15,6 +15,7 @@ class OvertimeShift extends Model
         'start_time',
         'end_time',
         'description',
+        'max_registrations',
     ];
     public function overtimeRequests()
     {
