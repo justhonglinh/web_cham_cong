@@ -13,10 +13,10 @@ class UserController extends Controller
 {
     public function show()
     {
-        $managerName = Auth::user()->name;
+        $managerId = Auth::user()->id;
 
         return User::where('role', 'employee')
-            ->where('manager', $managerName)
+            ->where('manager', $managerId)
             ->get();
     }
 

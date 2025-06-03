@@ -55,23 +55,6 @@ class DemoDatabaseSeeder extends Seeder
             ]);
         }
 
-        // Tạo 15 users
-        $users = [];
-        for ($i=1; $i<=15; $i++) {
-            $users[] = DB::table('users')->insertGetId([
-                'name' => $faker->name(),
-                'email' => $faker->unique()->safeEmail(),
-                'email_verified_at' => now(),
-                'password' => bcrypt('password'),
-                'remember_token' => Str::random(10),
-                'role' => 'employee',
-                'manager' => 'manager',
-                'avatar' => $faker->imageUrl(100, 100),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        };
-
         DB::table('users')->insertGetId([
             'name' => "manager",
             'email' => 'manager@gmail.com',
@@ -84,13 +67,30 @@ class DemoDatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        // Tạo 15 users
+        $users = [];
+        for ($i=1; $i<=15; $i++) {
+            $users[] = DB::table('users')->insertGetId([
+                'name' => $faker->name(),
+                'email' => $faker->unique()->safeEmail(),
+                'email_verified_at' => now(),
+                'password' => bcrypt('password'),
+                'remember_token' => Str::random(10),
+                'role' => 'employee',
+                'manager' => '1',
+                'avatar' => $faker->imageUrl(100, 100),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        };
+
         DB::table('users')->insertGetId([
             'name' => "linh",
             'email' => 'linh@gmail.com',
             'email_verified_at' => now(),
             'password' => bcrypt('linh@gmail.com'),
             'role' => 'employee',
-            'manager' => 'manager',
+            'manager' => '1',
             'avatar' => $faker->imageUrl(100, 100),
             'created_at' => now(),
             'updated_at' => now(),

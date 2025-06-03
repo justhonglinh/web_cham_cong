@@ -38,7 +38,7 @@
                hover:file:bg-green-100"
                 />
             </div>
-            <input type="hidden" name="manager" value="{{ Auth::user()->name }}">
+            <input type="hidden" name="manager" value="{{ Auth::user()->id }}">
 
             <div class="flex justify-between items-center">
                 <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Xác nhận</button>
