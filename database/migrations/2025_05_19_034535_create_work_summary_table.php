@@ -19,7 +19,7 @@ return new class extends Migration
             $table->float('total_work_hours')->default(0);
             $table->float('total_overtime_hours')->default(0);
             $table->integer('total_leave_days')->default(0);
-            $table->integer('total_absent_days')->default(0);
+            $table->integer('total_late_days')->default(0);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

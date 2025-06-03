@@ -77,7 +77,7 @@
                                             @elseif($att->status === 'absent')
                                                Vắng mặt
                                             @elseif($att->status === 'leave')
-                                                  Nghỉ phép
+                                               Nghỉ phép
                                             @endif
                                        </span>
                                     </td>
@@ -140,6 +140,13 @@
                             </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            @if($attendance_overtimes->isEmpty())
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    Không có dữ liệu tăng ca
+                                </td>
+                            </tr>
+                            @endif
                             @foreach($attendance_overtimes as $att)
                                 <tr class="hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">

@@ -6,6 +6,7 @@ use App\Http\Controllers\OvertimeRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkSummaryController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +27,7 @@ Route::get('/dashboard', function () {
 
     if ($userRole == 'manager') {
         $employees = (new UserController())->show();
-        return view('dashboard', compact('employees'));
+        return view('dashboard_management', compact('employees'));
     } else {
         return view('employees.dashboard');
     }
@@ -70,6 +71,12 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     // overtime request
     Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
+
+    // work summary
+    Route::get('/work-summary/management', [WorkSummaryController::class, 'show'])->name('work.index');
+    Route::get('/work-summary/export', [WorkSummaryController::class, 'export'])->name('work.export');
+    Route::get('/work-summary/search', [WorkSummaryController::class, 'search'])->name('work.search');
+
 });
 
 // Các route chỉ dành cho employee

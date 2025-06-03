@@ -50,6 +50,7 @@ class AttendanceController extends Controller
         $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
+            ->where('date', $today)
             ->paginate(10);
 
         $shifts = Shift::all();
