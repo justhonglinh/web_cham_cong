@@ -13,12 +13,12 @@ class AttendanceController extends Controller
 {
     public function show(Request $request)
     {
-        $managerName = Auth::user()->name;
+        $managerId = Auth::user()->id;
         $today = now()->toDateString();
 
         // Lấy danh sách nhân viên dưới quyền manager
         $employeeIds = User::where('role', 'employee')
-            ->where('manager', $managerName)
+            ->where('manager', $managerId)
             ->pluck('id');
 
         foreach ($employeeIds as $employeeId) {

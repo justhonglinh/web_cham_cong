@@ -12,22 +12,26 @@ class OvertimeController extends Controller
 {
     public function show()
     {
-        $managerName = Auth::user()->name;
+        $managerId = Auth::user()->id;
 
-        // Lấy danh sách id nhân viên dưới quyền quản lý
         $employeeIds = User::where('role', 'employee')
-            ->where('manager', $managerName)
+            ->where('manager', $managerId)
             ->pluck('id');
 
-        // Lấy ca làm thêm giờ, kèm các yêu cầu của nhân viên dưới quyền, cùng user info trong yêu cầu
-        $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
-            $query->whereIn('user_id', $employeeIds)
-                ->with('user')                  // eager load user
-                ->orderBy('created_at', 'asc');
-        }])->paginate(10);
+        if ($employeeIds->isEmpty()) {
+            // Nếu không có nhân viên dưới quyền, trả về dữ liệu trống
+            $overtimeShifts = collect(); // hoặc có thể là paginate rỗng, tùy bạn xử lý view
+        } else {
+            $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
+                $query->whereIn('user_id', $employeeIds)
+                    ->with('user')
+                    ->orderBy('created_at', 'asc');
+            }])->paginate(10);
+        }
 
         return view('overtime_management', compact('overtimeShifts'));
     }
+
 
     public function store(Request $request)
     {

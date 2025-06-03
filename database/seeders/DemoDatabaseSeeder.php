@@ -26,6 +26,17 @@ class DemoDatabaseSeeder extends Seeder
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
+        DB::table('users')->insertGetId([
+            'name' => "manager",
+            'email' => 'manager@gmail.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('manager@gmail.com'),
+            'role' => 'manager',
+            'manager' => null,
+            'avatar' => $faker->imageUrl(100, 100),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         // Tạo 5 shifts
         $shifts = [];
@@ -36,6 +47,7 @@ class DemoDatabaseSeeder extends Seeder
                 'end_time' => $faker->time(),
                 'created_at' => now(),
                 'updated_at' => now(),
+                'user_id' => 1, // Giả sử user_id là 1 (có thể thay đổi theo nhu cầu)
             ]);
         }
 
@@ -55,17 +67,7 @@ class DemoDatabaseSeeder extends Seeder
             ]);
         }
 
-        DB::table('users')->insertGetId([
-            'name' => "manager",
-            'email' => 'manager@gmail.com',
-            'email_verified_at' => now(),
-            'password' => bcrypt('manager@gmail.com'),
-            'role' => 'manager',
-            'manager' => null,
-            'avatar' => $faker->imageUrl(100, 100),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+
 
         // Tạo 15 users
         $users = [];

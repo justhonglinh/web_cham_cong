@@ -39,7 +39,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'employee',
+            'role' => 'manager',
         ]);
         event(new Registered($user));
         return redirect(route('login'))->with('success', 'Tạo tài khoản thành công!');
