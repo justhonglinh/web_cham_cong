@@ -16,11 +16,11 @@ class WorkSummary extends Model
         'total_work_hours',
         'total_overtime_hours',
         'total_leave_days',
-        'total_absent_days',
+        'total_late_days',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

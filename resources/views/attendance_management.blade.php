@@ -67,10 +67,19 @@
                                             {{ $att->status === 'early_leave'  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : '' }}
                                             {{ $att->status === 'absent'       ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : '' }}
                                             {{ $att->status === 'leave'       ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}
-                                        ">
-
-                                        {{ $att->status ? ucfirst($att->status) : '—' }}
-                                      </span>
+                                       ">
+                                            @if($att->status === 'present')
+                                               Có mặt
+                                            @elseif($att->status === 'late')
+                                               Đi muộn
+                                            @elseif($att->status === 'early_leave')
+                                               Về sớm
+                                            @elseif($att->status === 'absent')
+                                               Vắng mặt
+                                            @elseif($att->status === 'leave')
+                                               Nghỉ phép
+                                            @endif
+                                       </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <form method="POST" action=" {{route('attendance.update', $att->id)}} ">
@@ -131,12 +140,13 @@
                             </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            if($attendance_overtimes->isEmpty())
-                                <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                        Không có dữ liệu tăng ca
-                                    </td>
-                                </tr>
+                            @if($attendance_overtimes->isEmpty())
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    Không có dữ liệu tăng ca
+                                </td>
+                            </tr>
+                            @endif
                             @foreach($attendance_overtimes as $att)
                                 <tr class="hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">

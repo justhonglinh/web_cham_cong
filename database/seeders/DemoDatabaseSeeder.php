@@ -84,6 +84,18 @@ class DemoDatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        DB::table('users')->insertGetId([
+            'name' => "linh",
+            'email' => 'linh@gmail.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('linh@gmail.com'),
+            'role' => 'employee',
+            'manager' => 'manager',
+            'avatar' => $faker->imageUrl(100, 100),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         // Tạo dữ liệu chi tiết cho từng user
         foreach ($users as $userId) {
             DB::table('user_details')->insert([
@@ -103,7 +115,7 @@ class DemoDatabaseSeeder extends Seeder
                 'total_work_hours' => rand(120, 160),
                 'total_overtime_hours' => rand(0, 20),
                 'total_leave_days' => rand(0, 5),
-                'total_absent_days' => rand(0, 3),
+                'total_late_days' => rand(0, 3),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -29,7 +29,7 @@
                         </x-nav-link>
 
                         {{-- Tổng hợp giờ làm --}}
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        <x-nav-link :href="route('work.index')" :active="request()->routeIs('work.*')">
                             {{ __('Báo cáo công việc') }}
                         </x-nav-link>
 
