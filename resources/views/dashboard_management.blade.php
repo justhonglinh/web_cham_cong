@@ -4,72 +4,143 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h1 class="text-lg font-semibold mb-4">Lấy tọa độ và địa chỉ hiện tại</h1>
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-8 animate-fadeIn">Tổng hợp thông tin</h3>
 
-                <button id="getLocationBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Lấy vị trí hiện tại
-                </button>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
+                <!-- Card 1 -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex items-center space-x-4
+                           transform transition-transform duration-300 hover:scale-[1.05] hover:shadow-2xl animate-fadeIn delay-100">
+                    <div class="p-3 bg-blue-500 text-white rounded-full drop-shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5.121 17.804A13.937 13.937 0 0112 15c2.634 0 5.088.86 7.123 2.324M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">120</p>
+                        <p class="text-gray-500 dark:text-gray-400">Người dùng</p>
+                    </div>
+                </div>
 
-                <p id="locationResult" class="mt-4 text-gray-700 dark:text-gray-300"></p>
-                <p id="addressResult" class="mt-2 text-gray-600 dark:text-gray-400 italic"></p>
+                <!-- Card 2 -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex items-center space-x-4
+                           transform transition-transform duration-300 hover:scale-[1.05] hover:shadow-2xl animate-fadeIn delay-200">
+                    <div class="p-3 bg-green-500 text-white rounded-full drop-shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 7V3M16 7V3M3 11h18M5 21h14a2 2 0 002-2v-5H3v5a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">10</p>
+                        <p class="text-gray-500 dark:text-gray-400">Ca làm việc</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex items-center space-x-4
+                           transform transition-transform duration-300 hover:scale-[1.05] hover:shadow-2xl animate-fadeIn delay-300">
+                    <div class="p-3 bg-yellow-500 text-white rounded-full drop-shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8v4l3 3"/>
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">5</p>
+                        <p class="text-gray-500 dark:text-gray-400">Ca tăng ca</p>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex items-center space-x-4
+                           transform transition-transform duration-300 hover:scale-[1.05] hover:shadow-2xl animate-fadeIn delay-400">
+                    <div class="p-3 bg-red-500 text-white rounded-full drop-shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 12h6M9 16h6M9 8h6"/>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">15</p>
+                        <p class="text-gray-500 dark:text-gray-400">Đơn xin tăng ca</p>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex items-center space-x-4
+                           transform transition-transform duration-300 hover:scale-[1.05] hover:shadow-2xl animate-fadeIn delay-500">
+                    <div class="p-3 bg-purple-500 text-white rounded-full drop-shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10h1l3 8h10l3-8h1"/>
+                            <path d="M5 10V6a7 7 0 0114 0v4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">300</p>
+                        <p class="text-gray-500 dark:text-gray-400">Lần chấm công</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6 animate-fadeIn delay-600">Thông báo mới</h3>
+
+            <div class="space-y-6">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5
+                           transform transition-transform duration-300 hover:scale-[1.03] hover:shadow-2xl animate-fadeIn delay-700">
+                    <h4 class="font-semibold text-lg text-blue-600 dark:text-blue-400">Đơn xin tăng ca mới</h4>
+                    <p class="text-gray-700 dark:text-gray-300">Bạn có 3 đơn xin tăng ca đang chờ duyệt.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật: 01/06/2025</p>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5
+                           transform transition-transform duration-300 hover:scale-[1.03] hover:shadow-2xl animate-fadeIn delay-800">
+                    <h4 class="font-semibold text-lg text-red-600 dark:text-red-400">Chấm công muộn</h4>
+                    <p class="text-gray-700 dark:text-gray-300">Hôm nay có 2 nhân viên chấm công muộn hơn 15 phút.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật: 02/06/2025</p>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5
+                           transform transition-transform duration-300 hover:scale-[1.03] hover:shadow-2xl animate-fadeIn delay-900">
+                    <h4 class="font-semibold text-lg text-yellow-600 dark:text-yellow-400">Thay đổi ca làm việc</h4>
+                    <p class="text-gray-700 dark:text-gray-300">Ca làm việc ngày 05/06/2025 đã được cập nhật.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật: 31/05/2025</p>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5
+                           transform transition-transform duration-300 hover:scale-[1.03] hover:shadow-2xl animate-fadeIn delay-1000">
+                    <h4 class="font-semibold text-lg text-green-600 dark:text-green-400">Thông báo nội bộ</h4>
+                    <p class="text-gray-700 dark:text-gray-300">Cuộc họp toàn công ty sẽ diễn ra vào ngày 07/06/2025.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Cập nhật: 30/05/2025</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.getElementById('getLocationBtn').addEventListener('click', () => {
-            const locationResult = document.getElementById('locationResult');
-            const addressResult = document.getElementById('addressResult');
-            locationResult.textContent = 'Đang lấy vị trí...';
-            addressResult.textContent = '';
-
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        locationResult.textContent = `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
-
-                        // Gọi API Nominatim lấy địa chỉ
-                        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data && data.display_name) {
-                                    addressResult.textContent = `Địa chỉ: ${data.display_name}`;
-                                } else {
-                                    addressResult.textContent = 'Không tìm thấy địa chỉ.';
-                                }
-                            })
-                            .catch(error => {
-                                addressResult.textContent = 'Lỗi khi lấy địa chỉ.';
-                                console.error(error);
-                            });
-                    },
-                    (error) => {
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                locationResult.textContent = "Bạn đã từ chối cấp quyền vị trí.";
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                locationResult.textContent = "Không thể lấy vị trí hiện tại.";
-                                break;
-                            case error.TIMEOUT:
-                                locationResult.textContent = "Hết thời gian lấy vị trí.";
-                                break;
-                            default:
-                                locationResult.textContent = `Lỗi lấy vị trí: ${error.message}`;
-                        }
-                        addressResult.textContent = '';
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            } else {
-                locationResult.textContent = "Trình duyệt không hỗ trợ Geolocation.";
-                addressResult.textContent = '';
-            }
-        });
-    </script>
-
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.6s ease forwards;
+        }
+        /* delays handled by utility classes delay-[100|200|...] in Tailwind */
+    </style>
 </x-app-layout>

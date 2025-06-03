@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeRequestController;
 use App\Http\Controllers\ProfileController;
@@ -22,16 +23,9 @@ Route::get('/', function () {
 });
 
 // chia luồng sau khi login success
-Route::get('/dashboard', function () {
-    $userRole = Auth::user()->role;
-
-    if ($userRole == 'manager') {
-        $employees = (new UserController())->show();
-        return view('dashboard_management', compact('employees'));
-    } else {
-        return view('employees.dashboard');
-    }
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'show'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 // Các route chung cho user đã đăng nhập
 Route::middleware(['auth'])->group(function () {
