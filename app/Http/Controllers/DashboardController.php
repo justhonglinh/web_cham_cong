@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
+use App\Models\OvertimeRequest;
+use App\Models\OvertimeShift;
+use App\Models\Shift;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -11,11 +16,30 @@ class DashboardController extends Controller
         $userRole = Auth::user()->role;
 
         if ($userRole == 'manager') {
-            // Giả sử UserController::show() trả về danh sách nhân viên,
-            // bạn nên gọi service hoặc model ở đây trực tiếp.
-            $employees = app(\App\Http\Controllers\UserController::class)->show();
+            $managerId = Auth::user()->id;
 
-            return view('dashboard_management', compact('employees'));
+            // Lấy danh sách nhân viên do quản lý này quản lý
+            $employeesCount = User::where('manager', $managerId)->count();
+
+            // Lấy số lượng ca làm việc của quản lý này
+            $shiftsCount = Shift::where('user_id', $managerId)->count();
+
+            // Lấy số lượng yêu cầu tăng ca của quản lý này
+            $overtimesCount = OvertimeShift::where('user_id', $managerId)->count();
+
+            // Lấy số lượng yêu cầu tăng ca có user thuộc quản lý này
+            $overtimeRequestsCount = OvertimeRequest::whereHas('user', function($query) use ($managerId) {
+                $query->where('manager', $managerId);
+            })->count();
+
+            $attendancesCount = Attendance::whereHas('user', function($query) use ($managerId) {
+                $query->where('manager', $managerId); // Lọc theo manager
+            })
+            ->where('status', 'present') // Lọc theo trạng thái 'present'
+            ->where('created_at', '=', now())
+            ->count(); // Đếm số lượng bản ghi
+
+            return view('dashboard_management', compact('employeesCount', 'shiftsCount', 'overtimesCount', 'overtimeRequestsCount','attendancesCount'));
         } else {
             return view('employees.dashboard');
         }
