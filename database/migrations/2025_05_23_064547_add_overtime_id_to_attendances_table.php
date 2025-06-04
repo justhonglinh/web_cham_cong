@@ -14,6 +14,9 @@ class AddOvertimeIdToAttendancesTable extends Migration
 
             // Thêm ràng buộc khóa ngoại
             $table->foreign('overtime_id')->references('id')->on('overtime_shifts')->onDelete('set null');
+
+            $table->string('face_image')->nullable()->after('overtime_id');
+
         });
     }
 

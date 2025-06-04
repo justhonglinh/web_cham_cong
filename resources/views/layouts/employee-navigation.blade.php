@@ -29,7 +29,7 @@
                         </x-nav-link>
 
                         {{-- Làm thêm giờ --}}
-                        <x-nav-link :href="route('overtime.index')" :active="request()->routeIs('overtime.*')">
+                        <x-nav-link :href="route('employees.overtime.index')" :active="request()->routeIs('*.overtime.*')">
                             {{ __('Overtime') }}
                         </x-nav-link>
 

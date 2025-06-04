@@ -19,7 +19,7 @@
                         </x-nav-link>
 
                         {{-- Nhân viên --}}
-                        <x-nav-link :href="route('employees.management')" :active="request()->routeIs('employees.*')">
+                        <x-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')">
                             {{ __('Nhân Viên') }}
                         </x-nav-link>
 

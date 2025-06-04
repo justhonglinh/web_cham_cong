@@ -71,7 +71,7 @@ class User extends Authenticatable
     // Manager có nhiều nhân viên
     public function employees(): HasMany
     {
-        return $this->hasMany(User::class, 'manager', 'name');
+        return $this->hasMany(User::class, 'manager');  // 'manager' là khóa ngoại trong bảng 'users' liên kết tới 'id' của người quản lý
     }
 
     public function details()
@@ -81,7 +81,7 @@ class User extends Authenticatable
 
     public function manager()
     {
-        return $this->belongsTo(User::class, 'manager');  // Assuming 'manager' is the foreign key in the 'users' table
+        return $this->belongsTo(User::class, 'manager');
     }
 
     /**

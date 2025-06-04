@@ -15,9 +15,12 @@ class UserController extends Controller
     {
         $managerId = Auth::user()->id;
 
-        return User::where('role', 'employee')
-            ->where('manager', $managerId)
+        $employees = User::where('role', 'employee')
+            ->where('manager', $managerId)  // Filter by manager
+            ->with('details')  // Eager load 'user_details'
             ->get();
+
+        return view('employees_management', compact('employees'));
     }
 
     public function store(Request $request)

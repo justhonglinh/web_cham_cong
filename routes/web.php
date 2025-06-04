@@ -36,13 +36,14 @@ Route::middleware(['auth'])->group(function () {
 
 // Các route chỉ dành cho manager
 Route::middleware(['auth', 'role:manager'])->group(function () {
-    // employees management page
-    Route::get('/employees/management', function () {
-        $employees = (new UserController())->show();
-        return view('employees_management', compact('employees'));
-    })->name('employees.management');
+//    // employees management page
+//    Route::get('/employees/management', function () {
+//        $employees = (new UserController())->show();
+//        return view('employees_management', compact('employees'));
+//    })->name('employees.management');
 
     // user CRUD routes
+    Route::get('/employees/management', [UserController::class, 'show'])->name('employees.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -80,6 +81,10 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/employees/attendance', function () {
         return view('employees.attendance');
     })->name('employees.attendance');
+
+    //overtime
+    Route::get('/overtime/employee', [OvertimeController::class, 'show'])->name('employees.overtime.index');
+
 });
 
 require __DIR__.'/auth.php';
