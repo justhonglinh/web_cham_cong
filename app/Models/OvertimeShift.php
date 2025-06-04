@@ -10,6 +10,7 @@ class OvertimeShift extends Model
     protected $table = 'overtime_shifts';
 
     protected $fillable = [
+        'user_id',
         'name',
         'date',
         'start_time',

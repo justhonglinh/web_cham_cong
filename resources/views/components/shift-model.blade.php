@@ -28,6 +28,8 @@
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
             </div>
 
+            <input type="hidden" name="user_id" value="{{ Auth::user()->id }}">
+
             <div class="flex justify-between items-center">
                 <button type="submit"
                         class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Xác Nhận

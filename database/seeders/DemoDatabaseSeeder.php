@@ -55,6 +55,7 @@ class DemoDatabaseSeeder extends Seeder
         $overtimeShifts = [];
         for ($i=1; $i<=5; $i++) {
             $overtimeShifts[] = DB::table('overtime_shifts')->insertGetId([
+                'user_id' => 1, // Giả sử user_id là 1 (có thể thay đổi theo nhu cầu)
                 'name' => "Overtime Shift $i",
                 'start_time' => $faker->time(),
                 'end_time' => $faker->time(),

@@ -42,6 +42,7 @@ class OvertimeController extends Controller
             'description' => 'nullable|string',
             'max_registrations' => 'required|integer|min:1',
             'date' => 'required|date',
+            'user_id' => 'required|exists:users,id',
         ]);
 
         OvertimeShift::create($request->all());

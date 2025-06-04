@@ -21,6 +21,7 @@ class User extends Authenticatable
         'role',        // Keep role as is
         'manager',  // Added id_manager
         'id_position', // Changed position to id_position to match DB
+        'user_id', // nếu bạn muốn mass assign user
     ];
 
     /**

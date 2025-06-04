@@ -23,6 +23,7 @@ class ShiftController extends Controller
             'name' => 'required|string|max:255',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
+            'user_id' => 'required|exists:users,id',
         ]);
 
         Shift::create($request->all());

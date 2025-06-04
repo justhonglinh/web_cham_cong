@@ -16,6 +16,7 @@ class Shift extends Model
         'name',
         'start_time',
         'end_time',
+        'user_id', // nếu bạn muốn mass assign user
     ];
 
     public function attendances(): HasMany
