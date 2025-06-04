@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('detailAvatar').src = user.avatar ? `/storage/${user.avatar}` : 'https://via.placeholder.com/80';
 
+            document.getElementById('detailPhone').textContent = user.details.phone || '';
+            document.getElementById('detailAddress').textContent = user.details.address || '';
+            document.getElementById('detailBirthday').textContent = user.details.birthday || '';
+            document.getElementById('detailEmergencyContact').textContent = user.details.emergency_contact || '';
+
             detailModal.classList.remove('hidden');
         });
     });

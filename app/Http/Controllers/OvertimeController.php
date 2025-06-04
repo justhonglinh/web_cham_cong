@@ -12,26 +12,34 @@ class OvertimeController extends Controller
 {
     public function show()
     {
-        $managerId = Auth::user()->id;
+        if(Auth::user()->role == 'manager'){
+            $managerId = Auth::user()->id;
+            $employeeIds = User::where('role', 'employee')
+                ->where('manager', $managerId)
+                ->pluck('id');
 
-        $employeeIds = User::where('role', 'employee')
-            ->where('manager', $managerId)
-            ->pluck('id');
+            if ($employeeIds->isEmpty()) {
+                $overtimeShifts = collect(); // hoặc có thể là paginate rỗng, tùy bạn xử lý view
+            } else {
+                $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
+                    $query->whereIn('user_id', $employeeIds)
+                        ->with('user')
+                        ->orderBy('created_at', 'asc');
+                }])->paginate(10);
+            }
+            return view('overtime_management', compact('overtimeShifts'));
 
-        if ($employeeIds->isEmpty()) {
-            // Nếu không có nhân viên dưới quyền, trả về dữ liệu trống
-            $overtimeShifts = collect(); // hoặc có thể là paginate rỗng, tùy bạn xử lý view
-        } else {
-            $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
-                $query->whereIn('user_id', $employeeIds)
-                    ->with('user')
-                    ->orderBy('created_at', 'asc');
-            }])->paginate(10);
+        }else{
+            $managerId = Auth::user()->manager;
+
+            $overtimeShifts = OvertimeShift::with('overtimeRequests')
+                ->whereColumn('current_registrations', '<', 'max_registrations')
+                ->where('user_id', $managerId)
+                ->get();
+
+            return view('employees.overtime', compact('overtimeShifts'));
         }
-
-        return view('overtime_management', compact('overtimeShifts'));
     }
-
 
     public function store(Request $request)
     {

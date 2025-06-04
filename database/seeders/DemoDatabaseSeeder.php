@@ -72,7 +72,7 @@ class DemoDatabaseSeeder extends Seeder
 
         // Tạo 15 users
         $users = [];
-        for ($i=1; $i<=15; $i++) {
+        for ($i=1; $i<=50; $i++) {
             $users[] = DB::table('users')->insertGetId([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),

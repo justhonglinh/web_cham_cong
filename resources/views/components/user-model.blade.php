@@ -102,7 +102,6 @@
         </form>
     </div>
 </div>
-
 <!-- Detail User Modal -->
 <div id="userDetailModal" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center hidden z-50 backdrop-blur-sm">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md relative">
@@ -121,15 +120,32 @@
             <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
                 <strong>Ngày tạo:</strong>
                 <span>
-            <span id="detailCreatedDate" class="ml-1 text-gray-800 dark:text-white italic"></span>
-        </span>
+                    <span id="detailCreatedDate" class="ml-1 text-gray-800 dark:text-white italic"></span>
+                </span>
                 <span>
-            <span class="text-gray-500">Giờ:</span>
-            <span id="detailCreatedTime" class="ml-1 text-gray-800 dark:text-white italic"></span>
-        </span>
+                    <span class="text-gray-500">Giờ:</span>
+                    <span id="detailCreatedTime" class="ml-1 text-gray-800 dark:text-white italic"></span>
+                </span>
+            </p>
+
+            <!-- Additional fields from user_details -->
+            <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
+                <strong>Số điện thoại:</strong>
+                <span id="detailPhone" class="ml-1 text-gray-800 dark:text-white italic"></span>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
+                <strong>Địa chỉ:</strong>
+                <span id="detailAddress" class="ml-1 text-gray-800 dark:text-white italic"></span>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
+                <strong>Ngày sinh:</strong>
+                <span id="detailBirthday" class="ml-1 text-gray-800 dark:text-white italic"></span>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-x-4 gap-y-1">
+                <strong>Liên hệ khẩn cấp:</strong>
+                <span id="detailEmergencyContact" class="ml-1 text-gray-800 dark:text-white italic"></span>
             </p>
         </div>
-
 
         <div class="mt-6 text-right">
             <button id="closeDetailModal"
@@ -139,5 +155,4 @@
         </div>
     </div>
 </div>
-
 

@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -10,8 +11,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -73,8 +72,16 @@ class User extends Authenticatable
     public function employees(): HasMany
     {
         return $this->hasMany(User::class, 'manager', 'name');
-        // 'manager' là tên cột trong bảng users lưu tên manager
-        // 'name' là khóa chính để đối chiếu
+    }
+
+    public function details()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id');
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager');  // Assuming 'manager' is the foreign key in the 'users' table
     }
 
     /**

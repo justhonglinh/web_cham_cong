@@ -45,13 +45,13 @@ class AttendanceController extends Controller
             ->whereIn('user_id', $employeeIds)
             ->whereNull('overtime_id') // Lọc những bản ghi không có overtime
             ->where('date', $today)
-            ->paginate(10);
+            ->get();
 
         $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
             ->where('date', $today)
-            ->paginate(10);
+            ->get();
 
         $shifts = Shift::all();
 
