@@ -19,7 +19,7 @@
                         </x-nav-link>
 
                         {{-- Chấm công --}}
-                        <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                        <x-nav-link :href="route('employees.attendance')" :active="request()->routeIs('attendance.*')">
                             {{ __('Attendance') }}
                         </x-nav-link>
 

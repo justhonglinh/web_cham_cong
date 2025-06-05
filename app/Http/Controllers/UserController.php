@@ -71,7 +71,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('employees.management')->with('success', 'Cập nhật tài khoản thành công!');
+        return redirect()->route('employees.index')->with('success', 'Cập nhật tài khoản thành công!');
     }
 
     public function destroy($id)
@@ -83,6 +83,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('employees.management')->with('success', 'Xóa user thành công!');
+        return redirect()->route('employees.index')->with('success', 'Xóa user thành công!');
     }
 }
