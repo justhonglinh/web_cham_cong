@@ -38,6 +38,18 @@ class DemoDatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        DB::table('users')->insertGetId([
+            'name' => "linh",
+            'email' => 'linh@gmail.com',
+            'email_verified_at' => now(),
+            'password' => bcrypt('linh@gmail.com'),
+            'role' => 'employee',
+            'manager' => '1',
+            'avatar' => $faker->imageUrl(100, 100),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         // Tạo 5 shifts
         $shifts = [];
         for ($i=1; $i<=5; $i++) {
@@ -86,18 +98,6 @@ class DemoDatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         };
-
-        DB::table('users')->insertGetId([
-            'name' => "linh",
-            'email' => 'linh@gmail.com',
-            'email_verified_at' => now(),
-            'password' => bcrypt('linh@gmail.com'),
-            'role' => 'employee',
-            'manager' => '1',
-            'avatar' => $faker->imageUrl(100, 100),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
         // Tạo dữ liệu chi tiết cho từng user
         foreach ($users as $userId) {
