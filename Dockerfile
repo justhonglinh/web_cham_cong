@@ -1,1 +1,28 @@
-FROM php:8.2-fpmRUN docker-php-ext-install pdo pdo_mysql# Install system dependenciesRUN apt-get update && apt-get install -y \    git \    curl \    libpng-dev \    libonig-dev \    libxml2-dev \    zip \    unzip# Install PHP extensionsRUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd# Install ComposerCOPY --from=composer:latest /usr/bin/composer /usr/bin/composer# Set working directoryWORKDIR /var/wwwCOPY . .RUN composer installCMD ["php-fpm"]
+# Sử dụng image PHP 8.0 với Apache
+FROM php:8.0-apache
+
+# Cài đặt các package cần thiết cho PHP và GD extension
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql zip
+
+# Cài đặt Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Sao chép mã nguồn vào thư mục web của Apache
+COPY . /var/www/html/
+
+# Cài đặt các dependencies PHP cho ứng dụng Laravel
+WORKDIR /var/www/html
+RUN composer install --no-interaction
+
+# Mở port 80
+EXPOSE 80
+
+# Chạy Apache trong background
+CMD ["apache2-foreground"]
