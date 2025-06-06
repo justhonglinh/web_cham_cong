@@ -1,1 +1,29 @@
-# Sử dụng image PHP với các tiện ích cần thiếtFROM php:8.2-fpm# Cài đặt các phần mềm và thư viện cần thiết cho LaravelRUN apt-get update && apt-get install -y \    libpng-dev \    libjpeg62-turbo-dev \    libfreetype6-dev \    zip \    git \    unzip \    libxml2-dev \    && docker-php-ext-configure gd --with-freetype --with-jpeg \    && docker-php-ext-install gd pdo pdo_mysql xml# Cài đặt ComposerRUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer# Cài đặt Node.js và NPM (cho Vite, Laravel Mix, v.v.)RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \    && apt-get install -y nodejs# Cài đặt npm dependenciesRUN npm install -g npm@latest# Tạo thư mục ứng dụng trong containerWORKDIR /var/www# Copy project vào containerCOPY . .# Cài đặt các dependencies của PHPRUN composer install --no-dev --optimize-autoloader# Cài đặt các dependencies của Node.js (cho Laravel Mix hoặc Vite)RUN npm install# Tạo file .env từ .env.example nếu chưa cóRUN cp .env.example .env# Tạo key cho ứng dụng LaravelRUN php artisan key:generate# Cấu hình Nginx (hoặc Apache) và copy cấu hình vào container# Expose portEXPOSE 9000# Khởi động PHP-FPMCMD ["php-fpm"]
+# Sử dụng image PHP 8.0 với Apache
+FROM php:8.0-apache
+
+# Cài đặt các package cần thiết cho PHP và GD extension
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql zip
+
+# Cài đặt Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Sao chép mã nguồn vào thư mục web của Apache
+COPY . /var/www/html/
+
+# Cài đặt các dependencies PHP cho ứng dụng Laravel
+WORKDIR /var/www/html
+RUN composer install --no-interaction
+
+# Mở port 80
+EXPOSE 80
+
+# Chạy Apache trong background
+CMD ["apache2-foreground"]
+
