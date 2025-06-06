@@ -186,7 +186,11 @@
     </div>
 
 
-    <script>
-        let table = new DataTable('#myTable');
-    </script>
+{{--    <script>--}}
+{{--        $(document).ready(function() {--}}
+{{--            $('#myTable').DataTable({--}}
+{{--                responsive: true--}}
+{{--            });--}}
+{{--        });--}}
+{{--    </script>--}}
 </x-app-layout>

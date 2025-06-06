@@ -26,3 +26,4 @@ EXPOSE 80
 
 # Chạy Apache trong background
 CMD ["apache2-foreground"]
+

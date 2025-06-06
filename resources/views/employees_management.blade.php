@@ -24,7 +24,7 @@
 
                     <!-- Responsive wrapper -->
                     <div class="overflow-x-auto">
-                        <table id="myTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
@@ -125,7 +125,12 @@
         </div>
     </div>
 
+
     <script>
-        let table = new DataTable('#myTable');
+        $(document).ready(function() {
+            $('#myTable').DataTable({
+                responsive: true
+            });
+        });
     </script>
 </x-app-layout>
