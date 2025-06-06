@@ -81,14 +81,17 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <div class="flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <!-- Nút Chi Tiết (Màu xanh nước biển) -->
-                                            <a href="javascript:void(0);"
-                                               data-user='@json($employee)'
-                                               class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200"
-                                               title="View Details" aria-label="View Details">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
-                                                </svg>
-                                            </a>
+                                            @if($employee->details !== null)
+                                                <a href="javascript:void(0);"
+                                                   data-user='@json($employee)'
+                                                   class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200"
+                                                   title="View Details" aria-label="View Details">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path>
+                                                    </svg>
+                                                </a>
+                                            @endif
+
 
                                             <!-- Nút Sửa (Màu vàng) -->
                                             <a href="javascript:void(0);"

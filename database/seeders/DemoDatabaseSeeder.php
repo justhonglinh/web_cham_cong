@@ -26,7 +26,8 @@ class DemoDatabaseSeeder extends Seeder
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        DB::table('users')->insertGetId([
+        // Tạo quản lý (manager)
+        $managerId = DB::table('users')->insertGetId([
             'name' => "manager",
             'email' => 'manager@gmail.com',
             'email_verified_at' => now(),
@@ -38,53 +39,52 @@ class DemoDatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        DB::table('users')->insertGetId([
+        // Tạo nhân viên (employee)
+        $employeeId = DB::table('users')->insertGetId([
             'name' => "linh",
             'email' => 'linh@gmail.com',
             'email_verified_at' => now(),
             'password' => bcrypt('linh@gmail.com'),
             'role' => 'employee',
-            'manager' => '1',
+            'manager' => $managerId,
             'avatar' => $faker->imageUrl(100, 100),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Tạo 5 shifts
+        // Tạo các ca làm việc (shifts)
         $shifts = [];
-        for ($i=1; $i<=5; $i++) {
+        for ($i = 1; $i <= 5; $i++) {
             $shifts[] = DB::table('shifts')->insertGetId([
                 'name' => "Shift $i",
                 'start_time' => $faker->time(),
                 'end_time' => $faker->time(),
                 'created_at' => now(),
                 'updated_at' => now(),
-                'user_id' => 1, // Giả sử user_id là 1 (có thể thay đổi theo nhu cầu)
+                'user_id' => $managerId, // Ca làm việc do manager tạo
             ]);
         }
 
-        // Tạo 5 overtime shifts
+        // Tạo các ca làm thêm giờ (overtime shifts)
         $overtimeShifts = [];
-        for ($i=1; $i<=5; $i++) {
+        for ($i = 1; $i <= 5; $i++) {
             $overtimeShifts[] = DB::table('overtime_shifts')->insertGetId([
-                'user_id' => 1, // Giả sử user_id là 1 (có thể thay đổi theo nhu cầu)
+                'user_id' => $managerId, // Overtime shift do manager tạo
                 'name' => "Overtime Shift $i",
                 'start_time' => $faker->time(),
                 'end_time' => $faker->time(),
                 'description' => $faker->sentence(),
-                'max_registrations' => 5,
+                'max_registrations' => rand(3, 10), // Số lượng tối đa có thể đăng ký
                 'current_registrations' => 0,
-                'date' => now(),
+                'date' => $faker->date(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-
-
-        // Tạo 15 users
+        // Tạo 10 người dùng
         $users = [];
-        for ($i=1; $i<=50; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             $users[] = DB::table('users')->insertGetId([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
@@ -92,12 +92,12 @@ class DemoDatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'remember_token' => Str::random(10),
                 'role' => 'employee',
-                'manager' => '1',
+                'manager' => $managerId, // Mọi người đều có manager là manager đã tạo
                 'avatar' => $faker->imageUrl(100, 100),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        };
+        }
 
         // Tạo dữ liệu chi tiết cho từng user
         foreach ($users as $userId) {
@@ -113,7 +113,7 @@ class DemoDatabaseSeeder extends Seeder
 
             DB::table('work_summary')->insert([
                 'user_id' => $userId,
-                'month' => rand(1,12),
+                'month' => rand(1, 12),
                 'year' => rand(2020, 2024),
                 'total_work_hours' => rand(120, 160),
                 'total_overtime_hours' => rand(0, 20),
@@ -123,44 +123,46 @@ class DemoDatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            // Tạo 5 attendances mỗi user
-            for ($j=1; $j<=5; $j++) {
+            // Tạo attendances cho mỗi user
+            for ($j = 1; $j <= 5; $j++) {
+                $shiftId = $shifts[array_rand($shifts)];
                 DB::table('attendances')->insert([
                     'user_id' => $userId,
                     'date' => $faker->date(),
-                    'shift_id' => $shifts[array_rand($shifts)],
+                    'shift_id' => $shiftId,
                     'overtime_id' => null,
-                    'check_in_time' => now(),
-                    'check_out_time' => now(),
+                    'check_in_time' => $faker->dateTimeThisMonth(),
+                    'check_out_time' => $faker->dateTimeThisMonth(),
                     'status' => 'present',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                $overtimeShiftId = $overtimeShifts[array_rand($overtimeShifts)];
                 DB::table('attendances')->insert([
                     'user_id' => $userId,
                     'date' => $faker->date(),
                     'shift_id' => null,
-                    'overtime_id' => $overtimeShifts[array_rand($overtimeShifts)],
-                    'check_in_time' => now(),
-                    'check_out_time' => now(),
+                    'overtime_id' => $overtimeShiftId,
+                    'check_in_time' => $faker->dateTimeThisMonth(),
+                    'check_out_time' => $faker->dateTimeThisMonth(),
                     'status' => 'present',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
 
-            // Tạo 2 overtime requests mỗi user
-            for ($k=1; $k<=2; $k++) {
+            // Tạo overtime requests cho mỗi user
+            for ($k = 1; $k <= 2; $k++) {
                 DB::table('overtime_requests')->insert([
                     'user_id' => $userId,
                     'overtime_shift_id' => $overtimeShifts[array_rand($overtimeShifts)],
                     'status' => 'pending',
                     'created_at' => now(),
-                    'approved_at' => now(),
+                    'approved_at' => null, // Request chưa được phê duyệt
                     'updated_at' => now(),
                 ]);
             }
         }
-
     }
 }

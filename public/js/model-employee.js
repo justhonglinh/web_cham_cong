@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     // === Các biến modal ===
     const userModal = document.getElementById('userModal');
@@ -68,6 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('detailAddress').textContent = user.details.address || '';
             document.getElementById('detailBirthday').textContent = user.details.birthday || '';
             document.getElementById('detailEmergencyContact').textContent = user.details.emergency_contact || '';
+
+            // Kiểm tra nếu không có shift và hiển thị thông báo
+            const shiftInfo = user.shifts && user.shifts.length > 0 ? user.shifts : null;
+
+            const shiftMessage = shiftInfo === null || shiftInfo.length === 0
+                ? "Không có thông tin chi tiết ca làm việc."
+                : `Ca làm việc: ${shiftInfo.map(shift => shift.name).join(', ')}`;
+
 
             detailModal.classList.remove('hidden');
         });

@@ -40,7 +40,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return Redirect::route('employees.index')->with('success', 'Tạo tài khoản thành công!');
+        return Redirect::route('employees.index')->with('success', 'Tạo người dùng thành công!');
     }
 
     public function update(Request $request, $id)
@@ -83,6 +83,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('employees.index')->with('success', 'Xóa user thành công!');
+        return redirect()->route('employees.index')->with('success', 'Xóa tài khoản thành công!');
     }
 }
