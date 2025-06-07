@@ -4,6 +4,7 @@
             Lịch sử chấm công
         </h2>
     </x-slot>
+
     <div class="py-8">
         <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
             <table class="min-w-full">
@@ -40,9 +41,18 @@
                     @endforeach
                 </tbody>
             </table>
+
+            <!-- Phân trang -->
             <div class="mt-4">
                 {{ $attendances->links() }}
             </div>
+        </div>
+
+        <!-- Nút quay lại Dashboard, nằm ngoài khung -->
+        <div class="max-w-4xl mx-auto mt-4 flex justify-end">
+            <a href="{{ route('dashboard') }}" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                Quay lại Dashboard
+            </a>
         </div>
     </div>
 </x-app-layout>
