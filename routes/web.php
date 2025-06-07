@@ -37,10 +37,10 @@ Route::middleware(['auth'])->group(function () {
 // Các route chỉ dành cho manager
 Route::middleware(['auth', 'role:manager'])->group(function () {
 //    // employees management page
-//    Route::get('/employees/management', function () {
-//        $employees = (new UserController())->show();
-//        return view('employees_management', compact('employees'));
-//    })->name('employees.management');
+   Route::get('/employees/management', function () {
+       $employees = (new UserController())->show();
+       return view('employees_management', compact('employees'));
+   })->name('employees.management');
 
     // user CRUD routes
     Route::get('/employees/management', [UserController::class, 'show'])->name('employees.index');
@@ -85,6 +85,8 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
     //overtime
     Route::get('/overtime/employee', [OvertimeController::class, 'show'])->name('employees.overtime.index');
 
+    //Lich su cham cong
+    Route::get('/employees/attendance/history', [AttendanceController::class, 'history'])->name('employees.attendance.history');
 });
 
 require __DIR__.'/auth.php';

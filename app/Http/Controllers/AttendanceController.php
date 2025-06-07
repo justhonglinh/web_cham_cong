@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Shift;
-use function PHPUnit\Framework\isEmpty;
 
 class AttendanceController extends Controller
 {
+    // Hiển thị danh sách chấm công cho manager
     public function show(Request $request)
     {
         $managerId = Auth::user()->id;
@@ -58,14 +58,24 @@ class AttendanceController extends Controller
         return view('attendance_management', compact('attendance_shifts','attendance_overtimes','shifts'));
     }
 
+    // Cập nhật ca làm cho attendance
     public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
         $attendance->shift_id = $request->shift_id;
-        // Lưu bản ghi
         $attendance->save();
 
         return redirect()->back()->with('success', 'Ca làm đã được cập nhật!');
     }
 
+    // Lịch sử chấm công cho nhân viên
+    public function history()
+    {
+        $user = Auth::user();
+        $attendances = Attendance::where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->paginate(10);
+
+        return view('employees.attendance-history', compact('attendances'));
+    }
 }
