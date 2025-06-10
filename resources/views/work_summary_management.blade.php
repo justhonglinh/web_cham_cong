@@ -3,6 +3,9 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Work Summary Management') }}
         </h2>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     </x-slot>
 
     <div class="py-6 max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -35,20 +38,38 @@
                 </div>
 
                 <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700">Ngày</label>
+                    <input type="text" name="date" id="datepicker" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Chọn ngày">
+                </div>
+
+                <div>
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700">
                         Tìm kiếm
                     </button>
                 </div>
             </form>
 
+            <!-- Thêm script Flatpickr -->
+            <script>
+                flatpickr("#datepicker", {
+                    dateFormat: "Y-m-d",  // Định dạng ngày theo kiểu YYYY-MM-DD
+                });
+            </script>
+
             <!-- Nút xuất Excel -->
             <div class="mt-4">
                 <form method="GET" action="{{ route('work.export') }}">
+                    <!-- Các input ẩn để gửi các tham số tìm kiếm -->
+                    <input type="hidden" name="user" value="{{ request('user') }}">
+                    <input type="hidden" name="month" value="{{ request('month') }}">
+                    <input type="hidden" name="year" value="{{ request('year') }}">
+
                     <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-white hover:bg-green-700">
                         Xuất file Excel
                     </button>
                 </form>
             </div>
+
 
 
             <!-- Bảng dữ liệu với text cứng -->

@@ -21,10 +21,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 shadow-lg sm:rounded-lg overflow-hidden">
                 <div class="p-6">
-
                     <!-- Responsive wrapper -->
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <table id="Table" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
@@ -124,13 +123,4 @@
             </div>
         </div>
     </div>
-
-
-    <script>
-        $(document).ready(function() {
-            $('#myTable').DataTable({
-                responsive: true
-            });
-        });
-    </script>
 </x-app-layout>

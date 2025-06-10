@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Exports;
 
 use App\Models\User;
@@ -11,6 +10,19 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class WorkSummaryExport implements FromCollection, WithHeadings, WithMapping
 {
+    protected $user;
+    protected $month;
+    protected $year;
+
+    // Constructor nhận các tham số tìm kiếm
+    public function __construct($request)
+    {
+        $this->user = $request->user;    // Nhân viên
+        $this->month = $request->month;  // Tháng
+        $this->year = $request->year;    // Năm
+    }
+
+    // Phương thức collection lọc dữ liệu
     public function collection()
     {
         $managerId = Auth::user()->id;
@@ -18,12 +30,32 @@ class WorkSummaryExport implements FromCollection, WithHeadings, WithMapping
         // Lấy danh sách user_id có manager là $managerId
         $userIds = User::where('manager', $managerId)->pluck('id');
 
-        // Lấy WorkSummary của các user này kèm theo thông tin user
-        return WorkSummary::with('user:id,name,email')
-            ->whereIn('user_id', $userIds)
-            ->get();
+        $query = WorkSummary::with('user:id,name,email')->whereIn('user_id', $userIds);
+
+        // Lọc theo nhân viên (nếu có)
+        if ($this->user) {
+            $query->where(function($q) {
+                $q->whereHas('user', function($query) {
+                    $query->where('name', 'like', '%' . $this->user . '%')
+                        ->orWhere('email', 'like', '%' . $this->user . '%'); // Tìm theo tên hoặc email
+                });
+            });
+        }
+
+        // Lọc theo tháng (nếu có)
+        if ($this->month) {
+            $query->where('month', $this->month);
+        }
+
+        // Lọc theo năm (nếu có)
+        if ($this->year) {
+            $query->where('year', $this->year);
+        }
+
+        return $query->get(); // Lấy dữ liệu đã lọc
     }
 
+    // Phương thức map để xuất dữ liệu vào Excel
     public function map($workSummary): array
     {
         return [
@@ -35,6 +67,7 @@ class WorkSummaryExport implements FromCollection, WithHeadings, WithMapping
         ];
     }
 
+    // Tiêu đề cột khi xuất Excel
     public function headings(): array
     {
         return [

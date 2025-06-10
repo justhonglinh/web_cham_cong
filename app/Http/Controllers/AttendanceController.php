@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Shift;
+use Illuminate\Support\Facades\Redirect;
 
 class AttendanceController extends Controller
 {
@@ -66,7 +67,7 @@ class AttendanceController extends Controller
         $attendance->shift_id = $request->shift_id;
         $attendance->save();
 
-        return redirect()->back()->with('success', 'Ca làm đã được cập nhật!');
+        return Redirect::route('attendance.index')->with('success', 'Ca làm đã được cập nhật!');
     }
 
     // Lịch sử chấm công cho nhân viên

@@ -23,6 +23,17 @@ class UserController extends Controller
         return view('employees_management', compact('employees'));
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->input('query'); // Nhận từ khóa tìm kiếm
+
+        // Thực hiện tìm kiếm trong database
+        $results = User::where('column_name', 'LIKE', '%' . $query . '%')->get();
+
+        // Trả kết quả về dạng JSON
+        return response()->json($results);
+    }
+
     public function store(Request $request)
     {
         $user = new User();

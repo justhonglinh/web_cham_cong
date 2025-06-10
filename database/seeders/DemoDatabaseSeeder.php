@@ -50,9 +50,9 @@ class DemoDatabaseSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Tạo 5 shifts
+        // Tạo 3 shifts
         $shifts = [];
-        for ($i=1; $i<=5; $i++) {
+        for ($i=1; $i<=3; $i++) {
             $shifts[] = DB::table('shifts')->insertGetId([
                 'name' => "Shift $i",
                 'start_time' => $faker->time(),
@@ -63,9 +63,9 @@ class DemoDatabaseSeeder extends Seeder
             ]);
         }
 
-        // Tạo 5 overtime shifts
+        // Tạo 3 overtime shifts
         $overtimeShifts = [];
-        for ($i=1; $i<=5; $i++) {
+        for ($i=1; $i<=3; $i++) {
             $overtimeShifts[] = DB::table('overtime_shifts')->insertGetId([
                 'user_id' => 1, // Giả sử user_id là 1 (có thể thay đổi theo nhu cầu)
                 'name' => "Overtime Shift $i",
@@ -80,11 +80,9 @@ class DemoDatabaseSeeder extends Seeder
             ]);
         }
 
-
-
-        // Tạo 15 users
+        // Tạo 25 users
         $users = [];
-        for ($i=1; $i<=50; $i++) {
+        for ($i=1; $i<=25; $i++) {
             $users[] = DB::table('users')->insertGetId([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
@@ -97,7 +95,7 @@ class DemoDatabaseSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        };
+        }
 
         // Tạo dữ liệu chi tiết cho từng user
         foreach ($users as $userId) {
@@ -113,8 +111,8 @@ class DemoDatabaseSeeder extends Seeder
 
             DB::table('work_summary')->insert([
                 'user_id' => $userId,
-                'month' => rand(1,12),
-                'year' => rand(2020, 2024),
+                'month' => 1,
+                'year' => 2025,
                 'total_work_hours' => rand(120, 160),
                 'total_overtime_hours' => rand(0, 20),
                 'total_leave_days' => rand(0, 5),
@@ -123,8 +121,8 @@ class DemoDatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            // Tạo 5 attendances mỗi user
-            for ($j=1; $j<=5; $j++) {
+            // Tạo 3 attendances mỗi user
+            for ($j=1; $j<=3; $j++) {
                 DB::table('attendances')->insert([
                     'user_id' => $userId,
                     'date' => $faker->date(),
@@ -149,18 +147,15 @@ class DemoDatabaseSeeder extends Seeder
                 ]);
             }
 
-            // Tạo 2 overtime requests mỗi user
-            for ($k=1; $k<=2; $k++) {
-                DB::table('overtime_requests')->insert([
-                    'user_id' => $userId,
-                    'overtime_shift_id' => $overtimeShifts[array_rand($overtimeShifts)],
-                    'status' => 'pending',
-                    'created_at' => now(),
-                    'approved_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            // Tạo 1 overtime request mỗi user
+            DB::table('overtime_requests')->insert([
+                'user_id' => $userId,
+                'overtime_shift_id' => $overtimeShifts[array_rand($overtimeShifts)],
+                'status' => 'pending',
+                'created_at' => now(),
+                'approved_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
-
     }
 }

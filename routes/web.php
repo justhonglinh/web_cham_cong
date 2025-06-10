@@ -47,6 +47,7 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
 
     // attendance
     Route::get('/attendance/management', [AttendanceController::class, 'show'])->name('attendance.index');

@@ -35,9 +35,10 @@ class WorkSummaryController extends Controller
     }
 
 
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new WorkSummaryExport, 'work_summary.xlsx');
+        // Truyền các tham số tìm kiếm vào class WorkSummaryExport
+        return Excel::download(new WorkSummaryExport($request), 'work_summary.xlsx');
     }
 
     public function search(Request $request)
@@ -74,13 +75,20 @@ class WorkSummaryController extends Controller
             $query->where('year', $year);
         }
 
+        // Lọc theo ngày
+        if ($request->filled('date')) {
+            $date = $request->input('date');
+            // Kiểm tra định dạng ngày và áp dụng bộ lọc
+            $query->whereDate('created_at', '=', $date); // Hoặc thay 'created_at' bằng cột ngày mà bạn sử dụng trong bảng WorkSummary
+        }
+
         $workSummaries = $query->get();
 
         $years = WorkSummary::select('year')
             ->distinct()
             ->orderBy('year', 'asc')
             ->pluck('year')
-            ->filter() // loại bỏ null nếu có
+            ->filter()
             ->toArray();
 
         return view('work_summary_management', compact('workSummaries', 'years'));
