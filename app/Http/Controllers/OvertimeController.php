@@ -19,13 +19,15 @@ class OvertimeController extends Controller
                 ->pluck('id');
 
             if ($employeeIds->isEmpty()) {
-                $overtimeShifts = collect(); // hoặc có thể là paginate rỗng, tùy bạn xử lý view
+                $overtimeShifts = collect();
             } else {
                 $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
                     $query->whereIn('user_id', $employeeIds)
                         ->with('user')
                         ->orderBy('created_at', 'asc');
-                }])->paginate(10);
+                }])
+                ->where('date', '>=', now()->toDateString())
+                ->paginate(10);
             }
             return view('overtime_management', compact('overtimeShifts'));
 
@@ -35,6 +37,7 @@ class OvertimeController extends Controller
             $overtimeShifts = OvertimeShift::with('overtimeRequests')
                 ->whereColumn('current_registrations', '<', 'max_registrations')
                 ->where('user_id', $managerId)
+                ->where('date', '>=', now()->toDateString())
                 ->get();
 
             return view('employees.overtime', compact('overtimeShifts'));

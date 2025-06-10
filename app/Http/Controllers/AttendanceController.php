@@ -36,6 +36,7 @@ class AttendanceController extends Controller
                     'check_in' => null,
                     'check_out' => null,
                     'status' => 'absent', // trạng thái mặc định
+                    'created_at' => now(),
                 ]);
             }
         }

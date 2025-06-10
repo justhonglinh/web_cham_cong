@@ -35,9 +35,10 @@ class DashboardController extends Controller
             $attendancesCount = Attendance::whereHas('user', function($query) use ($managerId) {
                 $query->where('manager', $managerId); // Lọc theo manager
             })
-            ->where('status', 'present') // Lọc theo trạng thái 'present'
-            ->where('created_at', '=', now())
+            ->where('status', 'present')
+            ->whereDate('created_at', now()->toDateString())
             ->count(); // Đếm số lượng bản ghi
+
 
             return view('dashboard_management', compact('employeesCount', 'shiftsCount', 'overtimesCount', 'overtimeRequestsCount','attendancesCount'));
         } else {

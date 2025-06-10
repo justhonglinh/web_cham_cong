@@ -65,7 +65,7 @@
 
                     <h4 class="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">Ca làm: {{ $shift->name }}</h4>
                     <p class="mb-1 text-sm"><strong>Mô tả:</strong> {{ $shift->description }}</p>
-                    <p class="mb-1 text-sm"><strong>Thời gian:</strong> {{ formatDateTime($shift->start_time) }} - {{ formatDateTime($shift->end_time) }}</p>
+                    <p class="mb-1 text-sm"><strong>Thời gian:</strong> {{ ($shift->start_time) }} - {{ ($shift->end_time) }}</p>
                     <p class="mb-3 text-sm"><strong>Số lượng tối đa:</strong> {{ $shift->max_registrations }}</p>
                     <p class="mb-3 text-sm"><strong>Nhóm gồm:</strong> {{ $shift->overtimeRequests->where('status', 'approved')->pluck('user.name')->unique()->implode(', ') }}</p>
 
