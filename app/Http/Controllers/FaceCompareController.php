@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Attendance;
 
 class FaceCompareController extends Controller
 {
@@ -54,6 +56,61 @@ class FaceCompareController extends Controller
         $confidence = $result['confidence'] ?? null;
         $avatarUrl = asset('storage/' . str_replace(storage_path('app/public/'), '', $avatarPath));
 
-        return view('employees.face-compare', compact('avatarUrl', 'capturedUrl', 'confidence'));
+        // Xử lý vị trí và khoảng cách
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+        $distance = $request->input('distance');
+
+        // Tọa độ công ty (thay bằng tọa độ thực tế)
+        $officeLat = 21.028511;
+        $officeLng = 105.804817;
+
+        // Nếu chưa có distance từ client thì tính lại (phòng trường hợp JS không gửi)
+        if ($latitude && $longitude && !$distance) {
+            $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
+        }
+
+        // Lấy giờ bắt đầu ca làm (ví dụ, thực tế nên lấy từ DB)
+        $shiftStart = '08:00:00';
+        $now = now();
+
+        // Xác định status đúng với enum trong migration
+        if ($confidence === null || $confidence < 70 || ($distance !== null && $distance > 200)) {
+            $status = 'absent';
+        } elseif ($now->format('H:i:s') > $shiftStart) {
+            $status = 'late';
+        } else {
+            $status = 'present';
+        }
+
+        // Lưu vào DB (nếu có model Attendance)
+        if (Auth::check()) {
+            Attendance::create([
+                'user_id' => Auth::id(),
+                'date' => $now->toDateString(),
+                'check_in_time' => $now, // đúng tên cột migration
+                'status' => $status,
+                // Nếu muốn lưu thêm vị trí, khoảng cách thì thêm cột vào migration
+                // 'latitude' => $latitude,
+                // 'longitude' => $longitude,
+                // 'distance' => $distance,
+            ]);
+        }
+
+        return view('employees.face-compare', compact('avatarUrl', 'capturedUrl', 'confidence', 'status', 'distance'));
+    }
+
+    // Hàm tính khoảng cách Haversine (km)
+    private function haversine($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) * sin($dLat/2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+        $distance = $earthRadius * $c;
+        return $distance;
     }
 }
