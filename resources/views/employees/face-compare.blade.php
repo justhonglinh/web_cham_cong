@@ -120,17 +120,31 @@
         </div>
     </div>
     <div class="result-box">
-        <div class="result-title">Kết quả:</div>
-        @if(isset($confidence))
-            @if($confidence >= 70)
-                <div class="score"><span class="score-icon">✅</span>Chấm công thành công!</div>
-            @else
-                <div class="score fail"><span class="score-icon">❌</span>Chấm công thất bại!</div>
-            @endif
+    <div class="result-title">Kết quả:</div>
+    @if(isset($status))
+        @if($status == 'present')
+            <div class="score"><span class="score-icon">✅</span>Chấm công thành công!</div>
+        @elseif($status == 'late')
+            <div class="score" style="color:#f59e42"><span class="score-icon">⏰</span>Đi muộn!</div>
+        @elseif($status == 'absent')
+            <div class="score fail"><span class="score-icon">❌</span>Chấm công thất bại (vắng mặt)!</div>
+        @elseif($status == 'leave')
+            <div class="score" style="color:#3b82f6"><span class="score-icon">🏖️</span>Nghỉ phép!</div>
+        @elseif($status == 'early_leave')
+            <div class="score" style="color:#ec4899"><span class="score-icon">🏃‍♂️</span>Về sớm!</div>
         @else
-            <div class="score fail"><span class="score-icon">⚠️</span>Không nhận diện được khuôn mặt!</div>
+            <div class="score fail"><span class="score-icon">⚠️</span>Không xác định trạng thái!</div>
         @endif
-    </div>
+        @if(isset($confidence))
+            <div style="font-size:1.1rem;color:#6366f1;font-weight:600;">Điểm nhận diện: {{ number_format($confidence, 2) }}</div>
+        @endif
+        @if(isset($distance))
+            <div style="font-size:1.1rem;color:#6366f1;font-weight:600;">Khoảng cách tới công ty: {{ number_format($distance, 0) }} mét</div>
+        @endif
+    @else
+        <div class="score fail"><span class="score-icon">⚠️</span>Không nhận diện được khuôn mặt!</div>
+    @endif
+</div>
     <a href="{{ route('dashboard') }}" class="btn-back">Quay lại Dashboard</a>
 </div>
 </body>

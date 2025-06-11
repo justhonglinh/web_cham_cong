@@ -100,12 +100,23 @@
             padding: 0.7em 1em;
             box-shadow: 0 1px 4px #f472b655;
         }
+        .location-status {
+            font-size: 0.98rem;
+            color: #6366f1;
+            margin-bottom: 0.7em;
+            font-weight: 600;
+        }
+        .location-error {
+            color: #e11d48;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="step-label">Đưa khuôn mặt vào khung camera</div>
     <h2>Chấm công bằng khuôn mặt</h2>
+    <div id="locationStatus" class="location-status"></div>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
     <div id="preview"></div>
@@ -114,10 +125,14 @@
         @csrf
         <input type="hidden" name="image1" id="image1">
         <input type="hidden" name="avatar_path" id="avatar_path" value="{{ Auth::user()->avatar ? storage_path('app/public/' . Auth::user()->avatar) : '' }}">
+        <input type="hidden" name="latitude" id="latitude">
+        <input type="hidden" name="longitude" id="longitude">
+        <input type="hidden" name="distance" id="distance">
         <button type="submit" id="submitBtn">🚀 Gửi chấm công</button>
     </form>
     <div class="note">
-        <b>Lưu ý:</b> Đảm bảo khuôn mặt rõ nét, không bị ngược sáng hoặc che khuất để tăng độ chính xác nhận diện.
+        <b>Lưu ý:</b> Đảm bảo khuôn mặt rõ nét, không bị ngược sáng hoặc che khuất để tăng độ chính xác nhận diện.<br>
+        Hệ thống sẽ kiểm tra vị trí của bạn khi chấm công.
     </div>
 </div>
 <script>
@@ -127,6 +142,49 @@
     const preview = document.getElementById('preview');
     const attendanceForm = document.getElementById('attendanceForm');
     const image1Input = document.getElementById('image1');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const distanceInput = document.getElementById('distance');
+    const locationStatus = document.getElementById('locationStatus');
+
+    // Tọa độ công ty (ví dụ)
+    const officeLat = 21.028511; // Thay bằng lat thật
+    const officeLng = 105.804817; // Thay bằng lng thật
+
+    // Hàm tính khoảng cách Haversine (đơn vị mét)
+    function haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // mét
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return Math.round(R * c);
+    }
+
+    // Lấy vị trí hiện tại
+    function getLocation() {
+        if (navigator.geolocation) {
+            locationStatus.textContent = "Đang xác định vị trí...";
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                latitudeInput.value = lat;
+                longitudeInput.value = lng;
+                const dist = haversine(lat, lng, officeLat, officeLng);
+                distanceInput.value = dist;
+                locationStatus.innerHTML = `Vị trí hiện tại: <span style="color:#22c55e">${lat.toFixed(5)}, ${lng.toFixed(5)}</span><br>Khoảng cách tới công ty: <b style="color:#4f46e5">${dist}m</b>`;
+            }, function() {
+                locationStatus.innerHTML = '<span class="location-error">Không lấy được vị trí, vui lòng bật GPS!</span>';
+            });
+        } else {
+            locationStatus.innerHTML = '<span class="location-error">Trình duyệt không hỗ trợ lấy vị trí!</span>';
+        }
+    }
+    getLocation();
 
     navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => { video.srcObject = stream; })
