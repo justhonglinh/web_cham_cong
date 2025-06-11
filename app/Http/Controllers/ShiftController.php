@@ -43,7 +43,6 @@ class ShiftController extends Controller
     {
         $shift = Shift::findOrFail($id);
         $shift->delete();
-
         return redirect()->route('shifts.index')->with('success', 'Xóa ca làm thành công.');
     }
 
