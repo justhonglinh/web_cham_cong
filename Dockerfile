@@ -1,7 +1,7 @@
 # Sử dụng image PHP 8.2 với Apache
 FROM php:8.2-fpm
 
-# Cài đặt các package cần thiết cho PHP và GD extension
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -22,19 +22,28 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Sao chép mã nguồn vào thư mục web của Apache
-COPY . /var/www/html/
+# Set working directory
+WORKDIR /var/www
 
-# Cài đặt các dependencies PHP cho ứng dụng Laravel
-WORKDIR /var/www/html
+# Copy existing application directory
+COPY . .
+
+# Create storage directory if it doesn't exist
+RUN mkdir -p /var/www/storage/framework/{sessions,views,cache} \
+    && mkdir -p /var/www/bootstrap/cache
+
+# Set permissions
+RUN chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/storage \
+    && chown -R www-data:www-data /var/www/bootstrap/cache
+
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 RUN npm run build
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-
-# Mở port 9000
+# Expose port 9000
 EXPOSE 9000
 
 CMD ["php-fpm"]
