@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
+        <x-attendance-modal />
         <div class="flex flex-col gap-4 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -40,70 +41,80 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nhân viên</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ngày</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ca làm</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ vào</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ ra</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Trạng thái</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Thay đổi ca</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Chi tiết</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Sửa</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nhân viên</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ngày</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ca làm</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giờ vào</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giờ ra</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                             @foreach($attendance_shifts as $att)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $att->user->name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->shift->name }} </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_in_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_out_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $att->status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                               ($att->status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
-                                            {{ $att->status === 'present' ? 'Đã chấm công' : 
-                                               ($att->status === 'absent' ? 'Vắng mặt' : 'Đi muộn') }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        <form method="POST" action="{{ route('attendance.update', $att->id) }}" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <select name="shift_id" onchange="this.form.submit()" 
-                                                class="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                                <option value="">— Không có ca —</option>
-                                                @foreach($shifts as $shift)
-                                                    <option value="{{ $shift->id }}" {{ $att->shift_id == $shift->id ? 'selected' : '' }}>
-                                                        {{ $shift->name }} ({{ $shift->start_time }} - {{ $shift->end_time }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </form>
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full" src="{{ $att->user->avatar ? asset('storage/' . $att->user->avatar) : 'https://via.placeholder.com/40' }}" alt="">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $att->user->name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $att->user->email }}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $att->status }}
+                                        {{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onclick="openAttendanceModal({{ json_encode($att) }})" 
-                                                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
-                                            Chi tiết
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->shift ? $att->shift->name : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('H:i') : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('H:i') : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $statusClasses = [
+                                                'present' => 'text-green-600 dark:text-green-400',
+                                                'absent' => 'text-red-600 dark:text-red-400',
+                                                'leave' => 'text-yellow-600 dark:text-yellow-400',
+                                                'late' => 'text-orange-600 dark:text-orange-400',
+                                                'early_leave' => 'text-orange-600 dark:text-orange-400'
+                                            ];
+                                            $statusTexts = [
+                                                'present' => 'Đã chấm công',
+                                                'absent' => 'Vắng mặt',
+                                                'leave' => 'Nghỉ phép',
+                                                'late' => 'Đi muộn',
+                                                'early_leave' => 'Về sớm'
+                                            ];
+                                        @endphp
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$att->status] ?? 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $statusTexts[$att->status] ?? '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-full transition duration-200" 
+                                            title="Chi tiết"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
                                         </button>
-                                        <button onclick="openAttendanceModal({{ json_encode($att) }})" 
-                                                class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
-                                            Sửa
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-white rounded-full transition duration-200" 
+                                            title="Sửa"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
                                         </button>
                                     </td>
                                 </tr>
@@ -187,8 +198,13 @@
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             {{ $att->status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
                                                ($att->status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
-                                            {{ $att->status ? ucfirst($att->status) : '—' }}
+                                               ($att->status === 'leave' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200')) }}">
+                                            {{ $att->status === 'present' ? 'Đã chấm công' : 
+                                               ($att->status === 'absent' ? 'Vắng mặt' : 
+                                               ($att->status === 'leave' ? 'Nghỉ phép' :
+                                               ($att->status === 'late' ? 'Đi muộn' : 
+                                               ($att->status === 'early_leave' ? 'Về sớm' : '—')))) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -249,6 +265,7 @@
         'shifts' => $shifts
     ])
 
+    <script src="{{ asset('js/model-attendance.js') }}"></script>
     <script>
     // Tìm kiếm nhân viên
     document.getElementById('search').addEventListener('input', function() {

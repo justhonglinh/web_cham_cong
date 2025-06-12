@@ -8,7 +8,7 @@ use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Redirect;
-use App\Models\AttendanceOvertime;
+use App\Models\OvertimeShift;
 
 class AttendanceController extends Controller
 {
@@ -149,5 +149,13 @@ class AttendanceController extends Controller
         $users = User::all();
 
         return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'users'));
+    }
+
+    public function edit(Request $request, $id)
+    {
+        $attendance = Attendance::findOrFail($id);
+        $attendance->update($request->all());
+
+        return redirect()->route('attendance.index')->with('success', 'Cập nhật thông tin chấm công thành công');
     }
 }
