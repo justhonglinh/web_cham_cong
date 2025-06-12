@@ -16,8 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id'); // FK tới users
             $table->date('date'); // ngày chấm công
             $table->unsignedBigInteger('shift_id')->nullable(); // FK tới shifts
-            $table->dateTime('check_in_time')->nullable(); // giờ vào
-            $table->dateTime('check_out_time')->nullable(); // giờ ra
+            $table->time('check_in_time')->nullable(); // giờ vào
+            $table->time('check_out_time')->nullable(); // giờ ra
             $table->enum('status', ['present', 'leave', 'absent', 'late', 'early_leave'])->nullable(); // KHÔNG dùng ->change()
             $table->timestamps(); // created_at, updated_at
 
