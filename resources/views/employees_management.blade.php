@@ -46,16 +46,74 @@
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Hành Động</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700" id="employee-table-body"></tbody>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($employees as $employee)
+                                    <tr>
+                                        <td class='px-6 py-4 whitespace-nowrap'>
+                                            @if($employee->avatar)
+                                                <img src="/storage/{{ $employee->avatar }}" alt="Avatar" class="w-12 h-12 rounded-full object-cover">
+                                            @else
+                                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center"><span class="text-gray-500 text-sm">N/A</span></div>
+                                            @endif
+                                        </td>
+                                        <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>{{ $employee->name }}</td>
+                                        <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-600'>{{ $employee->email }}</td>
+                                        <td class='px-6 py-4 whitespace-nowrap text-center text-sm font-medium'>
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button data-user='${JSON.stringify(employee)}' class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200" title="Chi tiết" ${!employee.details ? 'disabled style=\"opacity:0.5;cursor:not-allowed;\"' : ''}>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
+                                                </button>
+                                                <a href="javascript:void(0);" data-user='${JSON.stringify(employee)}' class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400 transition duration-200" title="Sửa">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
+                                                </a>
+                                                <form action="/users/${employee.id}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn xóa không?');">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                    <input type="hidden" name="_method" value="DELETE">
+                                                    <button type="submit" class="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition duration-200" title="Xóa">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4a2 2 0 0 1 4 0v2h-4zM5 6l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12H5z"></path></svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
                         </table>
                     </div>
                     <!-- Phân trang và info -->
                     <div class="flex items-center justify-between mt-4">
-                        <div id="table-info" class="text-sm text-gray-600"></div>
-                        <div class="flex items-center gap-4">
-                            <span id="page-info" class="text-sm text-gray-500"></span>
-                            <button class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600" id="prevPage" onclick="changePage('prev')">Trước</button>
-                            <button class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600" id="nextPage" onclick="changePage('next')">Tiếp</button>
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            Hiển thị {{ $employees->firstItem() ?? 0 }} đến {{ $employees->lastItem() ?? 0 }} của {{ $employees->total() }} kết quả
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            @if($employees->hasPages())
+                                <div class="flex items-center space-x-2">
+                                    @if($employees->onFirstPage())
+                                        <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed">
+                                            Trước
+                                        </button>
+                                    @else
+                                        <a href="{{ $employees->previousPageUrl() }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                            Trước
+                                        </a>
+                                    @endif
+                                    @foreach($employees->getUrlRange(1, $employees->lastPage()) as $page => $url)
+                                        <a href="{{ $url }}" 
+                                           class="px-3 py-1 rounded-md {{ $page == $employees->currentPage() ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            {{ $page }}
+                                        </a>
+                                    @endforeach
+                                    @if($employees->hasMorePages())
+                                        <a href="{{ $employees->nextPageUrl() }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                            Tiếp
+                                        </a>
+                                    @else
+                                        <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed">
+                                            Tiếp
+                                        </button>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -74,7 +132,6 @@
                 button.onclick = function(e) {
                     e.preventDefault();
                     const user = JSON.parse(this.getAttribute('data-user'));
-                    // Gán dữ liệu vào modal chi tiết
                     document.getElementById('detailName').textContent = user.name || '';
                     document.getElementById('detailEmail').textContent = user.email || '';
                     if (user.created_at) {
@@ -82,15 +139,47 @@
                         const timePart = timeWithZone ? timeWithZone.split('.')[0] : '';
                         document.getElementById('detailCreatedDate').textContent = datePart || '';
                         document.getElementById('detailCreatedTime').textContent = timePart || '';
+                        document.getElementById('rowCreatedDate').style.display = '';
+                        document.getElementById('rowCreatedTime').style.display = '';
                     } else {
                         document.getElementById('detailCreatedDate').textContent = '';
                         document.getElementById('detailCreatedTime').textContent = '';
+                        document.getElementById('rowCreatedDate').style.display = 'none';
+                        document.getElementById('rowCreatedTime').style.display = 'none';
                     }
                     document.getElementById('detailAvatar').src = user.avatar ? `/storage/${user.avatar}` : 'https://via.placeholder.com/80';
-                    document.getElementById('detailPhone').textContent = user.details && user.details.phone ? user.details.phone : '';
-                    document.getElementById('detailAddress').textContent = user.details && user.details.address ? user.details.address : '';
-                    document.getElementById('detailBirthday').textContent = user.details && user.details.birthday ? user.details.birthday : '';
-                    document.getElementById('detailEmergencyContact').textContent = user.details && user.details.emergency_contact ? user.details.emergency_contact : '';
+                    // Phone
+                    if (user.details && user.details.phone) {
+                        document.getElementById('detailPhone').textContent = user.details.phone;
+                        document.getElementById('rowPhone').style.display = '';
+                    } else {
+                        document.getElementById('detailPhone').textContent = '';
+                        document.getElementById('rowPhone').style.display = 'none';
+                    }
+                    // Address
+                    if (user.details && user.details.address) {
+                        document.getElementById('detailAddress').textContent = user.details.address;
+                        document.getElementById('rowAddress').style.display = '';
+                    } else {
+                        document.getElementById('detailAddress').textContent = '';
+                        document.getElementById('rowAddress').style.display = 'none';
+                    }
+                    // Birthday
+                    if (user.details && user.details.birthday) {
+                        document.getElementById('detailBirthday').textContent = user.details.birthday;
+                        document.getElementById('rowBirthday').style.display = '';
+                    } else {
+                        document.getElementById('detailBirthday').textContent = '';
+                        document.getElementById('rowBirthday').style.display = 'none';
+                    }
+                    // Emergency Contact
+                    if (user.details && user.details.emergency_contact) {
+                        document.getElementById('detailEmergencyContact').textContent = user.details.emergency_contact;
+                        document.getElementById('rowEmergencyContact').style.display = '';
+                    } else {
+                        document.getElementById('detailEmergencyContact').textContent = '';
+                        document.getElementById('rowEmergencyContact').style.display = 'none';
+                    }
                     document.getElementById('userDetailModal').classList.remove('hidden');
                 };
             });
@@ -137,9 +226,9 @@
                     <td class='px-6 py-4 whitespace-nowrap text-sm text-gray-600'>${employee.email}</td>
                     <td class='px-6 py-4 whitespace-nowrap text-center text-sm font-medium'>
                         <div class="flex items-center justify-center space-x-2">
-                            <a href="javascript:void(0);" data-user='${JSON.stringify(employee)}' class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200" title="Chi tiết">
+                            <button data-user='${JSON.stringify(employee)}' class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 text-white rounded-full hover:bg-teal-400 transition duration-200" title="Chi tiết" ${!employee.details ? 'disabled style=\"opacity:0.5;cursor:not-allowed;\"' : ''}>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
-                            </a>
+                            </button>
                             <a href="javascript:void(0);" data-user='${JSON.stringify(employee)}' class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-400 transition duration-200" title="Sửa">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
                             </a>
