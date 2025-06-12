@@ -125,7 +125,7 @@ class DemoDatabaseSeeder extends Seeder
             for ($j=1; $j<=3; $j++) {
                 DB::table('attendances')->insert([
                     'user_id' => $userId,
-                    'date' => $faker->date(),
+                    'date' => now(),
                     'shift_id' => $shifts[array_rand($shifts)],
                     'overtime_id' => null,
                     'check_in_time' => now(),

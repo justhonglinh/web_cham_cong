@@ -1,16 +1,19 @@
 services:
   - type: web
-    name: laravel-web
-    env: php                     # **bắt buộc** chọn PHP, không phải Docker
+    name: web-cham-cong
+    runtime: php
     plan: free
     branch: main
-    buildCommand:               # build Laravel
+    buildCommand: |
       composer install --no-dev --optimize-autoloader
-      npm install && npm run production
+      npm install && npm run build
       php artisan migrate --force
       php artisan storage:link
-    startCommand:               # server sẽ nghe đúng port do Render cấp
-      php artisan serve --host=0.0.0.0 --port=$PORT
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan optimize
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
         value: production
@@ -18,10 +21,26 @@ services:
         value: "false"
       - key: APP_KEY
         fromSecret: LARAVEL_APP_KEY
+      - key: APP_URL
+        value: https://web-cham-cong.onrender.com
       - key: DATABASE_URL
         fromDatabase: laravel-db
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: DB_CONNECTION
+        value: pgsql
+    healthCheckPath: /
+    autoDeploy: true
+
 databases:
   - name: laravel-db
-    engine: postgresql
-    version: "13"
-    plan: free
+    databaseName: web_cham_cong
+    user: web_cham_cong_user
