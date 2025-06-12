@@ -17,23 +17,7 @@ class UserController extends Controller
         $employees = User::where('role', 'employee')
             ->where('manager', $managerId)
             ->with(['manager', 'details'])
-            ->get()
-            ->map(function($e) {
-                return [
-                    'id' => $e->id,
-                    'name' => $e->name,
-                    'email' => $e->email,
-                    'avatar' => $e->avatar,
-                    'manager' => $e->manager,
-                    'created_at' => $e->created_at ? $e->created_at->toIso8601String() : '',
-                    'details' => $e->details ? [
-                        'phone' => $e->details->phone,
-                        'address' => $e->details->address,
-                        'birthday' => $e->details->birthday,
-                        'emergency_contact' => $e->details->emergency_contact,
-                    ] : ['phone'=>'','address'=>'','birthday'=>'','emergency_contact'=>''],
-                ];
-            })->values();
+            ->paginate(10); // Sử dụng phân trang Eloquent
 
         return view('employees_management', ['employees' => $employees]);
     }
