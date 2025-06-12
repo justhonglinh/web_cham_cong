@@ -14,6 +14,8 @@ class WorkSummaryController extends Controller
     public function show()
     {
         $managerId = Auth::user()->id;
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
 
         // Lấy danh sách năm từ bảng work_summary
         $years = WorkSummary::select('year')
@@ -29,6 +31,8 @@ class WorkSummaryController extends Controller
         // Lấy work summaries của các user có trong $userIds, đồng thời lấy thông tin user liên quan
         $workSummaries = WorkSummary::with('user:id,name,email')
             ->whereIn('user_id', $userIds)
+            ->where('month', $currentMonth)
+            ->where('year', $currentYear)
             ->get();
 
         return view('work_summary_management', compact('workSummaries', 'years'));
@@ -37,8 +41,12 @@ class WorkSummaryController extends Controller
 
     public function export(Request $request)
     {
+        $month = $request->month ?? now()->month;
+        $year = $request->year ?? now()->year;
+        $fileName = 'Bang_Cong_Thang_' . $month . '_Nam_' . $year . '.xlsx';
+
         // Truyền các tham số tìm kiếm vào class WorkSummaryExport
-        return Excel::download(new WorkSummaryExport($request), 'work_summary.xlsx');
+        return Excel::download(new WorkSummaryExport($request), $fileName);
     }
 
     public function search(Request $request)

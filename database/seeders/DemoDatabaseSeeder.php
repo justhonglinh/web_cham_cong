@@ -111,7 +111,7 @@ class DemoDatabaseSeeder extends Seeder
 
             DB::table('work_summary')->insert([
                 'user_id' => $userId,
-                'month' => 1,
+                'month' => rand(1,12),
                 'year' => 2025,
                 'total_work_hours' => rand(120, 160),
                 'total_overtime_hours' => rand(0, 20),
@@ -136,7 +136,7 @@ class DemoDatabaseSeeder extends Seeder
                 ]);
                 DB::table('attendances')->insert([
                     'user_id' => $userId,
-                    'date' => $faker->date(),
+                    'date' => now(),
                     'shift_id' => null,
                     'overtime_id' => $overtimeShifts[array_rand($overtimeShifts)],
                     'check_in_time' => now(),
