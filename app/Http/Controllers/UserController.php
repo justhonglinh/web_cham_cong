@@ -14,28 +14,13 @@ class UserController extends Controller
     public function show()
     {
         $managerId = Auth::user()->id;
-        $employees = User::where('role', 'employee')
-            ->where('manager', $managerId)
-            ->with(['manager', 'details'])
-            ->get()
-            ->map(function($e) {
-                return [
-                    'id' => $e->id,
-                    'name' => $e->name,
-                    'email' => $e->email,
-                    'avatar' => $e->avatar,
-                    'manager' => $e->manager,
-                    'created_at' => $e->created_at ? $e->created_at->toIso8601String() : '',
-                    'details' => $e->details ? [
-                        'phone' => $e->details->phone,
-                        'address' => $e->details->address,
-                        'birthday' => $e->details->birthday,
-                        'emergency_contact' => $e->details->emergency_contact,
-                    ] : ['phone'=>'','address'=>'','birthday'=>'','emergency_contact'=>''],
-                ];
-            })->values();
 
-        return view('employees_management', ['employees' => $employees]);
+        $employees = User::where('role', 'employee')
+            ->where('manager', $managerId)  // Filter by manager
+            ->with('details')  // Eager load 'user_details'
+            ->get();
+
+        return view('employees_management', compact('employees'));
     }
 
     public function search(Request $request)
@@ -109,6 +94,6 @@ class UserController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('employees.index')->with('success', 'Xóa tài khoản thành công!');
+        return redirect()->route('employees.index')->with('success', 'Xóa user thành công!');
     }
 }

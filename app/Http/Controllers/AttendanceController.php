@@ -8,7 +8,6 @@ use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Redirect;
-use App\Models\AttendanceOvertime;
 
 class AttendanceController extends Controller
 {
@@ -19,11 +18,9 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
 
         // Lấy danh sách nhân viên dưới quyền manager
-        $users = User::where('role', 'employee')
+        $employeeIds = User::where('role', 'employee')
             ->where('manager', $managerId)
-            ->get();
-
-        $employeeIds = $users->pluck('id');
+            ->pluck('id');
 
         foreach ($employeeIds as $employeeId) {
             // Kiểm tra Attendance ngày hôm nay của từng nhân viên
@@ -50,19 +47,17 @@ class AttendanceController extends Controller
             ->whereIn('user_id', $employeeIds)
             ->whereNull('overtime_id') // Lọc những bản ghi không có overtime
             ->where('date', $today)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
         $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
             ->where('date', $today)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
         $shifts = Shift::all();
 
-        return view('attendance_management', compact('attendance_shifts', 'attendance_overtimes', 'shifts', 'users'));
+        return view('attendance_management', compact('attendance_shifts','attendance_overtimes','shifts'));
     }
 
     // Cập nhật ca làm cho attendance
@@ -84,70 +79,5 @@ class AttendanceController extends Controller
             ->paginate(10);
 
         return view('employees.attendance-history', compact('attendances'));
-    }
-
-    public function index(Request $request)
-    {
-        $query = Attendance::with(['user', 'shift'])
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc');
-
-        $overtimeQuery = AttendanceOvertime::with(['user', 'shift'])
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc');
-
-        // Xử lý tìm kiếm cho bảng ca làm việc
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('user', function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        // Xử lý tìm kiếm cho bảng tăng ca
-        if ($request->filled('search_overtime')) {
-            $search = $request->search_overtime;
-            $overtimeQuery->where(function($q) use ($search) {
-                $q->whereHas('user', function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        // Lọc theo ngày
-        if ($request->filled('date')) {
-            $query->whereDate('date', $request->date);
-            $overtimeQuery->whereDate('date', $request->date);
-        }
-
-        // Lọc theo ca làm việc
-        if ($request->filled('shift_id')) {
-            $query->where('shift_id', $request->shift_id);
-            $overtimeQuery->where('shift_id', $request->shift_id);
-        }
-
-        // Lọc theo trạng thái
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-            $overtimeQuery->where('status', $request->status);
-        }
-
-        $attendance = $query->paginate(10);
-        $attendance_overtimes = $overtimeQuery->paginate(10);
-
-        // Thêm tham số table vào URL phân trang
-        if ($request->filled('table')) {
-            $attendance->appends(['table' => $request->table]);
-            $attendance_overtimes->appends(['table' => $request->table]);
-        }
-
-        $shifts = Shift::all();
-        $users = User::all();
-
-        return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'users'));
     }
 }
