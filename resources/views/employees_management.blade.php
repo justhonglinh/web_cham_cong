@@ -40,6 +40,7 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ảnh Đại Diện</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tên Đầy Đủ</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
@@ -49,6 +50,7 @@
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($employees as $employee)
                                     <tr>
+                                        <td class='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>{{ $employee->id }}</td>
                                         <td class='px-6 py-4 whitespace-nowrap'>
                                             @if($employee->avatar)
                                                 <img src="/storage/{{ $employee->avatar }}" alt="Avatar" class="w-12 h-12 rounded-full object-cover">

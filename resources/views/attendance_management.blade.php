@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-attendance-modal />
+        <x-attendance-modal :shifts="$shifts" />
         <div class="flex flex-col gap-4 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -186,7 +186,9 @@
                                         <div class="text-sm text-gray-600 dark:text-gray-300">{{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->overtimeShift->name }} ({{ $att->overtimeShift ? $att->overtimeShift->start_time . ' - ' . $att->overtimeShift->end_time : '—' }})</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">
+                                            {{ $att->overtimeShift ? $att->overtimeShift->name . ' (' . $att->overtimeShift->start_time . ' - ' . $att->overtimeShift->end_time . ')' : '—' }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_in_time ?? '—' }}</div>
@@ -206,6 +208,22 @@
                                                ($att->status === 'late' ? 'Đi muộn' : 
                                                ($att->status === 'early_leave' ? 'Về sớm' : '—')))) }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-full transition duration-200" 
+                                            title="Chi tiết"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
+                                        </button>
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-white rounded-full transition duration-200" 
+                                            title="Sửa"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
+                                        </button>
                                     </td>
                                 </tr>
                             @empty

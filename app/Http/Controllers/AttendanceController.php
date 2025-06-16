@@ -29,6 +29,7 @@ class AttendanceController extends Controller
             // Kiểm tra Attendance ngày hôm nay của từng nhân viên
             $attendance = Attendance::where('user_id', $employeeId)
                 ->where('date', $today)
+                ->where('shift_id', '!=', null)
                 ->first();
 
             if (empty($attendance)) {
@@ -37,8 +38,8 @@ class AttendanceController extends Controller
                     'user_id' => $employeeId,
                     'date' => $today,
                     'shift_id' => '1',
-                    'check_in' => null,
-                    'check_out' => null,
+                    'check_in_time' => null,
+                    'check_out_time' => null,
                     'status' => 'absent', // trạng thái mặc định
                     'created_at' => now(),
                 ]);
@@ -53,6 +54,7 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
+        // Lấy danh sách Attendance overtime
         $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
@@ -60,7 +62,8 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        $shifts = Shift::all();
+        // Lấy danh sách ca làm việc
+        $shifts = Shift::where('user_id', $managerId)->get();
 
         return view('attendance_management', compact('attendance_shifts', 'attendance_overtimes', 'shifts', 'users'));
     }
@@ -154,7 +157,28 @@ class AttendanceController extends Controller
     public function edit(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
-        $attendance->update($request->all());
+        
+        // Chỉ cập nhật các trường được gửi lên và không null
+        if ($request->filled('date')) {
+            $attendance->date = $request->date;
+        }
+        if ($request->filled('shift_id')) {
+            $attendance->shift_id = $request->shift_id;
+        }
+        if ($request->filled('check_in_time')) {
+            $attendance->check_in_time = $request->check_in_time;
+        }
+        if ($request->filled('check_out_time')) {
+            $attendance->check_out_time = $request->check_out_time;
+        }
+        if ($request->filled('status')) {
+            $attendance->status = $request->status;
+        }
+        if ($request->filled('note')) {
+            $attendance->note = $request->note;
+        }
+
+        $attendance->save();
 
         return redirect()->route('attendance.index')->with('success', 'Cập nhật thông tin chấm công thành công');
     }
