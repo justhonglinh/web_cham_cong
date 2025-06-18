@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
             const overtimeForm = document.getElementById('editAttendanceOvertimeForm');
             if (overtimeForm && overtimeData.id) {
-                overtimeForm.action = `/attendance-overtime/management/${overtimeData.id}`;
+                overtimeForm.action = `/attendance/management/${overtimeData.id}`;
             }
             fillEditForm(overtimeData, 'overtime');
             document.getElementById('attendanceOvertimeEditModal').classList.remove('hidden');
@@ -268,8 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             // Đảm bảo chỉ gửi overtime_shift_id, không gửi shift_id
             formData.delete('shift_id');
+            formData.append('_method', 'PUT'); // Laravel nhận diện là PUT
             const overtimeId = document.getElementById('editAttendanceOvertimeId').value;
-            fetch(`/attendance-overtime/management/${overtimeId}`, {
+            fetch(`/attendance/management/${overtimeId}`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
