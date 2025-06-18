@@ -15,6 +15,7 @@ class Attendance extends Model
         'overtime_id', // nếu bạn muốn mass assign overtime_shift_id
         'date',        // thêm trường ngày
         'status',      // thêm trạng thái điểm danh
+        'face_image',  // thêm trường ảnh chấm công
     ];
     public function user(): BelongsTo
     {

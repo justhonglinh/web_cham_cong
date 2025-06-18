@@ -1,5 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
+        <x-attendance-modal :shifts="$shifts" />
+        <x-attendance-overtime-modal :shifts="$shifts" />
         <div class="flex flex-col gap-4 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
@@ -40,70 +42,80 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nhân viên</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ngày</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Ca làm</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ vào</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ ra</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Trạng thái</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Thay đổi ca</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Chi tiết</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Sửa</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nhân viên</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ngày</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ca làm</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giờ vào</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giờ ra</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                             @foreach($attendance_shifts as $att)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $att->user->name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->shift->name }} </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_in_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_out_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $att->status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                               ($att->status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
-                                            {{ $att->status === 'present' ? 'Đã chấm công' : 
-                                               ($att->status === 'absent' ? 'Vắng mặt' : 'Đi muộn') }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        <form method="POST" action="{{ route('attendance.update', $att->id) }}" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <select name="shift_id" onchange="this.form.submit()" 
-                                                class="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                                <option value="">— Không có ca —</option>
-                                                @foreach($shifts as $shift)
-                                                    <option value="{{ $shift->id }}" {{ $att->shift_id == $shift->id ? 'selected' : '' }}>
-                                                        {{ $shift->name }} ({{ $shift->start_time }} - {{ $shift->end_time }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </form>
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full" src="{{ $att->user->avatar ? asset('storage/' . $att->user->avatar) : 'https://via.placeholder.com/40' }}" alt="">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $att->user->name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $att->user->email }}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $att->status }}
+                                        {{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onclick="openAttendanceModal({{ json_encode($att) }})" 
-                                                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
-                                            Chi tiết
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->shift ? $att->shift->name : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('H:i') : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('H:i') : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $statusClasses = [
+                                                'present' => 'text-green-600 dark:text-green-400',
+                                                'absent' => 'text-red-600 dark:text-red-400',
+                                                'leave' => 'text-yellow-600 dark:text-yellow-400',
+                                                'late' => 'text-orange-600 dark:text-orange-400',
+                                                'early_leave' => 'text-orange-600 dark:text-orange-400'
+                                            ];
+                                            $statusTexts = [
+                                                'present' => 'Đã chấm công',
+                                                'absent' => 'Vắng mặt',
+                                                'leave' => 'Nghỉ phép',
+                                                'late' => 'Đi muộn',
+                                                'early_leave' => 'Về sớm'
+                                            ];
+                                        @endphp
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$att->status] ?? 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $statusTexts[$att->status] ?? '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openDetailModal inline-flex items-center px-3 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-full transition duration-200" 
+                                            title="Chi tiết"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
                                         </button>
-                                        <button onclick="openAttendanceModal({{ json_encode($att) }})" 
-                                                class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
-                                            Sửa
+                                        <button 
+                                            data-attendance='@json($att)' 
+                                            class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-white rounded-full transition duration-200" 
+                                            title="Sửa"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
                                         </button>
                                     </td>
                                 </tr>
@@ -123,20 +135,20 @@
                                             Trước
                                         </button>
                                     @else
-                                        <a href="{{ $attendance_shifts->previousPageUrl() }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        <a href="{{ $attendance_shifts->previousPageUrl() }}{{ strpos($attendance_shifts->previousPageUrl(), '?') !== false ? '&' : '?' }}table=attendance" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                             Trước
                                         </a>
                                     @endif
 
                                     @foreach($attendance_shifts->getUrlRange(1, $attendance_shifts->lastPage()) as $page => $url)
-                                        <a href="{{ $url }}" 
+                                        <a href="{{ $url }}{{ strpos($url, '?') !== false ? '&' : '?' }}table=attendance" 
                                            class="px-3 py-1 rounded-md {{ $page == $attendance_shifts->currentPage() ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                             {{ $page }}
                                         </a>
                                     @endforeach
 
                                     @if($attendance_shifts->hasMorePages())
-                                        <a href="{{ $attendance_shifts->nextPageUrl() }}" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        <a href="{{ $attendance_shifts->nextPageUrl() }}{{ strpos($attendance_shifts->nextPageUrl(), '?') !== false ? '&' : '?' }}table=attendance" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                             Tiếp
                                         </a>
                                     @else
@@ -163,38 +175,73 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ vào</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Giờ ra</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Trạng thái</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse($attendance_overtimes as $att)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $att->user->name }}</div>
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full" src="{{ $att->user->avatar ? asset('storage/' . $att->user->avatar) : 'https://via.placeholder.com/40' }}" alt="">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $att->user->name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $att->user->email }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->overtimeShift ? $att->overtimeShift->name : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('H:i') : '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('H:i') : '—' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ \Carbon\Carbon::parse($att->date)->format('d/m/Y') }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->overtimeShift->name }} ({{ $att->overtimeShift ? $att->overtimeShift->start_time . ' - ' . $att->overtimeShift->end_time : '—' }})</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_in_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600 dark:text-gray-300">{{ $att->check_out_time ?? '—' }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $att->status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 
-                                               ($att->status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') }}">
-                                            {{ $att->status ? ucfirst($att->status) : '—' }}
+                                        @php
+                                            $statusClasses = [
+                                                'present' => 'text-green-600 dark:text-green-400',
+                                                'absent' => 'text-red-600 dark:text-red-400',
+                                                'leave' => 'text-yellow-600 dark:text-yellow-400',
+                                                'late' => 'text-orange-600 dark:text-orange-400',
+                                                'early_leave' => 'text-orange-600 dark:text-orange-400'
+                                            ];
+                                            $statusTexts = [
+                                                'present' => 'Đã chấm công',
+                                                'absent' => 'Vắng mặt',
+                                                'leave' => 'Nghỉ phép',
+                                                'late' => 'Đi muộn',
+                                                'early_leave' => 'Về sớm'
+                                            ];
+                                        @endphp
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses[$att->status] ?? 'text-gray-600 dark:text-gray-400' }}">
+                                            {{ $statusTexts[$att->status] ?? '—' }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        <button 
+                                            class="openOvertimeDetailModal inline-flex items-center px-3 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-full transition duration-200" 
+                                            data-overtime='@json($att)'
+                                            title="Chi tiết"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
+                                        </button>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         Không có dữ liệu tăng ca
                                     </td>
                                 </tr>
@@ -202,40 +249,41 @@
                         </tbody>
                     </table>
                     <!-- Phân trang cho bảng tăng ca -->
-                    <div class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div class="text-sm text-gray-700 dark:text-gray-300">
-                                Hiển thị {{ $attendance_overtimes->firstItem() ?? 0 }} đến {{ $attendance_overtimes->lastItem() ?? 0 }} trong tổng số {{ $attendance_overtimes->total() }} kết quả
-                            </div>
-                            <div class="flex space-x-2">
-                                @if($attendance_overtimes->onFirstPage())
-                                    <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed dark:bg-gray-700 dark:text-gray-400">
-                                        Trước
-                                    </button>
-                                @else
-                                    <a href="{{ $attendance_overtimes->previousPageUrl() }}{{ strpos($attendance_overtimes->previousPageUrl(), '?') !== false ? '&' : '?' }}tab=overtime" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                        Trước
-                                    </a>
-                                @endif
-                                @for($i = 1; $i <= $attendance_overtimes->lastPage(); $i++)
-                                    @if($i == $attendance_overtimes->currentPage())
-                                        <span class="px-3 py-1 bg-blue-500 text-white rounded-md">{{ $i }}</span>
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            Hiển thị {{ $attendance_overtimes->firstItem() ?? 0 }} đến {{ $attendance_overtimes->lastItem() ?? 0 }} của {{ $attendance_overtimes->total() }} kết quả
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            @if($attendance_overtimes->hasPages())
+                                <div class="flex items-center space-x-2">
+                                    @if($attendance_overtimes->onFirstPage())
+                                        <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed">
+                                            Trước
+                                        </button>
                                     @else
-                                        <a href="{{ $attendance_overtimes->url($i) }}{{ strpos($attendance_overtimes->url($i), '?') !== false ? '&' : '?' }}tab=overtime" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                            {{ $i }}
+                                        <a href="{{ $attendance_overtimes->previousPageUrl() }}{{ strpos($attendance_overtimes->previousPageUrl(), '?') !== false ? '&' : '?' }}table=overtime&tab=overtime" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                            Trước
                                         </a>
                                     @endif
-                                @endfor
-                                @if($attendance_overtimes->hasMorePages())
-                                    <a href="{{ $attendance_overtimes->nextPageUrl() }}{{ strpos($attendance_overtimes->nextPageUrl(), '?') !== false ? '&' : '?' }}tab=overtime" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                        Tiếp
-                                    </a>
-                                @else
-                                    <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed dark:bg-gray-700 dark:text-gray-400">
-                                        Tiếp
-                                    </button>
-                                @endif
-                            </div>
+
+                                    @foreach($attendance_overtimes->getUrlRange(1, $attendance_overtimes->lastPage()) as $page => $url)
+                                        <a href="{{ $url }}{{ strpos($url, '?') !== false ? '&' : '?' }}table=overtime&tab=overtime" 
+                                           class="px-3 py-1 rounded-md {{ $page == $attendance_overtimes->currentPage() ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            {{ $page }}
+                                        </a>
+                                    @endforeach
+
+                                    @if($attendance_overtimes->hasMorePages())
+                                        <a href="{{ $attendance_overtimes->nextPageUrl() }}{{ strpos($attendance_overtimes->nextPageUrl(), '?') !== false ? '&' : '?' }}table=overtime&tab=overtime" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                            Tiếp
+                                        </a>
+                                    @else
+                                        <button disabled class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md cursor-not-allowed">
+                                            Tiếp
+                                        </button>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -249,12 +297,30 @@
         'shifts' => $shifts
     ])
 
+    @include('components.attendance-overtime-modal', [
+        'shifts' => $shifts
+    ])
+
+    <script src="{{ asset('js/model-attendance.js') }}"></script>
     <script>
     // Tìm kiếm nhân viên
     document.getElementById('search').addEventListener('input', function() {
         const searchText = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#attendance-table tbody tr');
-        rows.forEach(row => {
+        const attendanceRows = document.querySelectorAll('#attendance-table tbody tr');
+        const overtimeRows = document.querySelectorAll('#overtime-table tbody tr');
+        
+        // Tìm kiếm trong bảng chấm công
+        attendanceRows.forEach(row => {
+            const employeeName = row.querySelector('td:first-child').textContent.toLowerCase();
+            if (employeeName.includes(searchText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Tìm kiếm trong bảng tăng ca
+        overtimeRows.forEach(row => {
             const employeeName = row.querySelector('td:first-child').textContent.toLowerCase();
             if (employeeName.includes(searchText)) {
                 row.style.display = '';
@@ -263,6 +329,12 @@
             }
         });
     });
+
+    // Debug các nút đóng modal
+    console.log("Close detail modal button:", document.getElementById('closeAttendanceOvertimeDetailModal'));
+    console.log("Close edit modal button:", document.getElementById('closeAttendanceOvertimeEditModal'));
+    console.log("Cancel edit modal button:", document.getElementById('cancelAttendanceOvertimeEditModal'));
+
     // Chuyển tab
     document.addEventListener('DOMContentLoaded', function() {
         var tabAttendance = document.getElementById('tab-attendance');
@@ -271,6 +343,9 @@
         var overtimeTable = document.getElementById('overtime-table');
         var urlParams = new URLSearchParams(window.location.search);
         var tab = urlParams.get('tab');
+        var table = urlParams.get('table');
+
+        // Nếu đang ở tab overtime
         if (tab === 'overtime') {
             attendanceTable.classList.remove('block');
             attendanceTable.classList.add('hidden');
@@ -281,6 +356,7 @@
             tabAttendance.classList.remove('text-blue-600', 'border-blue-600');
             tabAttendance.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
         }
+
         tabAttendance.addEventListener('click', function() {
             attendanceTable.classList.remove('hidden');
             attendanceTable.classList.add('block');
@@ -290,8 +366,10 @@
             tabAttendance.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
             tabOvertime.classList.remove('text-blue-600', 'border-blue-600');
             tabOvertime.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
-            history.replaceState(null, '', window.location.pathname);
+            // Chuyển về trang 1 của bảng chấm công
+            window.location.href = window.location.pathname + '?table=attendance&page=1';
         });
+
         tabOvertime.addEventListener('click', function() {
             attendanceTable.classList.remove('block');
             attendanceTable.classList.add('hidden');
@@ -301,7 +379,8 @@
             tabOvertime.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
             tabAttendance.classList.remove('text-blue-600', 'border-blue-600');
             tabAttendance.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
-            history.replaceState(null, '', window.location.pathname + '?tab=overtime');
+            // Chuyển về trang 1 của bảng tăng ca
+            window.location.href = window.location.pathname + '?table=overtime&tab=overtime&page=1';
         });
     });
     </script>
