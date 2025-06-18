@@ -21,6 +21,7 @@
     <script src="{{ asset('js/model-shift.js') }}"></script>
     <script src="{{ asset('js/model-overtime.js') }}"></script>
     <script src="{{ asset('js/model-attendance.js') }}"></script>
+    <script src="{{ asset('js/attendance-overtime.js') }}"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

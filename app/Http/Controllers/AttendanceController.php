@@ -92,10 +92,12 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $query = Attendance::with(['user', 'shift'])
+            ->whereNull('overtime_id') // Chỉ lấy attendance thông thường
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
-        $overtimeQuery = AttendanceOvertime::with(['user', 'shift'])
+        $overtimeQuery = Attendance::with(['user', 'overtimeShift'])
+            ->whereNotNull('overtime_id') // Chỉ lấy attendance overtime
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -130,7 +132,9 @@ class AttendanceController extends Controller
         // Lọc theo ca làm việc
         if ($request->filled('shift_id')) {
             $query->where('shift_id', $request->shift_id);
-            $overtimeQuery->where('shift_id', $request->shift_id);
+        }
+        if ($request->filled('overtime_shift_id')) {
+            $overtimeQuery->where('overtime_id', $request->overtime_shift_id);
         }
 
         // Lọc theo trạng thái
@@ -157,6 +161,11 @@ class AttendanceController extends Controller
     public function edit(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
+        
+        // Kiểm tra xem có phải là attendance thông thường không (không phải overtime)
+        if ($attendance->overtime_id !== null) {
+            return redirect()->route('attendance.index')->with('error', 'Không thể sửa thông tin tăng ca');
+        }
         
         // Chỉ cập nhật các trường được gửi lên và không null
         if ($request->filled('date')) {

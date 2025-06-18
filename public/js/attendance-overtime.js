@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Nút đóng modal ===
     const closeDetailModalButton = document.getElementById('closeAttendanceOvertimeDetailModal');
     const closeEditModalButton = document.getElementById('closeAttendanceOvertimeEditModal');
+    const cancelEditModalButton = document.getElementById('cancelAttendanceOvertimeEditModal');
 
     // === Đóng modal chi tiết ===
     if (closeDetailModalButton) {
@@ -30,49 +31,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // === Đóng modal sửa khi nhấn nút Cancel ===
+    if (cancelEditModalButton) {
+        cancelEditModalButton.addEventListener('click', function() {
+            if (editModal) {
+                editModal.classList.add('hidden');
+            }
+        });
+    }
+
     // === Mở modal xem chi tiết ===
-    const detailButtons = document.querySelectorAll('.openAttendanceOvertimeDetailModal');
+    const detailButtons = document.querySelectorAll('.openOvertimeDetailModal');
     detailButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const attendanceData = JSON.parse(this.getAttribute('data-attendance'));
-            console.log('Attendance data:', attendanceData); // Debug log
+            const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
             
             // Hiển thị thông tin trong modal
-            document.getElementById('attendanceOvertimeDetailUserAvatar').src = attendanceData.user.avatar ? `/storage/${attendanceData.user.avatar}` : '/images/default-avatar.png';
-            document.getElementById('attendanceOvertimeDetailFaceImage').src = attendanceData.face_image ? `/storage/${attendanceData.face_image}` : '/images/default-face.png';
-            document.getElementById('attendanceOvertimeDetailUserName').textContent = attendanceData.user.name;
-            document.getElementById('attendanceOvertimeDetailUserEmail').textContent = attendanceData.user.email;
-            document.getElementById('attendanceOvertimeDetailDate').textContent = formatDate(attendanceData.date);
-            document.getElementById('attendanceOvertimeDetailShift').textContent = attendanceData.overtime_shift ? attendanceData.overtime_shift.name : '—';
-            document.getElementById('attendanceOvertimeDetailCheckIn').textContent = formatTime(attendanceData.check_in_time);
-            document.getElementById('attendanceOvertimeDetailCheckOut').textContent = formatTime(attendanceData.check_out_time);
+            document.getElementById('attendanceOvertimeDetailUserAvatar').src = overtimeData.user.avatar ? `/storage/${overtimeData.user.avatar}` : '/images/default-avatar.png';
+            document.getElementById('attendanceOvertimeDetailFaceImage').src = overtimeData.face_image ? `/storage/${overtimeData.face_image}` : '/images/default-face.png';
+            document.getElementById('attendanceOvertimeDetailUserName').textContent = overtimeData.user.name;
+            document.getElementById('attendanceOvertimeDetailUserEmail').textContent = overtimeData.user.email;
+            document.getElementById('attendanceOvertimeDetailDate').textContent = formatDate(overtimeData.date);
+            document.getElementById('attendanceOvertimeDetailShift').textContent = overtimeData.overtime_shift ? overtimeData.overtime_shift.name : '—';
+            document.getElementById('attendanceOvertimeDetailCheckIn').textContent = formatTime(overtimeData.check_in_time);
+            document.getElementById('attendanceOvertimeDetailCheckOut').textContent = formatTime(overtimeData.check_out_time);
             
             const statusElement = document.getElementById('attendanceOvertimeDetailStatus');
-            statusElement.textContent = convertStatusToText(attendanceData.status);
-            statusElement.className = 'text-sm font-medium ' + getStatusClass(attendanceData.status);
+            statusElement.textContent = convertStatusToText(overtimeData.status);
+            statusElement.className = 'text-sm font-medium ' + getStatusClass(overtimeData.status);
             
             detailModal.classList.remove('hidden');
         });
     });
 
     // === Mở modal sửa ===
-    document.querySelectorAll('.openAttendanceOvertimeEditModal').forEach(button => {
+    const editButtons = document.querySelectorAll('.openOvertimeEditModal');
+
+    editButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const attendanceData = JSON.parse(this.getAttribute('data-attendance'));
-            console.log('Edit attendance data:', attendanceData); // Debug log
+            const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
             
             // Điền thông tin vào form
-            document.getElementById('editAttendanceOvertimeId').value = attendanceData.id;
-            document.getElementById('editAttendanceOvertimeUserId').value = attendanceData.user_id;
-            document.getElementById('editAttendanceOvertimeDate').value = attendanceData.date;
-            document.getElementById('editAttendanceOvertimeShiftId').value = attendanceData.overtime_id;
-            document.getElementById('editAttendanceOvertimeCheckIn').value = attendanceData.check_in_time;
-            document.getElementById('editAttendanceOvertimeCheckOut').value = attendanceData.check_out_time;
-            document.getElementById('editAttendanceOvertimeStatus').value = attendanceData.status;
+            document.getElementById('editAttendanceOvertimeId').value = overtimeData.id;
+            document.getElementById('editAttendanceOvertimeUserId').value = overtimeData.user_id;
+            document.getElementById('editAttendanceOvertimeDate').value = overtimeData.date;
+            document.getElementById('editAttendanceOvertimeShiftId').value = overtimeData.overtime_shift_id;
+            document.getElementById('editAttendanceOvertimeCheckIn').value = overtimeData.check_in_time;
+            document.getElementById('editAttendanceOvertimeCheckOut').value = overtimeData.check_out_time;
+            document.getElementById('editAttendanceOvertimeStatus').value = overtimeData.status;
             
             // Cập nhật action của form
             const editForm = document.getElementById('editAttendanceOvertimeForm');
-            editForm.action = `/attendance-overtime/management/${attendanceData.id}`;
+            editForm.action = `/attendance-overtime/management/${overtimeData.id}`;
             
             editModal.classList.remove('hidden');
         });
@@ -84,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const attendanceId = document.getElementById('editAttendanceOvertimeId').value;
+            const overtimeId = document.getElementById('editAttendanceOvertimeId').value;
             
             // Gửi request PUT
-            fetch(`/attendance-overtime/management/${attendanceId}`, {
+            fetch(`/attendance-overtime/management/${overtimeId}`, {
                 method: 'PUT',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
