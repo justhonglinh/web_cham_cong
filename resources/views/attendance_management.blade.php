@@ -111,7 +111,15 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
                                         </button>
                                         <button 
-                                            data-attendance='@json($att)' 
+                                            data-attendance='{{ json_encode([
+                                                "id" => $att->id,
+                                                "user_id" => $att->user_id,
+                                                "date" => $att->date,
+                                                "shift_id" => $att->shift_id,
+                                                "check_in_time" => $att->check_in_time,
+                                                "check_out_time" => $att->check_out_time,
+                                                "status" => $att->status,
+                                            ]) }}'
                                             class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-white rounded-full transition duration-200" 
                                             title="Sửa"
                                         >
@@ -236,6 +244,13 @@
                                             title="Chi tiết"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6M10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"></path></svg>
+                                        </button>
+                                        <button 
+                                            class="openOvertimeEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-white rounded-full transition duration-200" 
+                                            data-overtime='@json($att)'
+                                            title="Sửa"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v5h5l11-11-5-5-11 11v5h-5z"></path></svg>
                                         </button>
                                     </td>
                                 </tr>
