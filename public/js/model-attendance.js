@@ -93,67 +93,70 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // === Mở modal chỉnh sửa ===
-    const editButtons = document.querySelectorAll('.openEditModal');
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
+    // === Hàm dùng chung để binding dữ liệu vào form sửa ===
+    function fillEditForm(data, type) {
+        if (type === 'overtime') {
+            document.getElementById('editAttendanceOvertimeId').value = data.id;
+            document.getElementById('editAttendanceOvertimeUserId').value = data.user_id;
+            document.getElementById('editAttendanceOvertimeDate').value = data.date;
+            document.getElementById('editAttendanceOvertimeCheckIn').value = data.check_in_time || '';
+            document.getElementById('editAttendanceOvertimeCheckOut').value = data.check_out_time || '';
+            document.getElementById('editAttendanceOvertimeStatus').value = data.status;
+            // Chỉ set overtime_shift_id
+            const shiftSelect = document.getElementById('editAttendanceOvertimeShiftId');
+            if (shiftSelect) {
+                Array.from(shiftSelect.options).forEach(opt => {
+                    opt.selected = (opt.value == String(data.overtime_id || data.overtime_shift_id));
+                });
+            }
+        } else {
+            document.getElementById('editAttendanceId').value = data.id;
+            document.getElementById('editUserId').value = data.user_id;
+            document.getElementById('editDate').value = data.date;
+            document.getElementById('editCheckIn').value = data.check_in_time || '';
+            document.getElementById('editCheckOut').value = data.check_out_time || '';
+            document.getElementById('editStatus').value = data.status;
+            // Chỉ set shift_id
+            const shiftSelect = document.getElementById('editShiftId');
+            if (shiftSelect) {
+                Array.from(shiftSelect.options).forEach(opt => {
+                    opt.selected = (opt.value == String(data.shift_id));
+                });
+            }
+        }
+    }
+
+    // === Mở modal chỉnh sửa ca làm việc ===
+    document.querySelectorAll('.openEditModal').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             const attendanceData = JSON.parse(this.getAttribute('data-attendance'));
-            console.log('Edit Data:', attendanceData);
-
-            // Cập nhật action URL của form
+            if (!attendanceData.id) {
+                alert('Lỗi: Không tìm thấy ID của bản ghi chấm công!');
+                if (editForm) editForm.action = '';
+                return;
+            }
             if (editForm) {
-                editForm.action = `/attendance/${attendanceData.id}`;
+                editForm.action = `/attendance/management/${attendanceData.id}`;
             }
-
-            // Lấy các element trong form
-            const dateInput = document.getElementById('editDate');
-            const shiftSelect = document.getElementById('editShift');
-            const checkInInput = document.getElementById('editCheckIn');
-            const checkOutInput = document.getElementById('editCheckOut');
-            const statusSelect = document.getElementById('editStatus');
-
-            // Cập nhật giá trị
-            if (dateInput) dateInput.value = attendanceData.date;
-            if (shiftSelect) shiftSelect.value = attendanceData.shift_id;
-            if (checkInInput) checkInInput.value = attendanceData.check_in_time || '';
-            if (checkOutInput) checkOutInput.value = attendanceData.check_out_time || '';
-            if (statusSelect) statusSelect.value = attendanceData.status;
-
-            // Hiển thị modal
-            if (editModal) {
-                editModal.classList.remove('hidden');
-            }
+            fillEditForm(attendanceData, 'normal');
+            editModal.classList.remove('hidden');
         });
     });
 
-    // === Xử lý submit form chỉnh sửa ===
-    if (editForm) {
-        editForm.addEventListener('submit', function(e) {
+    // === Mở modal sửa tăng ca ===
+    document.querySelectorAll('.openOvertimeEditModal').forEach(button => {
+        button.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            const formData = new FormData(this);
-            formData.append('_method', 'PUT');
-
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    throw new Error('Có lỗi xảy ra khi cập nhật');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi cập nhật thông tin');
-            });
+            const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
+            const overtimeForm = document.getElementById('editAttendanceOvertimeForm');
+            if (overtimeForm && overtimeData.id) {
+                overtimeForm.action = `/attendance/management/${overtimeData.id}`;
+            }
+            fillEditForm(overtimeData, 'overtime');
+            document.getElementById('attendanceOvertimeEditModal').classList.remove('hidden');
         });
-    }
+    });
 
     // === Đóng modal khi click bên ngoài
     window.addEventListener('click', function(event) {
@@ -178,6 +181,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 editModal.classList.add('hidden');
             }
         }
+    });
+
+    // === Đóng modal khi click vào nút có data-modal-hide ===
+    document.querySelectorAll('[data-modal-hide]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modalId = this.getAttribute('data-modal-hide');
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('hidden');
+        });
     });
 
     // === Hàm helper để format ngày ===
@@ -215,5 +227,69 @@ document.addEventListener('DOMContentLoaded', function() {
             'early_leave': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
         };
         return classMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+
+    // === Xử lý submit form sửa ca làm việc (AJAX) ===
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.delete('overtime_shift_id');
+            formData.append('_method', 'PUT'); // Laravel nhận diện là PUT
+            const attendanceId = document.getElementById('editAttendanceId').value;
+            fetch(`/attendance/management/${attendanceId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi cập nhật thông tin');
+            });
+        });
+    }
+
+    // === Xử lý submit form sửa tăng ca (AJAX) ===
+    const overtimeForm = document.getElementById('editAttendanceOvertimeForm');
+    if (overtimeForm) {
+        overtimeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            // Đảm bảo chỉ gửi overtime_shift_id, không gửi shift_id
+            formData.delete('shift_id');
+            formData.append('_method', 'PUT'); // Laravel nhận diện là PUT
+            const overtimeId = document.getElementById('editAttendanceOvertimeId').value;
+            fetch(`/attendance/management/${overtimeId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi cập nhật thông tin');
+            });
+        });
     }
 });

@@ -72,10 +72,34 @@ class AttendanceController extends Controller
     public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
-        $attendance->shift_id = $request->shift_id;
+        // Nếu là ca làm việc thường
+        if ($request->filled('shift_id')) {
+            $attendance->shift_id = $request->shift_id;
+            $attendance->overtime_id = null;
+        }
+        // Nếu là tăng ca
+        if ($request->filled('overtime_shift_id')) {
+            $attendance->overtime_id = $request->overtime_shift_id;
+            $attendance->shift_id = null;
+        }
+        // Các trường chung
+        if ($request->filled('date')) {
+            $attendance->date = $request->date;
+        }
+        if ($request->filled('check_in_time')) {
+            $attendance->check_in_time = $request->check_in_time;
+        }
+        if ($request->filled('check_out_time')) {
+            $attendance->check_out_time = $request->check_out_time;
+        }
+        if ($request->filled('status')) {
+            $attendance->status = $request->status;
+        }
         $attendance->save();
-
-        return Redirect::route('attendance.index')->with('success', 'Ca làm đã được cập nhật!');
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return redirect()->route('attendance.index')->with('success', 'Cập nhật thành công');
     }
 
     // Lịch sử chấm công cho nhân viên
@@ -156,39 +180,5 @@ class AttendanceController extends Controller
         $users = User::all();
 
         return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'users'));
-    }
-
-    public function edit(Request $request, $id)
-    {
-        $attendance = Attendance::findOrFail($id);
-        
-        // Kiểm tra xem có phải là attendance thông thường không (không phải overtime)
-        if ($attendance->overtime_id !== null) {
-            return redirect()->route('attendance.index')->with('error', 'Không thể sửa thông tin tăng ca');
-        }
-        
-        // Chỉ cập nhật các trường được gửi lên và không null
-        if ($request->filled('date')) {
-            $attendance->date = $request->date;
-        }
-        if ($request->filled('shift_id')) {
-            $attendance->shift_id = $request->shift_id;
-        }
-        if ($request->filled('check_in_time')) {
-            $attendance->check_in_time = $request->check_in_time;
-        }
-        if ($request->filled('check_out_time')) {
-            $attendance->check_out_time = $request->check_out_time;
-        }
-        if ($request->filled('status')) {
-            $attendance->status = $request->status;
-        }
-        if ($request->filled('note')) {
-            $attendance->note = $request->note;
-        }
-
-        $attendance->save();
-
-        return redirect()->route('attendance.index')->with('success', 'Cập nhật thông tin chấm công thành công');
     }
 }

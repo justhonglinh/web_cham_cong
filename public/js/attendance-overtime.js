@@ -75,11 +75,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('editAttendanceOvertimeId').value = overtimeData.id;
             document.getElementById('editAttendanceOvertimeUserId').value = overtimeData.user_id;
             document.getElementById('editAttendanceOvertimeDate').value = overtimeData.date;
-            document.getElementById('editAttendanceOvertimeShiftId').value = overtimeData.overtime_shift_id;
             document.getElementById('editAttendanceOvertimeCheckIn').value = overtimeData.check_in_time;
             document.getElementById('editAttendanceOvertimeCheckOut').value = overtimeData.check_out_time;
             document.getElementById('editAttendanceOvertimeStatus').value = overtimeData.status;
-            
+            // Sửa đoạn này để set đúng option ca làm
+            const shiftSelect = document.getElementById('editAttendanceOvertimeShiftId');
+            if (shiftSelect && overtimeData.overtime_shift_id) {
+                Array.from(shiftSelect.options).forEach(opt => {
+                    opt.selected = (opt.value == String(overtimeData.overtime_shift_id));
+                });
+            }
             // Cập nhật action của form
             const editForm = document.getElementById('editAttendanceOvertimeForm');
             editForm.action = `/attendance-overtime/management/${overtimeData.id}`;
