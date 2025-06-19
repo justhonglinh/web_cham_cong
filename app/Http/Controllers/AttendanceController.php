@@ -47,25 +47,33 @@ class AttendanceController extends Controller
         }
 
         // Lấy lại danh sách Attendance sau khi đảm bảo đã có bản ghi ngày hôm nay
-        $attendance_shifts = Attendance::with('shift', 'user')
+        $attendance_shifts = Attendance::with('shift', 'user', 'overtimeShift')
             ->whereIn('user_id', $employeeIds)
-            ->whereNull('overtime_id') // Lọc những bản ghi không có overtime
             ->where('date', $today)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // Lấy danh sách Attendance overtime
-        $attendance_overtimes = Attendance::with('overtimeShift', 'user')
-            ->whereIn('user_id', $employeeIds)
-            ->whereNull('shift_id')
-            ->where('date', $today)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Khởi tạo các mảng để lưu kết quả
+        $shift_attendance = [];
+        $overtime_attendance = [];
+
+        foreach ($attendance_shifts as $attendance) {
+            // Kiểm tra nếu có shift_id (có công ca làm việc)
+            if ($attendance->shift_id != null) {
+                $overtime_attendance[] = $attendance; // Thêm phần tử vào mảng overtime_attendance
+            } else {
+                $shift_attendance[] = $attendance; // Thêm phần tử vào mảng shift_attendance
+            }
+        }
+        dd($attendance_shifts);
+        // In kết quả ra để kiểm tra
+        dd( $overtime_attendance);
+
 
         // Lấy danh sách ca làm việc
         $shifts = Shift::where('user_id', $managerId)->get();
-
-        return view('attendance_management', compact('attendance_shifts', 'attendance_overtimes', 'shifts', 'users'));
+        $overtime_shifts = OvertimeShift::where('user_id', $managerId)->get();
+        return view('attendance_management', compact('$', 'shifts', 'users', 'overtime_shifts'));
     }
 
     // Cập nhật ca làm cho attendance
