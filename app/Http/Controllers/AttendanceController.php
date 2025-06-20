@@ -12,7 +12,6 @@ use App\Models\OvertimeShift;
 
 class AttendanceController extends Controller
 {
-    // Hiển thị danh sách chấm công cho manager
     public function show(Request $request)
     {
         $managerId = Auth::user()->id;
@@ -49,24 +48,24 @@ class AttendanceController extends Controller
         // Lấy lại danh sách Attendance sau khi đảm bảo đã có bản ghi ngày hôm nay
         $attendance_shifts = Attendance::with('shift', 'user')
             ->whereIn('user_id', $employeeIds)
-            ->whereNull('overtime_id') // Lọc những bản ghi không có overtime
+            ->whereNull('overtime_id')
             ->where('date', $today)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // Lấy danh sách Attendance overtime
-        $attendance_overtimes = Attendance::with('overtimeShift', 'user')
+         $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
             ->where('date', $today)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // Lấy danh sách ca làm việc
-        $shifts = Shift::where('user_id', $managerId)->get();
 
-        return view('attendance_management', compact('attendance_shifts', 'attendance_overtimes', 'shifts', 'users'));
+        $shifts = Shift::where('user_id', $managerId)->get();
+        $overtimes = OvertimeShift::where('user_id', $managerId)->get();
+        return view('attendance_management', compact('attendance_shifts','attendance_overtimes', 'shifts','overtimes'));
     }
+
 
     // Cập nhật ca làm cho attendance
     public function update(Request $request, $id)

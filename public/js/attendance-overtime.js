@@ -1,12 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Attendance Overtime JS loaded");
-    
     // === Các biến modal ===
     const detailModal = document.getElementById('attendanceOvertimeDetailModal');
     const editModal = document.getElementById('attendanceOvertimeEditModal');
-
-    console.log("Detail modal element:", detailModal);
-    console.log("Edit modal element:", editModal);
 
     // === Nút đóng modal ===
     const closeDetailModalButton = document.getElementById('closeAttendanceOvertimeDetailModal');
@@ -15,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Đóng modal chi tiết ===
     if (closeDetailModalButton) {
-        closeDetailModalButton.addEventListener('click', function() {
+        closeDetailModalButton.addEventListener('click', function () {
             if (detailModal) {
                 detailModal.classList.add('hidden');
             }
@@ -24,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Đóng modal sửa ===
     if (closeEditModalButton) {
-        closeEditModalButton.addEventListener('click', function() {
+        closeEditModalButton.addEventListener('click', function () {
             if (editModal) {
                 editModal.classList.add('hidden');
             }
@@ -33,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Đóng modal sửa khi nhấn nút Cancel ===
     if (cancelEditModalButton) {
-        cancelEditModalButton.addEventListener('click', function() {
+        cancelEditModalButton.addEventListener('click', function () {
             if (editModal) {
                 editModal.classList.add('hidden');
             }
@@ -43,9 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Mở modal xem chi tiết ===
     const detailButtons = document.querySelectorAll('.openOvertimeDetailModal');
     detailButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
-            
+
             // Hiển thị thông tin trong modal
             document.getElementById('attendanceOvertimeDetailUserAvatar').src = overtimeData.user.avatar ? `/storage/${overtimeData.user.avatar}` : '/images/default-avatar.png';
             document.getElementById('attendanceOvertimeDetailFaceImage').src = overtimeData.face_image ? `/storage/${overtimeData.face_image}` : '/images/default-face.png';
@@ -55,11 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('attendanceOvertimeDetailShift').textContent = overtimeData.overtime_shift ? overtimeData.overtime_shift.name : '—';
             document.getElementById('attendanceOvertimeDetailCheckIn').textContent = formatTime(overtimeData.check_in_time);
             document.getElementById('attendanceOvertimeDetailCheckOut').textContent = formatTime(overtimeData.check_out_time);
-            
+
             const statusElement = document.getElementById('attendanceOvertimeDetailStatus');
             statusElement.textContent = convertStatusToText(overtimeData.status);
             statusElement.className = 'text-sm font-medium ' + getStatusClass(overtimeData.status);
-            
+
             detailModal.classList.remove('hidden');
         });
     });
@@ -68,61 +63,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const editButtons = document.querySelectorAll('.openOvertimeEditModal');
 
     editButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const overtimeData = JSON.parse(this.getAttribute('data-overtime'));
-            
+
             // Điền thông tin vào form
-            document.getElementById('editAttendanceOvertimeId').value = overtimeData.id;
-            document.getElementById('editAttendanceOvertimeUserId').value = overtimeData.user_id;
-            document.getElementById('editAttendanceOvertimeDate').value = overtimeData.date;
-            document.getElementById('editAttendanceOvertimeCheckIn').value = overtimeData.check_in_time;
-            document.getElementById('editAttendanceOvertimeCheckOut').value = overtimeData.check_out_time;
-            document.getElementById('editAttendanceOvertimeStatus').value = overtimeData.status;
-            // Sửa đoạn này để set đúng option ca làm
+            const setValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value ?? '';
+            };
+            setValue('editAttendanceOvertimeId', overtimeData.id);
+            setValue('editAttendanceOvertimeUserId', overtimeData.user_id);
+            setValue('editAttendanceOvertimeDate', overtimeData.date);
+            setValue('editAttendanceOvertimeCheckIn', overtimeData.check_in_time);
+            setValue('editAttendanceOvertimeCheckOut', overtimeData.check_out_time);
+            setValue('editAttendanceOvertimeStatus', overtimeData.status);
+
+            // Set đúng option ca làm
             const shiftSelect = document.getElementById('editAttendanceOvertimeShiftId');
-            if (shiftSelect && overtimeData.overtime_shift_id) {
-                Array.from(shiftSelect.options).forEach(opt => {
-                    opt.selected = (opt.value == String(overtimeData.overtime_shift_id));
-                });
+            if (shiftSelect) {
+                shiftSelect.value = overtimeData.overtime_shift_id ?? '';
             }
+
             // Cập nhật action của form
             const editForm = document.getElementById('editAttendanceOvertimeForm');
-            editForm.action = `/attendance-overtime/management/${overtimeData.id}`;
-            
-            editModal.classList.remove('hidden');
+            if (editForm) {
+                console.log("hello");
+                editForm.action = `/attendance-overtime/management/${overtimeData.id}`;
+            }
+
+            if (editModal) {
+                editModal.classList.remove('hidden');
+            }
         });
     });
 
     // === Xử lý form sửa ===
     const editForm = document.getElementById('editAttendanceOvertimeForm');
     if (editForm) {
-        editForm.addEventListener('submit', function(e) {
+        editForm.addEventListener('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
             const overtimeId = document.getElementById('editAttendanceOvertimeId').value;
-            
-            // Gửi request PUT
+
+            // Gửi request POST với _method=PUT (Laravel style)
+            const dataObj = Object.fromEntries(formData);
+            dataObj._method = 'PUT';
             fetch(`/attendance-overtime/management/${overtimeId}`, {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(Object.fromEntries(formData))
+                body: JSON.stringify(dataObj)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message || 'Có lỗi xảy ra khi cập nhật thông tin');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi cập nhật thông tin');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi cập nhật thông tin');
+                });
         });
     }
 
@@ -131,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.addEventListener('click', function(e) {
+            modal.addEventListener('click', function (e) {
                 if (e.target === this) {
                     this.classList.add('hidden');
                 }
@@ -140,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Đóng modal khi nhấn phím ESC ===
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
