@@ -56,7 +56,7 @@ class AttendanceController extends Controller
          $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
-            ->where('date', $today)
+            ->where('date', '>=', $today)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -114,6 +114,9 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
+        $today = now()->toDateString();
+        $table = $request->get('table', 'attendance');
+        
         $query = Attendance::with(['user', 'shift'])
             ->whereNull('overtime_id') // Chỉ lấy attendance thông thường
             ->orderBy('date', 'desc')
@@ -121,11 +124,12 @@ class AttendanceController extends Controller
 
         $overtimeQuery = Attendance::with(['user', 'overtimeShift'])
             ->whereNotNull('overtime_id') // Chỉ lấy attendance overtime
+            ->where('date', '>', $today) // Chỉ lấy các ngày trong tương lai
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
-        // Xử lý tìm kiếm cho bảng ca làm việc
-        if ($request->filled('search')) {
+        // Xử lý tìm kiếm cho bảng ca làm việc (chỉ khi table = attendance)
+        if ($table === 'attendance' && $request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->whereHas('user', function($q) use ($search) {
@@ -135,8 +139,8 @@ class AttendanceController extends Controller
             });
         }
 
-        // Xử lý tìm kiếm cho bảng tăng ca
-        if ($request->filled('search_overtime')) {
+        // Xử lý tìm kiếm cho bảng tăng ca (chỉ khi table = overtime)
+        if ($table === 'overtime' && $request->filled('search_overtime')) {
             $search = $request->search_overtime;
             $overtimeQuery->where(function($q) use ($search) {
                 $q->whereHas('user', function($q) use ($search) {
@@ -146,38 +150,49 @@ class AttendanceController extends Controller
             });
         }
 
-        // Lọc theo ngày
+        // Lọc theo ngày (chỉ áp dụng cho bảng đang được xem)
         if ($request->filled('date')) {
-            $query->whereDate('date', $request->date);
-            $overtimeQuery->whereDate('date', $request->date);
+            if ($table === 'attendance') {
+                $query->whereDate('date', $request->date);
+            } elseif ($table === 'overtime') {
+                $overtimeQuery->whereDate('date', $request->date);
+            }
         }
 
-        // Lọc theo ca làm việc
-        if ($request->filled('shift_id')) {
+        // Lọc theo ca làm việc (chỉ cho bảng attendance)
+        if ($table === 'attendance' && $request->filled('shift_id')) {
             $query->where('shift_id', $request->shift_id);
         }
-        if ($request->filled('overtime_shift_id')) {
+
+        // Lọc theo ca tăng ca (chỉ cho bảng overtime)
+        if ($table === 'overtime' && $request->filled('overtime_shift_id')) {
             $overtimeQuery->where('overtime_id', $request->overtime_shift_id);
         }
 
-        // Lọc theo trạng thái
+        // Lọc theo trạng thái (chỉ áp dụng cho bảng đang được xem)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
-            $overtimeQuery->where('status', $request->status);
+            if ($table === 'attendance') {
+                $query->where('status', $request->status);
+            } elseif ($table === 'overtime') {
+                $overtimeQuery->where('status', $request->status);
+            }
         }
 
         $attendance = $query->paginate(10);
         $attendance_overtimes = $overtimeQuery->paginate(10);
 
-        // Thêm tham số table vào URL phân trang
-        if ($request->filled('table')) {
-            $attendance->appends(['table' => $request->table]);
-            $attendance_overtimes->appends(['table' => $request->table]);
+        // Thêm tham số table và các tham số tìm kiếm vào URL phân trang
+        if ($table === 'attendance') {
+            $attendance->appends($request->only(['table', 'search', 'date', 'shift_id', 'status']));
+            $attendance_overtimes->appends(['table' => 'overtime']);
+        } elseif ($table === 'overtime') {
+            $attendance_overtimes->appends($request->only(['table', 'search_overtime', 'date', 'overtime_shift_id', 'status']));
+            $attendance->appends(['table' => 'attendance']);
         }
 
         $shifts = Shift::all();
-        $users = User::all();
+        $overtimes = OvertimeShift::all();
 
-        return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'users'));
+        return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'overtimes'));
     }
 }

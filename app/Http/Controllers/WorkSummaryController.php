@@ -29,7 +29,7 @@ class WorkSummaryController extends Controller
         $userIds = User::where('manager', $managerId)->pluck('id');
 
         // Lấy work summaries của các user có trong $userIds, đồng thời lấy thông tin user liên quan
-        $workSummaries = WorkSummary::with('user:id,name,email')
+        $workSummaries = WorkSummary::with('user:id,name,email,avatar')
             ->whereIn('user_id', $userIds)
             ->where('month', $currentMonth)
             ->where('year', $currentYear)
