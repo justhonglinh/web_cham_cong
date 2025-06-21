@@ -89,4 +89,9 @@ class User extends Authenticatable
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
+
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
+    }
 }

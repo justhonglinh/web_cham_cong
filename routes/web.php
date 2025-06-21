@@ -73,6 +73,15 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
     Route::get('/work-summary/export', [WorkSummaryController::class, 'export'])->name('work.export');
     Route::get('/work-summary/search', [WorkSummaryController::class, 'search'])->name('work.search');
 
+    // Location routes
+    Route::get('/locations', [App\Http\Controllers\LocationController::class, 'index'])->name('locations.index');
+    Route::get('/locations/{id}', [App\Http\Controllers\LocationController::class, 'show'])->name('locations.show');
+    Route::post('/locations', [App\Http\Controllers\LocationController::class, 'store'])->name('locations.store');
+    Route::put('/locations/update', [App\Http\Controllers\LocationController::class, 'updateCurrent'])->name('locations.updateCurrent');
+    Route::put('/locations/{id}', [App\Http\Controllers\LocationController::class, 'update'])->name('locations.update');
+    Route::delete('/locations/{id}', [App\Http\Controllers\LocationController::class, 'destroy'])->name('locations.destroy');
+    Route::patch('/locations/{id}/toggle', [App\Http\Controllers\LocationController::class, 'toggleStatus'])->name('locations.toggle');
+    Route::post('/locations/check', [App\Http\Controllers\LocationController::class, 'checkLocation'])->name('locations.check');
 });
 
 // Các route chỉ dành cho employee

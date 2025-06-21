@@ -22,6 +22,47 @@
                             @endphp
                         </p>
                     </div>
+
+                    <!-- Khối vị trí chấm công hiện tại và nút thêm vị trí -->
+                    <div class="flex items-center bg-white bg-opacity-80 rounded-xl shadow px-4 py-2 space-x-4">
+                        @php
+                            $currentLocation = Auth::user()->locations()->where('is_active', true)->latest()->first();
+                        @endphp
+                        <div class="flex flex-col justify-center min-w-[160px]">
+                            <span class="text-xs text-gray-500 font-semibold mb-1">Vị trí chấm công hiện tại</span>
+                            @if($currentLocation)
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-flex items-center px-2 py-1 text-xs rounded bg-green-100 text-green-800 font-medium">
+                                        <svg class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <span class="font-semibold">{{ $currentLocation->name }}</span>
+                                    </span>
+                                </div>
+                                <span class="text-xs text-gray-600 mt-1 truncate max-w-[180px]">{{ $currentLocation->address }}</span>
+                                @if($currentLocation->radius)
+                                    <span class="text-xs text-gray-400">Bán kính: {{ $currentLocation->radius }}m</span>
+                                @endif
+                            @else
+                                <span class="inline-flex items-center px-2 py-1 text-xs rounded bg-gray-100 text-gray-600 font-medium">
+                                    <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Chưa có vị trí
+                                </span>
+                            @endif
+                        </div>
+                        <div>
+                            <button id="openLocationModal" 
+                                class="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 py-2 rounded-xl shadow transition-all text-sm whitespace-nowrap">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                @if($currentLocation)
+                                    Thay đổi vị trí
+                                @else
+                                    Thêm vị trí
+                                @endif
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -464,4 +505,31 @@
             </div>
         </div>
     </div>
+
+    <!-- Include Location Modal -->
+    <x-location-modal />
+
+    <!-- Location Management Script -->
+    <script src="{{ asset('js/location-management.js') }}"></script>
+    
+    <!-- Pass current location data to JavaScript -->
+    <script>
+        @if($currentLocation)
+        window.currentLocationData = {
+            name: {!! json_encode($currentLocation->name) !!},
+            address: {!! json_encode($currentLocation->address) !!},
+            latitude: {!! json_encode($currentLocation->latitude) !!},
+            longitude: {!! json_encode($currentLocation->longitude) !!},
+            radius: {!! json_encode($currentLocation->radius) !!},
+            description: {!! json_encode($currentLocation->description ?? '') !!}
+        };
+        @else
+        window.currentLocationData = null;
+        @endif
+        
+        // Update button text after setting currentLocationData
+        if (window.updateLocationButtonText) {
+            window.updateLocationButtonText();
+        }
+    </script>
 </x-app-layout>
