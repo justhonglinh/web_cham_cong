@@ -51,14 +51,14 @@ class AttendanceController extends Controller
             ->whereNull('overtime_id')
             ->where('date', $today)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
          $attendance_overtimes = Attendance::with('overtimeShift', 'user')
             ->whereIn('user_id', $employeeIds)
             ->whereNull('shift_id')
             ->where('date', '>=', $today)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
 
         $shifts = Shift::where('user_id', $managerId)->get();

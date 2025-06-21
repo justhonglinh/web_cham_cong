@@ -9,23 +9,32 @@
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div class="text-white">
-                    <h1 class="text-3xl font-bold mb-2">Quản lý tổng kết công việc</h1>
-                    <p class="text-indigo-100 text-lg">Thống kê và báo cáo tổng hợp công việc</p>
+                    <h1 class="text-3xl font-bold mb-2">Quản lý tổng hợp công việc</h1>
+                    <p class="text-indigo-100 text-lg">Theo dõi và quản lý tổng hợp giờ làm việc</p>
                 </div>
                 
-                <!-- Export Button -->
+                <!-- Action Buttons -->
                 <div class="flex items-center space-x-4">
-                    <form method="GET" action="{{ route('work.export') }}" class="flex items-center">
-                        <input type="hidden" name="user" value="{{ request('user') }}">
-                        <input type="hidden" name="month" value="{{ request('month') }}">
-                        <input type="hidden" name="year" value="{{ request('year') }}">
-                        <button type="submit" class="flex items-center gap-2 bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all text-base whitespace-nowrap">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    <!-- Search Bar -->
+                    <div class="relative">
+                        <input type="text" id="search"
+                            class="pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:ring-2 focus:ring-white/50 focus:outline-none text-white placeholder-indigo-100 w-64"
+                            placeholder="Tìm kiếm tổng hợp...">
+                        <span class="absolute left-3 top-2.5 text-indigo-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="M21 21l-4.35-4.35"/>
                             </svg>
-                            Xuất Excel
-                        </button>
-                    </form>
+                        </span>
+                    </div>
+                    
+                    <!-- Export Button -->
+                    <a href="{{ route('work.export') }}" class="flex items-center gap-2 bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all text-base whitespace-nowrap">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Xuất Excel
+                    </a>
                 </div>
             </div>
         </div>
@@ -89,65 +98,6 @@
                         <p class="text-2xl font-bold text-gray-900">{{ $workSummaries->sum('total_leave_days') }}</p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Search and Filter Section -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-            <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
-                <h3 class="text-xl font-bold text-white flex items-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Tìm kiếm và lọc
-                </h3>
-            </div>
-            
-            <div class="p-6">
-                <form method="GET" action="{{ route('work.search') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div>
-                        <label for="user" class="block text-sm font-medium text-gray-700 mb-2">Nhân viên</label>
-                        <input type="text" name="user" id="user" value="{{ request('user') }}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                            placeholder="ID hoặc tên">
-                    </div>
-
-                    <div>
-                        <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Tháng</label>
-                        <select name="month" id="month" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">-- Chọn tháng --</option>
-                            @for ($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                            @endfor
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Năm</label>
-                        <select name="year" id="year" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">-- Chọn năm --</option>
-                            @foreach ($years as $y)
-                                <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Ngày</label>
-                        <input type="text" name="date" id="datepicker" value="{{ request('date') }}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                            placeholder="Chọn ngày">
-                    </div>
-
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            Tìm kiếm
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
 
@@ -261,6 +211,36 @@
         flatpickr("#datepicker", {
             dateFormat: "Y-m-d",
             placeholder: "Chọn ngày"
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality for work summary
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchText = this.value.toLowerCase().trim();
+                    const rows = document.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const id = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+                        const name = row.querySelector('td:nth-child(2) .text-sm.font-medium')?.textContent.toLowerCase() || '';
+                        const time = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                        const workHours = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                        const overtimeHours = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+                        const leaveDays = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+                        
+                        const allText = `${id} ${name} ${time} ${workHours} ${overtimeHours} ${leaveDays}`;
+                        
+                        if (allText.includes(searchText)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
         });
     </script>
 </x-app-layout>

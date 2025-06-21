@@ -153,29 +153,152 @@
             <!-- Weekly Attendance Chart -->
             <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                    <h3 class="text-xl font-bold text-white flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                        Thống kê chấm công tuần này
-                    </h3>
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Thống kê chấm công tuần này
+                        </h3>
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-lg">
+                                <span class="text-white text-sm font-medium">
+                                    @php
+                                        $totalWeekAttendance = array_sum(array_column($weeklyStats, 'count'));
+                                        $avgDailyAttendance = $totalWeekAttendance > 0 ? round($totalWeekAttendance / count($weeklyStats), 1) : 0;
+                                    @endphp
+                                    TB: {{ $avgDailyAttendance }}/ngày
+                                </span>
+                            </div>
+                            <div class="bg-white bg-opacity-20 px-3 py-1 rounded-lg">
+                                <span class="text-white text-sm font-medium">
+                                    Tổng: {{ $totalWeekAttendance }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-6">
-                    <div class="flex items-end justify-between space-x-2 h-32">
+                    <!-- Chart -->
+                    <div class="flex items-end justify-between space-x-2 h-40 mb-6">
                         @php
                             $maxCount = max(array_column($weeklyStats, 'count'));
                             $maxCount = $maxCount > 0 ? $maxCount : 1;
                         @endphp
                         @foreach($weeklyStats as $stat)
                         <div class="flex flex-col items-center flex-1">
-                            <div class="w-full bg-gray-200 rounded-t-lg relative" style="height: {{ max(20, ($stat['count'] / $maxCount) * 100) }}%">
-                                <div class="absolute inset-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg"></div>
+                            <div class="w-full bg-gray-200 rounded-t-lg relative group cursor-pointer" style="height: {{ max(20, ($stat['count'] / $maxCount) * 100) }}%">
+                                <div class="absolute inset-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all duration-200 group-hover:from-blue-600 group-hover:to-blue-500"></div>
+                                <!-- Tooltip -->
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                    {{ $stat['count'] }} chấm công
+                                </div>
                             </div>
                             <p class="text-xs text-gray-600 mt-2 font-medium">{{ $stat['day'] }}</p>
                             <p class="text-xs text-gray-500">{{ $stat['date'] }}</p>
                             <p class="text-xs font-bold text-blue-600">{{ $stat['count'] }}</p>
                         </div>
                         @endforeach
+                    </div>
+                    
+                    <!-- Weekly Summary -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        @php
+                            $highestDay = collect($weeklyStats)->sortByDesc('count')->first();
+                            $lowestDay = collect($weeklyStats)->sortBy('count')->first();
+                            $workDays = collect($weeklyStats)->where('count', '>', 0)->count();
+                        @endphp
+                        
+                        <!-- Highest Day -->
+                        <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-green-100 rounded-lg mr-3">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-green-800">Cao nhất</p>
+                                    <p class="text-lg font-bold text-green-900">{{ $highestDay['day'] ?? 'N/A' }}</p>
+                                    <p class="text-xs text-green-600">{{ $highestDay['count'] ?? 0 }} chấm công</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lowest Day -->
+                        <div class="bg-red-50 rounded-xl p-4 border border-red-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-red-100 rounded-lg mr-3">
+                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-red-800">Thấp nhất</p>
+                                    <p class="text-lg font-bold text-red-900">{{ $lowestDay['day'] ?? 'N/A' }}</p>
+                                    <p class="text-xs text-red-600">{{ $lowestDay['count'] ?? 0 }} chấm công</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Work Days -->
+                        <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-blue-800">Ngày làm việc</p>
+                                    <p class="text-lg font-bold text-blue-900">{{ $workDays }}/7</p>
+                                    <p class="text-xs text-blue-600">{{ round(($workDays / 7) * 100, 1) }}% tuần</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trend Analysis -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Phân tích xu hướng
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            @php
+                                $firstHalf = collect($weeklyStats)->take(3)->sum('count');
+                                $secondHalf = collect($weeklyStats)->skip(3)->sum('count');
+                                $trend = $secondHalf > $firstHalf ? 'tăng' : ($secondHalf < $firstHalf ? 'giảm' : 'ổn định');
+                                $trendColor = $secondHalf > $firstHalf ? 'text-green-600' : ($secondHalf < $firstHalf ? 'text-red-600' : 'text-blue-600');
+                                $trendIcon = $secondHalf > $firstHalf ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : ($secondHalf < $firstHalf ? 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6' : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z');
+                            @endphp
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Đầu tuần (T2-T4):</span>
+                                <span class="font-semibold">{{ $firstHalf }} chấm công</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Cuối tuần (T5-CN):</span>
+                                <span class="font-semibold">{{ $secondHalf }} chấm công</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Xu hướng:</span>
+                                <span class="font-semibold {{ $trendColor }} flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $trendIcon }}"></path>
+                                    </svg>
+                                    {{ $trend }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Hiệu suất:</span>
+                                <span class="font-semibold {{ $totalWeekAttendance >= ($employeesCount * 5) ? 'text-green-600' : 'text-yellow-600' }}">
+                                    {{ $totalWeekAttendance >= ($employeesCount * 5) ? 'Tốt' : 'Cần cải thiện' }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

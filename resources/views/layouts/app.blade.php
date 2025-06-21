@@ -16,6 +16,9 @@
     <!-- Thêm JavaScript DataTables -->
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     {{-- js model--}}
     <script src="{{ asset('js/model-employee.js') }}"></script>
     <script src="{{ asset('js/model-shift.js') }}"></script>
