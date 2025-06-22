@@ -7,10 +7,14 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Faker\Factory as Faker;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Shift;
+use App\Models\Location;
+use Illuminate\Support\Facades\Hash;
 
 class DemoDatabaseSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $faker = Faker::create('vi_VN'); // Sử dụng locale Việt Nam
 
@@ -29,17 +33,53 @@ class DemoDatabaseSeeder extends Seeder
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Tạo manager
-        $managerId = DB::table('users')->insertGetId([
-            'name' => "Nguyễn Văn Quản Lý",
-            'email' => 'manager@gmail.com',
-            'email_verified_at' => now(),
-            'password' => bcrypt('manager@gmail.com'),
+        // Tạo quản lý
+        $manager = User::create([
+            'name' => 'Nguyễn Văn Quản Lý',
+            'email' => 'manager@example.com',
+            'password' => Hash::make('password'),
             'role' => 'manager',
-            'manager' => null,
-            'avatar' => $faker->imageUrl(100, 100),
-            'created_at' => now(),
-            'updated_at' => now(),
+        ]);
+
+        // Tạo nhân viên
+        $employee = User::create([
+            'name' => 'Trần Thị Nhân Viên',
+            'email' => 'employee@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'employee',
+            'manager' => $manager->id,
+        ]);
+
+        // Tạo ca làm việc cho nhân viên
+        Shift::create([
+            'name' => 'Ca sáng',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'user_id' => $employee->id,
+        ]);
+
+        // Tạo vị trí làm việc cho quản lý
+        Location::create([
+            'user_id' => $manager->id,
+            'name' => 'Văn phòng chính',
+            'address' => '123 Đường ABC, Quận 1, TP.HCM',
+            'latitude' => 10.762622,
+            'longitude' => 106.660172,
+            'radius' => 200, // 200 mét
+            'is_active' => true,
+            'description' => 'Văn phòng chính của công ty',
+        ]);
+
+        // Tạo thêm một số vị trí khác
+        Location::create([
+            'user_id' => $manager->id,
+            'name' => 'Chi nhánh 1',
+            'address' => '456 Đường XYZ, Quận 3, TP.HCM',
+            'latitude' => 10.7829,
+            'longitude' => 106.7004,
+            'radius' => 150,
+            'is_active' => false,
+            'description' => 'Chi nhánh phụ',
         ]);
 
         // Tạo 5 ca làm việc thực tế
@@ -59,7 +99,7 @@ class DemoDatabaseSeeder extends Seeder
                 'end_time' => $shift['end_time'],
                 'created_at' => now(),
                 'updated_at' => now(),
-                'user_id' => $managerId,
+                'user_id' => $manager->id,
             ]);
         }
 
@@ -75,7 +115,7 @@ class DemoDatabaseSeeder extends Seeder
 
         foreach ($overtimeData as $overtime) {
             $overtimeShifts[] = DB::table('overtime_shifts')->insertGetId([
-                'user_id' => $managerId,
+                'user_id' => $manager->id,
                 'name' => $overtime['name'],
                 'start_time' => $overtime['start_time'],
                 'end_time' => $overtime['end_time'],
@@ -106,7 +146,7 @@ class DemoDatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'remember_token' => Str::random(10),
                 'role' => 'employee',
-                'manager' => $managerId,
+                'manager' => $manager->id,
                 'avatar' => $faker->imageUrl(100, 100),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -257,37 +297,15 @@ class DemoDatabaseSeeder extends Seeder
                     'manager_notes' => $status !== 'pending' ? $faker->sentence() : null,
                     'approved_at' => $status === 'approved' ? $faker->dateTimeBetween('-10 days', 'now') : null,
                     'rejected_at' => $status === 'rejected' ? $faker->dateTimeBetween('-10 days', 'now') : null,
-                    'approver_id' => $status !== 'pending' ? $managerId : null,
+                    'approver_id' => $status !== 'pending' ? $manager->id : null,
                     'created_at' => $faker->dateTimeBetween('-30 days', 'now'),
                     'updated_at' => $faker->dateTimeBetween('-30 days', 'now'),
                 ]);
             }
         }
 
-        // Tạo dữ liệu location
-        $locations = [
-            ['name' => 'Văn phòng chính', 'address' => '123 Đường ABC, Quận 1, TP.HCM', 'latitude' => 10.7769, 'longitude' => 106.7009, 'radius' => 100, 'is_active' => 1],
-            ['name' => 'Chi nhánh 1', 'address' => '456 Đường XYZ, Quận 3, TP.HCM', 'latitude' => 10.7829, 'longitude' => 106.6889, 'radius' => 150, 'is_active' => 1],
-            ['name' => 'Chi nhánh 2', 'address' => '789 Đường DEF, Quận 7, TP.HCM', 'latitude' => 10.7329, 'longitude' => 106.7229, 'radius' => 200, 'is_active' => 0],
-        ];
-
-        foreach ($locations as $location) {
-            DB::table('locations')->insert([
-                'user_id' => $managerId,
-                'name' => $location['name'],
-                'address' => $location['address'],
-                'latitude' => $location['latitude'],
-                'longitude' => $location['longitude'],
-                'radius' => $location['radius'],
-                'is_active' => $location['is_active'],
-                'description' => $faker->sentence(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
         echo "Demo data seeded successfully!\n";
-        echo "Manager account: manager@gmail.com / manager@gmail.com\n";
+        echo "Manager account: manager@example.com / password\n";
         echo "Employee accounts: [name]@company.com / password\n";
     }
 

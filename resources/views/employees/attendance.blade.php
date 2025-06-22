@@ -133,6 +133,33 @@
                     </div>
                 </div>
 
+                <!-- Validation Status -->
+                <div id="validationStatus" class="relative z-10 mb-4 hidden">
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- Face Validation -->
+                        <div id="faceValidation" class="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                            <div class="flex items-center text-yellow-700 font-medium text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <span id="faceValidationText">Đang kiểm tra khuôn mặt...</span>
+                            </div>
+                        </div>
+
+                        <!-- Location Validation -->
+                        <div id="locationValidation" class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                            <div class="flex items-center text-blue-700 font-medium text-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span id="locationValidationText">Đang kiểm tra vị trí...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Camera Container -->
                 <div class="relative z-10 mb-6">
                     <div class="relative bg-gray-900 rounded-xl overflow-hidden shadow-lg">
@@ -216,12 +243,13 @@
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <h3 class="text-sm font-semibold text-purple-800 mb-1">Lưu ý quan trọng:</h3>
+                            <h3 class="text-sm font-semibold text-purple-800 mb-1">Quy trình chấm công:</h3>
                             <ul class="text-xs sm:text-sm text-purple-700 space-y-1">
-                                <li>• Đảm bảo khuôn mặt rõ nét, không bị ngược sáng</li>
-                                <li>• Không che khuất khuôn mặt bằng khẩu trang, mũ, kính</li>
-                                <li>• Hệ thống sẽ kiểm tra vị trí của bạn khi chấm công</li>
-                                <li>• Vui lòng bật GPS để xác định vị trí chính xác</li>
+                                <li>• <strong>Bước 1:</strong> Đảm bảo khuôn mặt rõ nét, không bị ngược sáng</li>
+                                <li>• <strong>Bước 2:</strong> Không che khuất khuôn mặt bằng khẩu trang, mũ, kính</li>
+                                <li>• <strong>Bước 3:</strong> Hệ thống sẽ so sánh với ảnh đại diện của bạn</li>
+                                <li>• <strong>Bước 4:</strong> Kiểm tra vị trí hiện tại với phạm vi làm việc của quản lý</li>
+                                <li>• <strong>Bước 5:</strong> Vui lòng bật GPS để xác định vị trí chính xác</li>
                             </ul>
                         </div>
                     </div>
@@ -255,6 +283,8 @@
             const longitudeInput = document.getElementById('longitude');
             const distanceInput = document.getElementById('distance');
             const locationStatus = document.getElementById('locationStatus');
+            const faceValidationText = document.getElementById('faceValidationText');
+            const locationValidationText = document.getElementById('locationValidationText');
 
             let stream = null;
             let capturedImage = null;
@@ -379,6 +409,14 @@
                         return;
                     }
                     
+                    // Hiển thị validation status
+                    document.getElementById('validationStatus').classList.remove('hidden');
+                    locationStatus.classList.add('hidden');
+                    
+                    // Cập nhật trạng thái validation
+                    faceValidationText.textContent = 'Đang so sánh khuôn mặt với ảnh đại diện...';
+                    locationValidationText.textContent = 'Đang kiểm tra vị trí với quản lý...';
+                    
                     // Disable button và hiển thị loading
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = `
@@ -386,7 +424,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Đang xử lý...
+                        Đang xử lý chấm công...
                     `;
                     
                     // Submit form

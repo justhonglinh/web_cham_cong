@@ -103,6 +103,11 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/employees/attendance', [AttendanceController::class, 'showAttendanceForm'])->name('employees.attendance');
     Route::post('/employees/attendance', [AttendanceController::class, 'processAttendance'])->name('employees.attendance.process');
 
+    // Test route cho chức năng chấm công mới
+    Route::get('/test/attendance', function() {
+        return view('test.attendance-demo');
+    })->name('test.attendance');
+
     // Face compare route
     Route::get('/employees/face-compare', [FaceCompareController::class, 'showForm'])->name('employees.face-compare');
 

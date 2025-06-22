@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\OvertimeShift;
+use App\Models\Location;
 
 class AttendanceController extends Controller
 {
@@ -304,6 +305,24 @@ class AttendanceController extends Controller
         
         file_put_contents($fullPath, base64_decode($image1));
 
+        // 1. SO SÁNH KHUÔN MẶT VỚI AVATAR
+        $faceComparisonResult = $this->compareFaceWithAvatar($user, $fullPath);
+        
+        if (!$faceComparisonResult['success']) {
+            // Xóa ảnh đã lưu nếu so sánh thất bại
+            @unlink($fullPath);
+            return redirect()->back()->with('error', 'Không thể xác thực khuôn mặt: ' . $faceComparisonResult['message']);
+        }
+
+        // 2. KIỂM TRA VỊ TRÍ VỚI QUẢN LÝ
+        $locationValidationResult = $this->validateLocationWithManager($user, $request->input('latitude'), $request->input('longitude'));
+        
+        if (!$locationValidationResult['success']) {
+            // Xóa ảnh đã lưu nếu kiểm tra vị trí thất bại
+            @unlink($fullPath);
+            return redirect()->back()->with('error', 'Vị trí không hợp lệ: ' . $locationValidationResult['message']);
+        }
+
         // Xác định trạng thái chấm công
         $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
         $currentTimeOnly = $currentTime->format('H:i:s');
@@ -311,25 +330,6 @@ class AttendanceController extends Controller
         $status = 'present';
         if ($currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')) {
             $status = 'late';
-        }
-
-        // Kiểm tra vị trí nếu có
-        $latitude = $request->input('latitude');
-        $longitude = $request->input('longitude');
-        $distance = $request->input('distance');
-
-        // Tọa độ công ty (thay bằng tọa độ thực tế)
-        $officeLat = 21.028511;
-        $officeLng = 105.804817;
-
-        // Nếu chưa có distance từ client thì tính lại
-        if ($latitude && $longitude && !$distance) {
-            $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
-        }
-
-        // Nếu khoảng cách quá xa (>200m) thì đánh dấu vắng mặt
-        if ($distance && $distance > 200) {
-            $status = 'absent';
         }
 
         // Tạo hoặc cập nhật bản ghi chấm công
@@ -350,22 +350,139 @@ class AttendanceController extends Controller
             ]);
         }
 
-        return redirect()->route('employees.dashboard')->with('success', 'Chấm công thành công!');
+        return redirect()->route('employees.dashboard')->with('success', 'Chấm công thành công! Độ tin cậy: ' . $faceComparisonResult['confidence'] . '%');
     }
 
     /**
-     * Hàm tính khoảng cách Haversine (km)
+     * So sánh khuôn mặt với avatar ban đầu
      */
-    private function haversine($lat1, $lon1, $lat2, $lon2)
+    private function compareFaceWithAvatar($user, $capturedImagePath)
     {
-        $earthRadius = 6371; // km
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat/2) * sin($dLat/2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-            sin($dLon/2) * sin($dLon/2);
-        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-        $distance = $earthRadius * $c;
-        return $distance;
+        // Kiểm tra xem user có avatar không
+        if (!$user->avatar) {
+            return [
+                'success' => false,
+                'message' => 'Bạn chưa có ảnh đại diện trong hệ thống'
+            ];
+        }
+
+        $avatarPath = storage_path('app/public/' . $user->avatar);
+        
+        if (!file_exists($avatarPath)) {
+            return [
+                'success' => false,
+                'message' => 'Không tìm thấy ảnh đại diện'
+            ];
+        }
+
+        // Gọi API Face++ để so sánh
+        $api_key = env('FACEPP_API_KEY');
+        $api_secret = env('FACEPP_API_SECRET');
+        
+        if (!$api_key || !$api_secret) {
+            return [
+                'success' => false,
+                'message' => 'Cấu hình API nhận diện khuôn mặt chưa hoàn chỉnh'
+            ];
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::asMultipart()->post('https://api-us.faceplusplus.com/facepp/v3/compare', [
+                'api_key' => $api_key,
+                'api_secret' => $api_secret,
+                'image_file1' => fopen($capturedImagePath, 'r'),
+                'image_file2' => fopen($avatarPath, 'r'),
+            ]);
+
+            $result = $response->json();
+
+            if (isset($result['error_message'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Lỗi API: ' . $result['error_message']
+                ];
+            }
+
+            $confidence = $result['confidence'] ?? 0;
+            $threshold = 70; // Ngưỡng tin cậy 70%
+
+            if ($confidence >= $threshold) {
+                return [
+                    'success' => true,
+                    'confidence' => round($confidence, 2),
+                    'message' => 'Xác thực khuôn mặt thành công'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'confidence' => round($confidence, 2),
+                    'message' => 'Khuôn mặt không khớp với ảnh đại diện (Độ tin cậy: ' . round($confidence, 2) . '%)'
+                ];
+            }
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Lỗi khi gọi API nhận diện: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Kiểm tra vị trí với quản lý
+     */
+    private function validateLocationWithManager($user, $latitude, $longitude)
+    {
+        // Kiểm tra xem user có quản lý không
+        if (!$user->manager) {
+            return [
+                'success' => false,
+                'message' => 'Bạn chưa được phân công quản lý'
+            ];
+        }
+
+        // Lấy thông tin quản lý
+        $manager = User::find($user->manager);
+        if (!$manager) {
+            return [
+                'success' => false,
+                'message' => 'Không tìm thấy thông tin quản lý'
+            ];
+        }
+
+        // Lấy vị trí làm việc của quản lý
+        $managerLocation = Location::where('user_id', $manager->id)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$managerLocation) {
+            return [
+                'success' => false,
+                'message' => 'Quản lý chưa thiết lập vị trí làm việc'
+            ];
+        }
+
+        // Kiểm tra xem có vị trí GPS không
+        if (!$latitude || !$longitude) {
+            return [
+                'success' => false,
+                'message' => 'Không thể xác định vị trí hiện tại của bạn'
+            ];
+        }
+
+        // Kiểm tra xem có trong phạm vi cho phép không
+        if ($managerLocation->isWithinRadius($latitude, $longitude)) {
+            return [
+                'success' => true,
+                'message' => 'Vị trí hợp lệ',
+                'distance' => round($managerLocation->distanceTo($latitude, $longitude), 0)
+            ];
+        } else {
+            $distance = round($managerLocation->distanceTo($latitude, $longitude), 0);
+            return [
+                'success' => false,
+                'message' => "Bạn đang ở ngoài phạm vi làm việc (Cách " . $distance . "m, phạm vi cho phép: " . $managerLocation->radius . "m)"
+            ];
+        }
     }
 }

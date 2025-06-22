@@ -168,6 +168,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Back Button -->
+            <div class="relative z-10 mt-6 text-center">
+                <a href="{{ route('employees.dashboard') }}" 
+                   class="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors text-sm">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Quay lại Dashboard
+                </a>
+                
+                <!-- Demo Link -->
+                <div class="mt-4">
+                    <a href="{{ route('test.attendance') }}" 
+                       class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors text-sm">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Xem demo chức năng mới
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
