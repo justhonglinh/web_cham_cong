@@ -42,6 +42,11 @@
                         <x-nav-link :href="route('shifts.index')" :active="request()->routeIs('shifts.*')">
                             {{ __('Ca làm việc') }}
                         </x-nav-link>
+
+                        {{-- Yêu cầu nghỉ phép --}}
+                        <x-nav-link :href="route('leave.index')" :active="request()->routeIs('leave.*')">
+                            {{ __('Yêu cầu nghỉ phép') }}
+                        </x-nav-link>
                     </div>
 
                 </div>
@@ -98,6 +103,22 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Trang Chủ') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')">
+                {{ __('Nhân Viên') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                {{ __('Chấm Công') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('overtime.index')" :active="request()->routeIs('overtime.*')">
+                {{ __('Tăng Ca') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('leave.index')" :active="request()->routeIs('leave.*')">
+                {{ __('Yêu cầu nghỉ phép') }}
             </x-responsive-nav-link>
         </div>
 

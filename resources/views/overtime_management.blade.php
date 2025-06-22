@@ -161,7 +161,7 @@
                                     </svg>
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Thời gian:</span>
                                 </div>
-                                <p class="text-sm text-gray-900 dark:text-white mt-1">{{ ($shift->start_time) }} - {{ ($shift->end_time) }}</p>
+                                <p class="text-sm text-gray-900 dark:text-white mt-1">{{ \Carbon\Carbon::parse($shift->date)->format('d/m/Y') }} {{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}</p>
                             </div>
                             
                             <div class="bg-white dark:bg-gray-600 rounded-lg p-3 border border-gray-200 dark:border-gray-500">
@@ -169,9 +169,9 @@
                                     <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Số lượng tối đa:</span>
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Đăng ký:</span>
                                 </div>
-                                <p class="text-sm text-gray-900 dark:text-white mt-1">{{ $shift->max_registrations }}</p>
+                                <p class="text-sm text-gray-900 dark:text-white mt-1">{{ $shift->current_registrations }}/{{ $shift->max_registrations }}</p>
                             </div>
                             
                             <div class="bg-white dark:bg-gray-600 rounded-lg p-3 border border-gray-200 dark:border-gray-500">
@@ -179,13 +179,19 @@
                                     <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Nhóm hiện tại:</span>
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái:</span>
                                 </div>
-                                <p class="text-sm text-gray-900 dark:text-white mt-1">{{ $shift->overtimeRequests->where('status', 'approved')->pluck('user.name')->unique()->implode(', ') ?: 'Chưa có' }}</p>
+                                <p class="text-sm text-gray-900 dark:text-white mt-1">
+                                    @if($shift->isFull)
+                                        <span class="text-red-600 font-medium">Đã đầy</span>
+                                    @else
+                                        <span class="text-green-600 font-medium">Còn chỗ</span>
+                                    @endif
+                                </p>
                             </div>
                         </div>
 
-                        <!-- Requests Section -->
+                        <!-- All Requests Section -->
                         @if($shift->overtimeRequests->isEmpty())
                             <div class="text-center py-6">
                                 <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,58 +200,71 @@
                                 <p class="text-gray-500 dark:text-gray-400 text-sm">Chưa có yêu cầu làm thêm giờ nào.</p>
                             </div>
                         @else
-                            @if($shift->current_registrations < $shift->max_registrations)
-                                <div x-data="{ open: false }" class="relative">
-                                    <button @click="open = !open"
-                                            class="flex items-center justify-between w-full mb-4 px-4 py-3 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 focus:outline-none transition-colors">
-                                        <span class="flex items-center">
-                                            <svg class="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            Danh sách đăng ký đang chờ duyệt ({{ $shift->overtimeRequests->where('status', 'pending')->count() }})
-                                        </span>
-                                        <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }"
-                                             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open"
+                                        class="flex items-center justify-between w-full mb-4 px-4 py-3 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 focus:outline-none transition-colors">
+                                    <span class="flex items-center">
+                                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                         </svg>
-                                    </button>
+                                        Danh sách yêu cầu ({{ $shift->overtimeRequests->count() }})
+                                        <span class="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">{{ $shift->overtimeRequests->where('status', 'pending')->count() }} chờ duyệt</span>
+                                        <span class="ml-2 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">{{ $shift->overtimeRequests->where('status', 'approved')->count() }} đã duyệt</span>
+                                        <span class="ml-2 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">{{ $shift->overtimeRequests->where('status', 'rejected')->count() }} từ chối</span>
+                                    </span>
+                                    <svg class="w-5 h-5 transform transition-transform" :class="{ 'rotate-180': open }"
+                                         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
 
-                                    <div x-show="open" x-transition class="mt-4">
-                                        <div class="bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 overflow-hidden">
-                                            <table class="w-full">
-                                                <thead class="bg-gray-50 dark:bg-gray-700">
-                                                    <tr>
-                                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nhân viên</th>
-                                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Thời gian tạo</th>
-                                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Hành động</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-gray-200 dark:divide-gray-500">
-                                                    @foreach ($shift->overtimeRequests->where('status', 'pending') as $request)
-                                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors">
-                                                            <td class="px-4 py-3">
-                                                                <div class="flex items-center">
-                                                                    @if($request->user && $request->user->avatar)
-                                                                        <img src="{{ asset('storage/' . $request->user->avatar) }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200 shadow-sm mr-3" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                                        <div class="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center mr-3" style="display: none;">
-                                                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                                            </svg>
-                                                                        </div>
-                                                                    @else
-                                                                        <div class="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center mr-3">
-                                                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                                            </svg>
-                                                                        </div>
-                                                                    @endif
-                                                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $request->user->name }}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                                                Vào lúc {{ \Carbon\Carbon::parse($request->created_at)->format('H:i') }} ngày {{ \Carbon\Carbon::parse($request->created_at)->format('d/m') }}
-                                                            </td>
-                                                            <td class="px-4 py-3 text-center">
+                                <div x-show="open" x-transition class="mt-4">
+                                    <div class="bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 overflow-hidden">
+                                        <table class="w-full">
+                                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                                <tr>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nhân viên</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Thời gian tạo</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Trạng thái</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Hành động</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200 dark:divide-gray-500">
+                                                @foreach ($shift->overtimeRequests as $request)
+                                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors">
+                                                        <td class="px-4 py-3">
+                                                            <div class="flex items-center">
+                                                                @if($request->user && $request->user->avatar)
+                                                                    <img src="{{ asset('storage/' . $request->user->avatar) }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200 shadow-sm mr-3" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                                    <div class="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center mr-3" style="display: none;">
+                                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                        </svg>
+                                                                    </div>
+                                                                @else
+                                                                    <div class="w-8 h-8 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center mr-3">
+                                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                        </svg>
+                                                                    </div>
+                                                                @endif
+                                                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $request->user->name }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                                                            {{ \Carbon\Carbon::parse($request->created_at)->format('H:i d/m/Y') }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                                @if($request->status === 'pending') bg-yellow-100 text-yellow-800
+                                                                @elseif($request->status === 'approved') bg-green-100 text-green-800
+                                                                @else bg-red-100 text-red-800
+                                                                @endif">
+                                                                {{ $request->status_text }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            @if($request->status === 'pending')
                                                                 <div class="flex items-center justify-center space-x-2">
                                                                     <form method="POST" action="{{ route('overtimeRequests.update', $request->id) }}" class="inline-block">
                                                                         @csrf
@@ -267,22 +286,23 @@
                                                                         </button>
                                                                     </form>
                                                                 </div>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                            @else
+                                                                <span class="text-sm text-gray-500">
+                                                                    @if($request->status === 'approved')
+                                                                        Đã phê duyệt lúc {{ \Carbon\Carbon::parse($request->updated_at)->format('H:i d/m/Y') }}
+                                                                    @else
+                                                                        Đã từ chối lúc {{ \Carbon\Carbon::parse($request->updated_at)->format('H:i d/m/Y') }}
+                                                                    @endif
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-                            @else
-                                <div class="text-center py-4">
-                                    <svg class="w-8 h-8 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <p class="text-green-600 dark:text-green-400 text-sm font-medium">Đã đủ thành viên cho dự án</p>
-                                </div>
-                            @endif
+                            </div>
                         @endif
                     </div>
                 @empty

@@ -14,9 +14,18 @@ class Attendance extends Model
         'shift_id',    // nếu bạn muốn mass assign shift_id
         'overtime_id', // nếu bạn muốn mass assign overtime_shift_id
         'date',        // thêm trường ngày
+        'check_in_time',
+        'check_out_time',
         'status',      // thêm trạng thái điểm danh
         'face_image',  // thêm trường ảnh chấm công
     ];
+
+    protected $casts = [
+        'date' => 'date',
+        'check_in_time' => 'datetime:H:i',
+        'check_out_time' => 'datetime:H:i',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -30,5 +39,32 @@ class Attendance extends Model
     public function overtimeShift()
     {
         return $this->belongsTo(OvertimeShift::class, 'overtime_id');
+    }
+
+    // Helper methods
+    public function getStatusTextAttribute()
+    {
+        return match($this->status) {
+            'present' => 'Có mặt',
+            'leave' => 'Nghỉ phép',
+            'absent' => 'Vắng mặt',
+            'late' => 'Đi muộn',
+            'early_leave' => 'Về sớm',
+            'pending' => 'Chờ chấm công',
+            default => 'Không xác định'
+        };
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return match($this->status) {
+            'present' => 'green',
+            'leave' => 'blue',
+            'absent' => 'red',
+            'late' => 'yellow',
+            'early_leave' => 'orange',
+            'pending' => 'gray',
+            default => 'gray'
+        };
     }
 }

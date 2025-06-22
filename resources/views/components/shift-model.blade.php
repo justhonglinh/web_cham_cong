@@ -4,7 +4,7 @@
     <div class="bg-white p-8 rounded-lg shadow-lg w-1/3">
         <h2 class="text-xl font-semibold mb-4">Tạo Ca Làm Việc</h2>
 
-        <form action="{{ route('shifts.store') }}" method="POST">
+        <form action="{{ route('shifts.store') }}" method="POST" id="createShiftForm">
             @csrf
 
             <div class="mb-4">
@@ -12,6 +12,7 @@
                 <input type="text" id="shiftName" name="name" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="nameError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <div class="mb-4">
@@ -19,6 +20,7 @@
                 <input type="time" id="startTime" name="start_time" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="startTimeError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <div class="mb-4">
@@ -26,12 +28,13 @@
                 <input type="time" id="endTime" name="end_time" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="endTimeError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <input type="hidden" name="user_id" value="{{ Auth::user()->id }}">
 
             <div class="flex justify-between items-center">
-                <button type="submit"
+                <button type="submit" id="submitShiftBtn"
                         class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition duration-300">Xác Nhận
                 </button>
                 <button type="button" id="closeShiftModal"
@@ -59,6 +62,7 @@
                 <input type="text" id="editShiftName" name="name" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="editNameError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <div class="mb-4">
@@ -66,6 +70,7 @@
                 <input type="time" id="editStartTime" name="start_time" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="editStartTimeError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <div class="mb-4">
@@ -73,10 +78,11 @@
                 <input type="time" id="editEndTime" name="end_time" required
                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
                       focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div id="editEndTimeError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
 
             <div class="flex justify-between items-center">
-                <button type="submit"
+                <button type="submit" id="submitEditShiftBtn"
                         class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition duration-300">Xác Nhận
                 </button>
                 <button type="button" id="closeEditShiftModal"

@@ -7,6 +7,7 @@ use App\Models\OvertimeRequest;
 use App\Models\OvertimeShift;
 use App\Models\Shift;
 use App\Models\User;
+use App\Models\LeaveRequest;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -23,8 +24,26 @@ class DashboardController extends Controller
             // Lấy danh sách nhân viên do quản lý này quản lý
             $employeesCount = User::where('manager', $managerId)->count();
 
-            // Lấy số lượng ca làm việc của quản lý này
-            $shiftsCount = Shift::where('user_id', $managerId)->count();
+            // Thống kê ca làm việc chi tiết
+            $allShifts = Shift::where('user_id', $managerId)->get();
+            $shiftsCount = $allShifts->count();
+            
+            // Phân loại ca làm theo trạng thái
+            $activeShifts = $allShifts->filter(function($shift) use ($today) {
+                return !Attendance::where('shift_id', $shift->id)
+                    ->where('date', '<', $today)
+                    ->exists();
+            })->count();
+            
+            $oldShifts = $allShifts->filter(function($shift) use ($today) {
+                return Attendance::where('shift_id', $shift->id)
+                    ->where('date', '<', $today)
+                    ->exists();
+            })->count();
+            
+            $unusedShifts = $allShifts->filter(function($shift) {
+                return !$shift->attendances()->exists();
+            })->count();
 
             // Lấy số lượng yêu cầu tăng ca của quản lý này
             $overtimesCount = OvertimeShift::where('user_id', $managerId)->count();
@@ -49,6 +68,13 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
+            // Lấy số yêu cầu nghỉ phép đang chờ duyệt
+            $pendingLeaveRequests = LeaveRequest::whereHas('user', function($query) use ($managerId) {
+                $query->where('manager', $managerId);
+            })
+            ->where('status', 'pending')
+            ->count();
+
             // Lấy số nhân viên chấm công muộn hôm nay (sau 8:15 AM)
             $lateAttendances = Attendance::whereHas('user', function($query) use ($managerId) {
                 $query->where('manager', $managerId);
@@ -58,13 +84,15 @@ class DashboardController extends Controller
             ->where('check_in_time', '>', '08:15:00')
             ->count();
 
-            // Lấy số ca làm việc đang được sử dụng
-            $activeShifts = Shift::where('user_id', $managerId)
-                ->whereHas('attendances')
-                ->count();
-
             // Lấy số yêu cầu tăng ca đã được phê duyệt
             $approvedOvertimeRequests = OvertimeRequest::whereHas('user', function($query) use ($managerId) {
+                $query->where('manager', $managerId);
+            })
+            ->where('status', 'approved')
+            ->count();
+
+            // Lấy số yêu cầu nghỉ phép đã được phê duyệt
+            $approvedLeaveRequests = LeaveRequest::whereHas('user', function($query) use ($managerId) {
                 $query->where('manager', $managerId);
             })
             ->where('status', 'approved')
@@ -75,6 +103,15 @@ class DashboardController extends Controller
                 $query->where('manager', $managerId);
             })
             ->with('user', 'overtimeShift')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+            // Lấy các yêu cầu nghỉ phép gần đây
+            $recentLeaveRequests = LeaveRequest::whereHas('user', function($query) use ($managerId) {
+                $query->where('manager', $managerId);
+            })
+            ->with('user')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -106,19 +143,41 @@ class DashboardController extends Controller
                 ];
             }
 
+            // Thống kê ca làm theo thời gian
+            $shiftTimeStats = [];
+            $shifts = Shift::where('user_id', $managerId)->get();
+            foreach ($shifts as $shift) {
+                $usageCount = $shift->attendances()->count();
+                $shiftTimeStats[] = [
+                    'name' => $shift->name,
+                    'start_time' => $shift->start_time,
+                    'end_time' => $shift->end_time,
+                    'usage_count' => $usageCount,
+                    'is_active' => !Attendance::where('shift_id', $shift->id)
+                        ->where('date', '<', $today)
+                        ->exists()
+                ];
+            }
+
             return view('dashboard_management', compact(
                 'employeesCount', 
-                'shiftsCount', 
+                'shiftsCount',
+                'activeShifts',
+                'oldShifts',
+                'unusedShifts',
                 'overtimesCount', 
                 'overtimeRequestsCount',
                 'attendancesCount',
                 'pendingOvertimeRequests',
+                'pendingLeaveRequests',
                 'lateAttendances',
-                'activeShifts',
                 'approvedOvertimeRequests',
+                'approvedLeaveRequests',
                 'recentOvertimeRequests',
+                'recentLeaveRequests',
                 'recentAttendances',
-                'weeklyStats'
+                'weeklyStats',
+                'shiftTimeStats'
             ));
         } else {
             return view('employees.dashboard');

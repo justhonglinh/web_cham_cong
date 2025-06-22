@@ -17,6 +17,7 @@ class DemoDatabaseSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         // Truncate các bảng
+        DB::table('leave_requests')->truncate();
         DB::table('overtime_requests')->truncate();
         DB::table('attendances')->truncate();
         DB::table('work_summary')->truncate();
@@ -24,6 +25,7 @@ class DemoDatabaseSeeder extends Seeder
         DB::table('users')->truncate();
         DB::table('shifts')->truncate();
         DB::table('overtime_shifts')->truncate();
+        DB::table('locations')->truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
@@ -198,25 +200,95 @@ class DemoDatabaseSeeder extends Seeder
 
         // Tạo yêu cầu tăng ca
         foreach ($users as $userId) {
-            $requestStatuses = ['approved', 'pending', 'rejected'];
-            $requestStatusWeights = [60, 30, 10];
-            
             // Mỗi nhân viên có 1-3 yêu cầu tăng ca
-            $requestCount = rand(1, 3);
-            
-            for ($i = 0; $i < $requestCount; $i++) {
-                $status = $this->getRandomStatus($requestStatuses, $requestStatusWeights);
-                
+            $numRequests = rand(1, 3);
+            for ($i = 0; $i < $numRequests; $i++) {
+                $overtimeShiftId = $overtimeShifts[array_rand($overtimeShifts)];
+                $statuses = ['pending', 'approved', 'rejected'];
+                $statusWeights = [40, 40, 20]; // 40% pending, 40% approved, 20% rejected
+                $status = $this->getRandomStatus($statuses, $statusWeights);
+
                 DB::table('overtime_requests')->insert([
                     'user_id' => $userId,
-                    'overtime_shift_id' => $overtimeShifts[array_rand($overtimeShifts)],
+                    'overtime_shift_id' => $overtimeShiftId,
                     'status' => $status,
-                    'created_at' => now()->subDays(rand(1, 30)),
-                    'approved_at' => $status === 'approved' ? now()->subDays(rand(1, 7)) : null,
-                    'updated_at' => now(),
+                    'created_at' => $faker->dateTimeBetween('-30 days', 'now'),
+                    'updated_at' => $faker->dateTimeBetween('-30 days', 'now'),
+                ]);
+
+                // Nếu approved, tăng current_registrations
+                if ($status === 'approved') {
+                    DB::table('overtime_shifts')
+                        ->where('id', $overtimeShiftId)
+                        ->increment('current_registrations');
+                }
+            }
+        }
+
+        // Tạo yêu cầu nghỉ phép
+        foreach ($users as $userId) {
+            // Mỗi nhân viên có 0-2 yêu cầu nghỉ phép
+            $numLeaveRequests = rand(0, 2);
+            for ($i = 0; $i < $numLeaveRequests; $i++) {
+                $requestTypes = ['late', 'leave', 'early_leave'];
+                $requestType = $requestTypes[array_rand($requestTypes)];
+                $statuses = ['pending', 'approved', 'rejected'];
+                $statusWeights = [30, 50, 20]; // 30% pending, 50% approved, 20% rejected
+                $status = $this->getRandomStatus($statuses, $statusWeights);
+
+                // Tạo ngày yêu cầu trong tương lai hoặc quá khứ gần
+                $requestDate = $faker->dateTimeBetween('-15 days', '+15 days');
+                $startTime = $faker->time('H:i:s');
+                $endTime = $faker->time('H:i:s');
+
+                // Đảm bảo end_time > start_time
+                if ($endTime <= $startTime) {
+                    $endTime = date('H:i:s', strtotime($startTime) + 3600); // Thêm 1 giờ
+                }
+
+                DB::table('leave_requests')->insert([
+                    'user_id' => $userId,
+                    'type' => $requestType,
+                    'request_date' => $requestDate->format('Y-m-d'),
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'reason' => $faker->sentence(),
+                    'status' => $status,
+                    'manager_notes' => $status !== 'pending' ? $faker->sentence() : null,
+                    'approved_at' => $status === 'approved' ? $faker->dateTimeBetween('-10 days', 'now') : null,
+                    'rejected_at' => $status === 'rejected' ? $faker->dateTimeBetween('-10 days', 'now') : null,
+                    'approver_id' => $status !== 'pending' ? $managerId : null,
+                    'created_at' => $faker->dateTimeBetween('-30 days', 'now'),
+                    'updated_at' => $faker->dateTimeBetween('-30 days', 'now'),
                 ]);
             }
         }
+
+        // Tạo dữ liệu location
+        $locations = [
+            ['name' => 'Văn phòng chính', 'address' => '123 Đường ABC, Quận 1, TP.HCM', 'latitude' => 10.7769, 'longitude' => 106.7009, 'radius' => 100, 'is_active' => 1],
+            ['name' => 'Chi nhánh 1', 'address' => '456 Đường XYZ, Quận 3, TP.HCM', 'latitude' => 10.7829, 'longitude' => 106.6889, 'radius' => 150, 'is_active' => 1],
+            ['name' => 'Chi nhánh 2', 'address' => '789 Đường DEF, Quận 7, TP.HCM', 'latitude' => 10.7329, 'longitude' => 106.7229, 'radius' => 200, 'is_active' => 0],
+        ];
+
+        foreach ($locations as $location) {
+            DB::table('locations')->insert([
+                'user_id' => $managerId,
+                'name' => $location['name'],
+                'address' => $location['address'],
+                'latitude' => $location['latitude'],
+                'longitude' => $location['longitude'],
+                'radius' => $location['radius'],
+                'is_active' => $location['is_active'],
+                'description' => $faker->sentence(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        echo "Demo data seeded successfully!\n";
+        echo "Manager account: manager@gmail.com / manager@gmail.com\n";
+        echo "Employee accounts: [name]@company.com / password\n";
     }
 
     private function getRandomStatus($statuses, $weights)

@@ -96,7 +96,20 @@
                     <div class="ml-3">
                         <p class="text-sm font-medium text-gray-600">Ca làm việc</p>
                         <p class="text-2xl font-bold text-gray-900">{{ $shiftsCount }}</p>
-                        <p class="text-xs text-gray-500">{{ $activeShifts }} đang sử dụng</p>
+                        <div class="text-xs text-gray-500 space-y-1">
+                            <div class="flex items-center">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                {{ $activeShifts }} đang hoạt động
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                                {{ $oldShifts }} ca làm cũ
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                {{ $unusedShifts }} chưa sử dụng
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -143,7 +156,7 @@
                             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Yêu cầu chờ duyệt
+                            Yêu cầu tăng ca chờ duyệt
                         </h3>
                         <span class="bg-yellow-400 bg-opacity-30 px-3 py-1 rounded-full text-sm text-white">{{ $pendingOvertimeRequests }} yêu cầu</span>
                     </div>
@@ -151,6 +164,33 @@
                 <div class="p-6">
                     <p class="text-gray-700 mb-4">Bạn có {{ $pendingOvertimeRequests }} yêu cầu tăng ca đang chờ phê duyệt.</p>
                     <a href="{{ route('overtime.index') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Xem chi tiết
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <!-- Pending Leave Requests Alert -->
+            @if($pendingLeaveRequests > 0)
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Yêu cầu nghỉ phép chờ duyệt
+                        </h3>
+                        <span class="bg-teal-400 bg-opacity-30 px-3 py-1 rounded-full text-sm text-white">{{ $pendingLeaveRequests }} yêu cầu</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-700 mb-4">Bạn có {{ $pendingLeaveRequests }} yêu cầu nghỉ phép đang chờ phê duyệt.</p>
+                    <a href="{{ route('leave.index') }}" class="inline-flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -187,6 +227,138 @@
                 </div>
             </div>
             @endif
+        </div>
+
+        <!-- Shift Statistics Section -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Thống kê ca làm việc
+                    </h3>
+                    <a href="{{ route('shifts.index') }}" class="bg-white bg-opacity-20 px-3 py-1 rounded-lg text-white text-sm hover:bg-opacity-30 transition-colors">
+                        Quản lý ca làm
+                    </a>
+                </div>
+            </div>
+            <div class="p-6">
+                <!-- Shift Status Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-green-800">Đang hoạt động</p>
+                                <p class="text-2xl font-bold text-green-900">{{ $activeShifts }}</p>
+                                <p class="text-xs text-green-600">Ca làm hiện tại</p>
+                            </div>
+                            <div class="p-3 bg-green-100 rounded-lg">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-orange-800">Ca làm cũ</p>
+                                <p class="text-2xl font-bold text-orange-900">{{ $oldShifts }}</p>
+                                <p class="text-xs text-orange-600">Đã sử dụng trong quá khứ</p>
+                            </div>
+                            <div class="p-3 bg-orange-100 rounded-lg">
+                                <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-800">Chưa sử dụng</p>
+                                <p class="text-2xl font-bold text-blue-900">{{ $unusedShifts }}</p>
+                                <p class="text-xs text-blue-600">Ca làm mới tạo</p>
+                            </div>
+                            <div class="p-3 bg-blue-100 rounded-lg">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shift Details Table -->
+                @if(count($shiftTimeStats) > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ca làm</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Số lần sử dụng</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($shiftTimeStats as $shift)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ $shift['name'] }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ $shift['start_time'] }} - {{ $shift['end_time'] }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $shift['usage_count'] > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                        {{ $shift['usage_count'] }} lần
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    @if($shift['is_active'])
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Hoạt động
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Cũ
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Chưa có ca làm nào</h3>
+                    <p class="mt-1 text-sm text-gray-500">Bắt đầu tạo ca làm việc cho nhân viên của bạn.</p>
+                    <div class="mt-6">
+                        <a href="{{ route('shifts.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Tạo ca làm đầu tiên
+                        </a>
+                    </div>
+                </div>
+                @endif
+            </div>
         </div>
 
         <!-- Charts and Recent Activities -->
@@ -366,7 +538,7 @@
                     <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                         <div class="flex items-center">
                             <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                            <span class="text-sm font-medium text-gray-700">Đã phê duyệt</span>
+                            <span class="text-sm font-medium text-gray-700">OT đã phê duyệt</span>
                         </div>
                         <span class="text-lg font-bold text-green-600">{{ $approvedOvertimeRequests }}</span>
                     </div>
@@ -374,7 +546,7 @@
                     <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                         <div class="flex items-center">
                             <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
-                            <span class="text-sm font-medium text-gray-700">Chờ duyệt</span>
+                            <span class="text-sm font-medium text-gray-700">OT chờ duyệt</span>
                         </div>
                         <span class="text-lg font-bold text-yellow-600">{{ $pendingOvertimeRequests }}</span>
                     </div>
@@ -385,6 +557,27 @@
                             <span class="text-sm font-medium text-gray-700">Ca đang sử dụng</span>
                         </div>
                         <span class="text-lg font-bold text-purple-600">{{ $activeShifts }}</span>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Yêu cầu nghỉ phép</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-teal-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-gray-700">Đã phê duyệt</span>
+                                </div>
+                                <span class="text-lg font-bold text-teal-600">{{ $approvedLeaveRequests }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-gray-700">Chờ duyệt</span>
+                                </div>
+                                <span class="text-lg font-bold text-red-600">{{ $pendingLeaveRequests }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -502,6 +695,68 @@
                         </div>
                     @endif
                 </div>
+            </div>
+        </div>
+
+        <!-- Recent Leave Requests -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mt-6">
+            <div class="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Yêu cầu nghỉ phép gần đây
+                    </h3>
+                    <a href="{{ route('leave.index') }}" class="text-teal-100 hover:text-white text-sm">Xem tất cả</a>
+                </div>
+            </div>
+            <div class="p-6">
+                @if($recentLeaveRequests->count() > 0)
+                    <div class="space-y-4">
+                        @foreach($recentLeaveRequests as $request)
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center">
+                                @if($request->user && $request->user->avatar)
+                                    <img src="{{ asset('storage/' . $request->user->avatar) }}" alt="Avatar" class="w-10 h-10 rounded-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <svg class="w-5 h-5 text-white" style="display: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                @else
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                @endif
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">{{ $request->user->name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $request->leave_type }} - 
+                                    {{ \Carbon\Carbon::parse($request->start_date)->format('d/m/Y') }}
+                                    @if($request->end_date && $request->end_date != $request->start_date)
+                                        đến {{ \Carbon\Carbon::parse($request->end_date)->format('d/m/Y') }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                    {{ $request->status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                       ($request->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                    {{ ucfirst($request->status) }}
+                                </span>
+                                <p class="text-xs text-gray-500 mt-1">{{ $request->created_at->format('d/m H:i') }}</p>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="text-gray-500 text-sm">Chưa có yêu cầu nghỉ phép nào</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

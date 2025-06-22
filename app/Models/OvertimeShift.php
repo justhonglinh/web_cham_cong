@@ -17,11 +17,20 @@ class OvertimeShift extends Model
         'end_time',
         'description',
         'max_registrations',
+        'current_registrations',
     ];
+
+    protected $casts = [
+        'date' => 'date',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+    ];
+
     public function overtimeRequests()
     {
         return $this->hasMany(OvertimeRequest::class, 'overtime_shift_id', 'id');
     }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
@@ -29,7 +38,17 @@ class OvertimeShift extends Model
 
     public function attendances(): HasMany
     {
-        return $this->hasMany(Attendance::class);
+        return $this->hasMany(Attendance::class, 'overtime_id');
     }
 
+    // Helper methods
+    public function getAvailableSlotsAttribute()
+    {
+        return max(0, $this->max_registrations - $this->current_registrations);
+    }
+
+    public function isFullAttribute()
+    {
+        return $this->current_registrations >= $this->max_registrations;
+    }
 }

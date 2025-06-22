@@ -33,6 +33,11 @@
                             {{ __('Overtime') }}
                         </x-nav-link>
 
+                        {{-- Yêu cầu nghỉ phép --}}
+                        <x-nav-link :href="route('employees.leave.history')" :active="request()->routeIs('employees.leave.*')">
+                            {{ __('Leave Requests') }}
+                        </x-nav-link>
+
                     </div>
 
                 </div>
@@ -89,6 +94,18 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('employees.attendance')" :active="request()->routeIs('attendance.*')">
+                {{ __('Attendance') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('employees.overtime.index')" :active="request()->routeIs('*.overtime.*')">
+                {{ __('Overtime') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('employees.leave.history')" :active="request()->routeIs('employees.leave.*')">
+                {{ __('Leave Requests') }}
             </x-responsive-nav-link>
         </div>
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\OvertimeRequestController;
+use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\UserController;
@@ -61,12 +62,18 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 
     // shift management
     Route::get('/shift/management', [ShiftController::class, 'show'])->name('shifts.index');
+    Route::get('/shift/management/all', [ShiftController::class, 'showAll'])->name('shifts.all');
     Route::post('/shift/management', [ShiftController::class, 'store'])->name('shifts.store');
     Route::put('/shift/management/{id}', [ShiftController::class, 'update'])->name('shifts.update');
     Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+    Route::get('/shift/management/search', [ShiftController::class, 'search'])->name('shifts.search');
 
     // overtime request
     Route::patch('/overtime-requests/{id}/status', [OvertimeRequestController::class, 'updateStatus'])->name('overtimeRequests.update');
+
+    // leave request management
+    Route::get('/leave-requests/management', [LeaveRequestController::class, 'index'])->name('leave.index');
+    Route::patch('/leave-requests/{id}/status', [LeaveRequestController::class, 'updateStatus'])->name('leave.updateStatus');
 
     // work summary
     Route::get('/work-summary/management', [WorkSummaryController::class, 'show'])->name('work.index');
@@ -94,9 +101,17 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
 
     //overtime
     Route::get('/overtime/employee', [OvertimeController::class, 'show'])->name('employees.overtime.index');
+    Route::post('/overtime/register/{shiftId}', [OvertimeController::class, 'register'])->name('employees.overtime.register');
+    Route::delete('/overtime/unregister/{shiftId}', [OvertimeController::class, 'unregister'])->name('employees.overtime.unregister');
 
     //Lich su cham cong
     Route::get('/employees/attendance/history', [AttendanceController::class, 'history'])->name('employees.attendance.history');
+
+    // Leave request routes
+    Route::get('/employees/leave/request', [LeaveRequestController::class, 'showForm'])->name('employees.leave.request');
+    Route::post('/employees/leave', [LeaveRequestController::class, 'store'])->name('employees.leave.store');
+    Route::get('/employees/leave/history', [LeaveRequestController::class, 'history'])->name('employees.leave.history');
+    Route::delete('/employees/leave/{id}', [LeaveRequestController::class, 'destroy'])->name('employees.leave.destroy');
 });
 
 require __DIR__.'/auth.php';
