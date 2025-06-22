@@ -66,8 +66,6 @@ class AttendanceController extends Controller
         return view('attendance_management', compact('attendance_shifts','attendance_overtimes', 'shifts','overtimes'));
     }
 
-
-    // Cập nhật ca làm cho attendance
     public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
@@ -101,7 +99,6 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.index')->with('success', 'Cập nhật thành công');
     }
 
-    // Lịch sử chấm công cho nhân viên
     public function history()
     {
         $user = Auth::user();

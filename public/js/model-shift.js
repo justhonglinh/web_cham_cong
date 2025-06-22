@@ -15,34 +15,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const editShiftButtons = document.querySelectorAll('.openEditModal');
-    const editShiftModal = document.getElementById('editShiftModal');
-    const closeEditShiftBtn = document.getElementById('closeEditShiftModal');
-    const editShiftForm = document.getElementById('editShiftForm');
+    // === Mở modal sửa === (Logic giống hệt nút sửa nhân viên)
+    document.querySelectorAll('.openEditModal').forEach(button => {
+        button.addEventListener('click', e => {
+            e.preventDefault();
+            const shift = JSON.parse(button.getAttribute('data-user'));
 
-    if (editShiftButtons.length > 0 && editShiftModal && closeEditShiftBtn && editShiftForm) {
-        editShiftButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                try {
-                    const shift = JSON.parse(btn.dataset.shift);
-                    if (!shift) return;
+            document.getElementById('editShiftId').value = shift.id;
+            document.getElementById('editShiftName').value = shift.name;
+            document.getElementById('editStartTime').value = shift.start_time;
+            document.getElementById('editEndTime').value = shift.end_time;
 
-                    editShiftModal.classList.remove('hidden');
+            document.getElementById('editShiftForm').action = `/shift/management/${shift.id}`;
 
-                    document.getElementById('editShiftId').value = shift.id;
-                    document.getElementById('editShiftName').value = shift.name;
-                    document.getElementById('editStartTime').value = shift.start_time;
-                    document.getElementById('editEndTime').value = shift.end_time;
-
-                    editShiftForm.action = `/shift/management/${shift.id}`;
-                } catch (error) {
-                    console.error('Lỗi khi phân tích dữ liệu shift:', error);
-                }
-            });
+            document.getElementById('editShiftModal').classList.remove('hidden');
         });
+    });
 
+    // === Đóng modal sửa ===
+    const closeEditShiftBtn = document.getElementById('closeEditShiftModal');
+    if (closeEditShiftBtn) {
         closeEditShiftBtn.addEventListener('click', () => {
-            editShiftModal.classList.add('hidden');
+            document.getElementById('editShiftModal').classList.add('hidden');
         });
     }
+
+    // === Click ngoài modal để đóng ===
+    window.addEventListener('click', e => {
+        if (e.target === createShiftModal) {
+            createShiftModal.classList.add('hidden');
+        }
+        if (e.target === document.getElementById('editShiftModal')) {
+            document.getElementById('editShiftModal').classList.add('hidden');
+        }
+    });
 });

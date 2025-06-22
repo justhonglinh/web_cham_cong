@@ -49,7 +49,7 @@
                     @endif
                     
                     <!-- Add Shift Button -->
-                    <button id="openShiftModal"
+                    <button id="openCreateShiftModal"
                         class="flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all text-base whitespace-nowrap">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -273,14 +273,14 @@
                                             
                                             <!-- Nút Sửa -->
                                             <a href="javascript:void(0);" 
-                                               data-shift='${JSON.stringify(shift)}'
+                                               data-user='@json($shift)'
                                                class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition duration-200 shadow-sm" 
                                                title="Sửa ca làm">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                             </a>
                                             
                                             <!-- Nút Xóa -->
-                                            <form action="/shift/management/${shift.id}" method="POST" class="inline-block" 
+                                            <form action="/shift/management/{{ $shift->id }}" method="POST" class="inline-block" 
                                                   onsubmit="return confirm('Bạn có chắc muốn xóa ca làm này không?');">
                                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                                 <input type="hidden" name="_method" value="DELETE">
@@ -324,22 +324,6 @@
         const rowsPerPage = 10;
         const shifts = @json($shifts);
         let filteredShifts = shifts;
-
-        function bindShiftModalEvents() {
-            // Bind edit modal events for dynamically created buttons
-            document.querySelectorAll('.openEditModal').forEach(button => {
-                button.onclick = function(e) {
-                    e.preventDefault();
-                    const shift = JSON.parse(this.getAttribute('data-shift'));
-                    document.getElementById('editShiftId').value = shift.id;
-                    document.getElementById('editShiftName').value = shift.name;
-                    document.getElementById('editStartTime').value = shift.start_time;
-                    document.getElementById('editEndTime').value = shift.end_time;
-                    document.getElementById('editShiftForm').action = `/shift/management/${shift.id}`;
-                    document.getElementById('editShiftModal').classList.remove('hidden');
-                };
-            });
-        }
 
         function updateTableInfo(data) {
             const start = (data.length === 0) ? 0 : (currentPage - 1) * rowsPerPage + 1;
@@ -401,7 +385,7 @@
                         <div class="flex items-center justify-center space-x-2">
                             <!-- Nút Sửa -->
                             <a href="javascript:void(0);" 
-                               data-shift='${JSON.stringify(shift)}'
+                               data-user='${JSON.stringify(shift)}'
                                class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition duration-200 shadow-sm" 
                                title="Sửa ca làm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -443,7 +427,6 @@
                 nextBtn.className = "px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm";
             }
             
-            bindShiftModalEvents();
             updateTableInfo(data);
             updatePageInfo(data);
         }
@@ -486,43 +469,6 @@
                     });
                 });
             }
-
-            // Create shift modal
-            const createShiftModal = document.getElementById('createShiftModal');
-            const closeShiftModal = document.getElementById('closeShiftModal');
-            const openShiftModalBtn = document.getElementById('openShiftModal');
-
-            if (openShiftModalBtn) {
-                openShiftModalBtn.addEventListener('click', function() {
-                    createShiftModal.classList.remove('hidden');
-                });
-            }
-
-            if (closeShiftModal) {
-                closeShiftModal.addEventListener('click', function() {
-                    createShiftModal.classList.add('hidden');
-                });
-            }
-
-            // Edit shift modal
-            const editShiftModal = document.getElementById('editShiftModal');
-            const closeEditShiftModal = document.getElementById('closeEditShiftModal');
-
-            if (closeEditShiftModal) {
-                closeEditShiftModal.addEventListener('click', function() {
-                    editShiftModal.classList.add('hidden');
-                });
-            }
-
-            // Close modals when clicking outside
-            window.addEventListener('click', function(event) {
-                if (event.target === createShiftModal) {
-                    createShiftModal.classList.add('hidden');
-                }
-                if (event.target === editShiftModal) {
-                    editShiftModal.classList.add('hidden');
-                }
-            });
 
             // Initialize table
             renderTable(filteredShifts);

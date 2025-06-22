@@ -126,11 +126,6 @@ class ShiftController extends Controller
             return redirect()->back()->withErrors(['error' => 'Bạn không có quyền thực hiện hành động này.']);
         }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-        ]);
 
         $shift = Shift::findOrFail($id);
         
