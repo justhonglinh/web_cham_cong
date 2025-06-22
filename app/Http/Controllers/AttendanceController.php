@@ -104,7 +104,8 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $attendances = Attendance::where('user_id', $user->id)
             ->orderByDesc('date')
-            ->paginate(10);
+            ->where('date', '>=', now()->startOfMonth())
+            ->get();
 
         return view('employees.attendance-history', compact('attendances'));
     }
@@ -191,5 +192,180 @@ class AttendanceController extends Controller
         $overtimes = OvertimeShift::all();
 
         return view('attendance_management', compact('attendance', 'attendance_overtimes', 'shifts', 'overtimes'));
+    }
+
+    /**
+     * Hiển thị form chấm công với camera và thông tin ca làm việc hiện tại
+     */
+    public function showAttendanceForm()
+    {
+        $user = Auth::user();
+        $today = now()->toDateString();
+        $currentTime = now();
+
+        // Lấy ca làm việc của user hiện tại
+        $currentShift = Shift::where('user_id', $user->id)->first();
+        
+        // Kiểm tra xem đã chấm công hôm nay chưa
+        $todayAttendance = Attendance::where('user_id', $user->id)
+            ->where('date', $today)
+            ->whereNotNull('shift_id')
+            ->first();
+
+        // Xác định trạng thái ca làm việc hiện tại
+        $shiftStatus = 'no_shift';
+        $canCheckIn = false;
+        $shiftInfo = null;
+
+        if ($currentShift) {
+            $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+            $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+            $currentTimeOnly = $currentTime->format('H:i:s');
+            
+            // Kiểm tra xem có đang trong giờ làm việc không
+            if ($currentTimeOnly >= $shiftStartTime->format('H:i:s') && $currentTimeOnly <= $shiftEndTime->format('H:i:s')) {
+                $shiftStatus = 'active';
+                $canCheckIn = !$todayAttendance || !$todayAttendance->check_in_time;
+                $shiftInfo = [
+                    'name' => $currentShift->name,
+                    'start_time' => $shiftStartTime->format('H:i'),
+                    'end_time' => $shiftEndTime->format('H:i'),
+                    'current_time' => $currentTime->format('H:i'),
+                    'is_late' => $currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')
+                ];
+            } elseif ($currentTimeOnly < $shiftStartTime->format('H:i:s')) {
+                $shiftStatus = 'upcoming';
+                $shiftInfo = [
+                    'name' => $currentShift->name,
+                    'start_time' => $shiftStartTime->format('H:i'),
+                    'end_time' => $shiftEndTime->format('H:i'),
+                    'current_time' => $currentTime->format('H:i')
+                ];
+            } else {
+                $shiftStatus = 'ended';
+                $shiftInfo = [
+                    'name' => $currentShift->name,
+                    'start_time' => $shiftStartTime->format('H:i'),
+                    'end_time' => $shiftEndTime->format('H:i'),
+                    'current_time' => $currentTime->format('H:i')
+                ];
+            }
+        }
+
+        return view('employees.attendance', compact('currentShift', 'todayAttendance', 'shiftStatus', 'canCheckIn', 'shiftInfo'));
+    }
+
+    /**
+     * Xử lý chấm công với camera
+     */
+    public function processAttendance(Request $request)
+    {
+        $request->validate([
+            'image1' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'distance' => 'nullable|numeric',
+        ]);
+
+        $user = Auth::user();
+        $today = now()->toDateString();
+        $currentTime = now();
+
+        // Lấy ca làm việc hiện tại
+        $currentShift = Shift::where('user_id', $user->id)->first();
+        
+        if (!$currentShift) {
+            return redirect()->back()->with('error', 'Bạn chưa được phân công ca làm việc');
+        }
+
+        // Kiểm tra xem đã chấm công hôm nay chưa
+        $todayAttendance = Attendance::where('user_id', $user->id)
+            ->where('date', $today)
+            ->whereNotNull('shift_id')
+            ->first();
+
+        if ($todayAttendance && $todayAttendance->check_in_time) {
+            return redirect()->back()->with('error', 'Bạn đã chấm công vào hôm nay');
+        }
+
+        // Xử lý ảnh chụp từ camera
+        $capturedUrl = $request->input('image1');
+        $image1 = str_replace('data:image/png;base64,', '', $capturedUrl);
+        $image1 = str_replace(' ', '+', $image1);
+        
+        // Lưu ảnh chấm công
+        $imagePath = 'attendance_images/' . $user->id . '_' . $today . '_' . time() . '.png';
+        $fullPath = storage_path('app/public/' . $imagePath);
+        
+        // Tạo thư mục nếu chưa có
+        if (!file_exists(dirname($fullPath))) {
+            mkdir(dirname($fullPath), 0755, true);
+        }
+        
+        file_put_contents($fullPath, base64_decode($image1));
+
+        // Xác định trạng thái chấm công
+        $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+        $currentTimeOnly = $currentTime->format('H:i:s');
+        
+        $status = 'present';
+        if ($currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')) {
+            $status = 'late';
+        }
+
+        // Kiểm tra vị trí nếu có
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+        $distance = $request->input('distance');
+
+        // Tọa độ công ty (thay bằng tọa độ thực tế)
+        $officeLat = 21.028511;
+        $officeLng = 105.804817;
+
+        // Nếu chưa có distance từ client thì tính lại
+        if ($latitude && $longitude && !$distance) {
+            $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
+        }
+
+        // Nếu khoảng cách quá xa (>200m) thì đánh dấu vắng mặt
+        if ($distance && $distance > 200) {
+            $status = 'absent';
+        }
+
+        // Tạo hoặc cập nhật bản ghi chấm công
+        if ($todayAttendance) {
+            $todayAttendance->update([
+                'check_in_time' => $currentTime,
+                'status' => $status,
+                'face_image' => $imagePath,
+            ]);
+        } else {
+            Attendance::create([
+                'user_id' => $user->id,
+                'shift_id' => $currentShift->id,
+                'date' => $today,
+                'check_in_time' => $currentTime,
+                'status' => $status,
+                'face_image' => $imagePath,
+            ]);
+        }
+
+        return redirect()->route('employees.dashboard')->with('success', 'Chấm công thành công!');
+    }
+
+    /**
+     * Hàm tính khoảng cách Haversine (km)
+     */
+    private function haversine($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) * sin($dLat/2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+        $distance = $earthRadius * $c;
+        return $distance;
     }
 }

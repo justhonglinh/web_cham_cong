@@ -20,13 +20,6 @@
             </div>
         @endif
 
-        {{-- Thông báo thành công --}}
-        @if (session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-                {{ session('success') }}
-            </div>
-        @endif
-
         {{-- Danh sách ca làm thêm giờ --}}
         <section class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <h3 class="text-2xl font-semibold mb-8 text-gray-900 dark:text-gray-100">Danh sách Ca Làm Thêm Giờ</h3>

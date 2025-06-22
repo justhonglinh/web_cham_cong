@@ -1,143 +1,183 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Đăng ký yêu cầu') }}
-            </h2>
-        </div>
-    </x-slot>
-
-    <!-- Header Section -->
-    <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-green-800 -mt-6 -mx-6 px-6 py-8 mb-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div class="text-white">
-                    <h1 class="text-3xl font-bold mb-2">Đăng ký yêu cầu nghỉ phép</h1>
-                    <p class="text-green-100 text-lg">Gửi yêu cầu đi muộn/nghỉ phép/về sớm</p>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('employees.leave.history') }}" class="flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 font-semibold px-6 py-3 rounded-xl transition-all text-base whitespace-nowrap">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+    <div class="py-6 sm:py-8 lg:py-12" style="background: linear-gradient(135deg, #e0e7ff 0%, #fdf2f8 50%, #e0f2fe 100%); min-height: calc(100vh - 64px);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Header Section -->
+            <div class="bg-white/95 rounded-3xl shadow-2xl p-6 sm:p-8 border border-orange-200/50 backdrop-blur-xl mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📝 Đăng ký thay đổi lịch làm việc</h1>
+                        <p class="text-gray-600 text-base sm:text-lg">Gửi yêu cầu đi muộn/nghỉ phép/về sớm cho quản lý phê duyệt</p>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <a href="{{ route('employees.leave.history') }}" 
+                       class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-2xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                         </svg>
                         Xem lịch sử
                     </a>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-white flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Thông tin yêu cầu
-                    </h3>
-                </div>
-            </div>
-            
-            <div class="p-6">
-                <form method="POST" action="{{ route('employees.leave.store') }}" class="space-y-6">
-                    @csrf
-
-                    <!-- Loại yêu cầu -->
-                    <div>
-                        <x-input-label for="type" :value="__('Loại yêu cầu')" class="text-sm font-medium text-gray-700" />
-                        <select id="type" name="type" class="mt-1 block w-full border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-lg shadow-sm" required>
-                            <option value="">Chọn loại yêu cầu</option>
-                            <option value="late" {{ old('type') == 'late' ? 'selected' : '' }}>Đi muộn</option>
-                            <option value="leave" {{ old('type') == 'leave' ? 'selected' : '' }}>Nghỉ phép</option>
-                            <option value="early_leave" {{ old('type') == 'early_leave' ? 'selected' : '' }}>Về sớm</option>
-                        </select>
-                        <x-input-error :messages="$errors->get('type')" class="mt-2" />
-                    </div>
-
-                    <!-- Ngày yêu cầu -->
-                    <div>
-                        <x-input-label for="request_date" :value="__('Ngày yêu cầu')" class="text-sm font-medium text-gray-700" />
-                        <x-text-input id="request_date" name="request_date" type="date" class="mt-1 block w-full" :value="old('request_date')" required min="{{ date('Y-m-d') }}" />
-                        <x-input-error :messages="$errors->get('request_date')" class="mt-2" />
-                    </div>
-
-                    <!-- Thời gian bắt đầu (cho đi muộn/về sớm) -->
-                    <div id="time_fields" class="hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label for="start_time" :value="__('Thời gian bắt đầu')" class="text-sm font-medium text-gray-700" />
-                                <x-text-input id="start_time" name="start_time" type="time" class="mt-1 block w-full" :value="old('start_time')" />
-                                <x-input-error :messages="$errors->get('start_time')" class="mt-2" />
+            <!-- Main Content -->
+            <div class="max-w-4xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Form Section -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white/95 rounded-3xl shadow-xl border border-orange-200/50 backdrop-blur-xl overflow-hidden">
+                            <!-- Form Header -->
+                            <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-white">Thông tin yêu cầu</h3>
+                                        <p class="text-orange-100 text-sm">Điền đầy đủ thông tin bên dưới</p>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <!-- Form Content -->
+                            <div class="p-6 sm:p-8">
+                                <form method="POST" action="{{ route('employees.leave.store') }}" class="space-y-6">
+                                    @csrf
 
-                            <div>
-                                <x-input-label for="end_time" :value="__('Thời gian kết thúc')" class="text-sm font-medium text-gray-700" />
-                                <x-text-input id="end_time" name="end_time" type="time" class="mt-1 block w-full" :value="old('end_time')" />
-                                <x-input-error :messages="$errors->get('end_time')" class="mt-2" />
+                                    <!-- Loại yêu cầu -->
+                                    <div>
+                                        <label for="type" class="block text-sm font-semibold text-gray-700 mb-2">Loại yêu cầu *</label>
+                                        <select id="type" name="type" class="w-full border-gray-300 rounded-xl focus:border-orange-500 focus:ring-orange-500 shadow-sm transition-colors" required>
+                                            <option value="">Chọn loại yêu cầu</option>
+                                            <option value="late" {{ old('type') == 'late' ? 'selected' : '' }}>⏰ Đi muộn</option>
+                                            <option value="leave" {{ old('type') == 'leave' ? 'selected' : '' }}>🏖️ Nghỉ phép</option>
+                                            <option value="early_leave" {{ old('type') == 'early_leave' ? 'selected' : '' }}>🚪 Về sớm</option>
+                                        </select>
+                                        @error('type')
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Ngày yêu cầu -->
+                                    <div>
+                                        <label for="request_date" class="block text-sm font-semibold text-gray-700 mb-2">Ngày yêu cầu *</label>
+                                        <input id="request_date" name="request_date" type="date" 
+                                               class="w-full border-gray-300 rounded-xl focus:border-orange-500 focus:ring-orange-500 shadow-sm transition-colors" 
+                                               value="{{ old('request_date') }}" 
+                                               required 
+                                               min="{{ date('Y-m-d') }}" />
+                                        @error('request_date')
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Thời gian bắt đầu (cho đi muộn/về sớm) -->
+                                    <div id="time_fields" class="hidden space-y-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="start_time" class="block text-sm font-semibold text-gray-700 mb-2">Thời gian đến</label>
+                                                <input id="start_time" name="start_time" type="time" 
+                                                       class="w-full border-gray-300 rounded-xl focus:border-orange-500 focus:ring-orange-500 shadow-sm transition-colors" 
+                                                       value="{{ old('start_time') }}" />
+                                                @error('start_time')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+
+                                            <div>
+                                                <label for="end_time" class="block text-sm font-semibold text-gray-700 mb-2">Thời gian về</label>
+                                                <input id="end_time" name="end_time" type="time" 
+                                                       class="w-full border-gray-300 rounded-xl focus:border-orange-500 focus:ring-orange-500 shadow-sm transition-colors" 
+                                                       value="{{ old('end_time') }}" />
+                                                @error('end_time')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lý do -->
+                                    <div>
+                                        <label for="reason" class="block text-sm font-semibold text-gray-700 mb-2">Lý do *</label>
+                                        <textarea id="reason" name="reason" rows="4" 
+                                                  class="w-full border-gray-300 rounded-xl focus:border-orange-500 focus:ring-orange-500 shadow-sm transition-colors resize-none" 
+                                                  placeholder="Vui lòng nêu rõ lý do yêu cầu nghỉ phép..." 
+                                                  required>{{ old('reason') }}</textarea>
+                                        @error('reason')
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                                        <a href="{{ route('employees.leave.history') }}" 
+                                           class="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-semibold text-center">
+                                            ❌ Hủy bỏ
+                                        </a>
+                                        <button type="submit" 
+                                                class="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-semibold">
+                                            📤 Gửi yêu cầu
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lý do -->
-                    <div>
-                        <x-input-label for="reason" :value="__('Lý do')" class="text-sm font-medium text-gray-700" />
-                        <textarea id="reason" name="reason" rows="4" class="mt-1 block w-full border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-lg shadow-sm" placeholder="Vui lòng nêu rõ lý do..." required>{{ old('reason') }}</textarea>
-                        <x-input-error :messages="$errors->get('reason')" class="mt-2" />
-                    </div>
+                    <!-- Info Cards Section -->
+                    <div class="space-y-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">📋 Hướng dẫn loại yêu cầu</h3>
+                        
+                        <!-- Đi muộn -->
+                        <div class="bg-white/95 rounded-2xl shadow-lg p-6 border border-yellow-200/50 backdrop-blur-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 mb-2">⏰ Đi muộn</h4>
+                                    <p class="text-sm text-gray-600 leading-relaxed">Yêu cầu đi muộn với thời gian cụ thể. Cần chọn thời gian đến và thời gian về.</p>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="flex items-center justify-end mt-6">
-                        <a href="{{ route('employees.leave.history') }}" class="mr-4 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                            Hủy
-                        </a>
-                        <x-primary-button class="bg-green-600 hover:bg-green-700 focus:ring-green-500">
-                            {{ __('Gửi yêu cầu') }}
-                        </x-primary-button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <!-- Nghỉ phép -->
+                        <div class="bg-white/95 rounded-2xl shadow-lg p-6 border border-red-200/50 backdrop-blur-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 mb-2">🏖️ Nghỉ phép</h4>
+                                    <p class="text-sm text-gray-600 leading-relaxed">Yêu cầu nghỉ phép cả ngày. Không cần chọn thời gian cụ thể.</p>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Info Cards -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <div class="flex items-center mb-4">
-                    <div class="p-2 bg-yellow-100 rounded-lg">
-                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                        <!-- Về sớm -->
+                        <div class="bg-white/95 rounded-2xl shadow-lg p-6 border border-blue-200/50 backdrop-blur-xl">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 mb-2">🚪 Về sớm</h4>
+                                    <p class="text-sm text-gray-600 leading-relaxed">Yêu cầu về sớm với thời gian cụ thể. Cần chọn thời gian đến và thời gian về.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <h4 class="ml-3 font-semibold text-gray-900">Đi muộn</h4>
                 </div>
-                <p class="text-sm text-gray-600">Yêu cầu đi muộn với thời gian cụ thể. Cần chọn thời gian bắt đầu và kết thúc.</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <div class="flex items-center mb-4">
-                    <div class="p-2 bg-red-100 rounded-lg">
-                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="ml-3 font-semibold text-gray-900">Nghỉ phép</h4>
-                </div>
-                <p class="text-sm text-gray-600">Yêu cầu nghỉ phép cả ngày. Không cần chọn thời gian cụ thể.</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <div class="flex items-center mb-4">
-                    <div class="p-2 bg-blue-100 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="ml-3 font-semibold text-gray-900">Về sớm</h4>
-                </div>
-                <p class="text-sm text-gray-600">Yêu cầu về sớm với thời gian cụ thể. Cần chọn thời gian bắt đầu và kết thúc.</p>
             </div>
         </div>
     </div>

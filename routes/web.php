@@ -94,10 +94,17 @@ Route::middleware(['auth', 'role:manager'])->group(function () {
 // Các route chỉ dành cho employee
 
 Route::middleware(['auth', 'role:employee'])->group(function () {
+    // Employee dashboard
+    Route::get('/employees/dashboard', function () {
+        return view('employees.dashboard');
+    })->name('employees.dashboard');
+
     // Route chấm công cho nhân viên (giao diện bật cam chụp ảnh)
-    Route::get('/employees/attendance', function () {
-        return view('employees.attendance');
-    })->name('employees.attendance');
+    Route::get('/employees/attendance', [AttendanceController::class, 'showAttendanceForm'])->name('employees.attendance');
+    Route::post('/employees/attendance', [AttendanceController::class, 'processAttendance'])->name('employees.attendance.process');
+
+    // Face compare route
+    Route::get('/employees/face-compare', [FaceCompareController::class, 'showForm'])->name('employees.face-compare');
 
     //overtime
     Route::get('/overtime/employee', [OvertimeController::class, 'show'])->name('employees.overtime.index');

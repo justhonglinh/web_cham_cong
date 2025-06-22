@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Shift;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LeaveRequestController extends Controller
 {
@@ -20,66 +21,29 @@ class LeaveRequestController extends Controller
     // Nhân viên tạo yêu cầu mới
     public function store(Request $request)
     {
-        $request->validate([
-            'type' => 'required|in:late,leave,early_leave',
-            'request_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'reason' => 'required|string|max:500',
-        ], [
-            'type.required' => 'Vui lòng chọn loại yêu cầu.',
-            'type.in' => 'Loại yêu cầu không hợp lệ.',
-            'request_date.required' => 'Vui lòng chọn ngày yêu cầu.',
-            'request_date.after_or_equal' => 'Ngày yêu cầu phải từ hôm nay trở đi.',
-            'start_time.date_format' => 'Thời gian bắt đầu không đúng định dạng.',
-            'end_time.date_format' => 'Thời gian kết thúc không đúng định dạng.',
-            'end_time.after' => 'Thời gian kết thúc phải sau thời gian bắt đầu.',
-            'reason.required' => 'Vui lòng nhập lý do.',
-            'reason.max' => 'Lý do không được quá 500 ký tự.',
-        ]);
+        try {
+          
 
-        // Validation bổ sung cho thời gian
-        if ($request->type === 'late' || $request->type === 'early_leave') {
-            if (!$request->start_time || !$request->end_time) {
-                return back()->withErrors(['error' => 'Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc.']);
-            }
 
-            // Kiểm tra thời gian hợp lý
-            $startTime = \Carbon\Carbon::parse($request->start_time);
-            $endTime = \Carbon\Carbon::parse($request->end_time);
-            $duration = $endTime->diffInHours($startTime);
 
-            if ($duration < 1) {
-                return back()->withErrors(['error' => 'Thời gian làm việc phải ít nhất 1 giờ.']);
-            }
+                $leaveRequest = LeaveRequest::create([
+                    'user_id' => Auth::id(),
+                    'type' => $request->type,
+                    'request_date' => $request->request_date,
+                    'start_time' => $request->start_time,
+                    'end_time' => $request->end_time,
+                    'reason' => $request->reason,
+                    'status' => 'pending',
+                ]);
 
-            if ($duration > 12) {
-                return back()->withErrors(['error' => 'Thời gian làm việc không được quá 12 giờ.']);
-            }
+            return redirect()->route('employees.leave.history')
+                ->with('success', 'Yêu cầu đã được gửi thành công!');
+
+        } catch (\Exception $e) {
+            dd('Exception caught:', $e->getMessage(), 'Stack trace:', $e->getTraceAsString());
+            Log::error('Leave request creation error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Có lỗi xảy ra khi tạo yêu cầu. Vui lòng thử lại.']);
         }
-
-        // Kiểm tra xem đã có yêu cầu cho ngày này chưa
-        $existingRequest = LeaveRequest::where('user_id', Auth::id())
-            ->where('request_date', $request->request_date)
-            ->whereIn('status', ['pending', 'approved'])
-            ->first();
-
-        if ($existingRequest) {
-            return back()->withErrors(['request_date' => 'Bạn đã có yêu cầu cho ngày này.']);
-        }
-
-        LeaveRequest::create([
-            'user_id' => Auth::id(),
-            'type' => $request->type,
-            'request_date' => $request->request_date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'reason' => $request->reason,
-            'status' => 'pending',
-        ]);
-
-        return redirect()->route('employees.leave.history')
-            ->with('success', 'Yêu cầu đã được gửi thành công!');
     }
 
     // Hiển thị lịch sử yêu cầu cho nhân viên
