@@ -504,11 +504,21 @@ class AttendanceController extends Controller
         @unlink($image2Path);
         $result = $response->json();
         $confidence = $result['confidence'] ?? null;
-
-        
         $threshold = 70;
-        if ($confidence === null || $confidence < $threshold) {
-            return redirect()->back()->with('error', 'Khuôn mặt không khớp hoặc không nhận diện được. Điểm: ' . ($confidence ?? 'N/A'));
+
+        // Xác định status giống logic FaceCompareController
+        $status = 'present';
+        $now = $currentTime;
+        $shiftStart = '08:00:00'; // Nếu muốn lấy từ DB thì sửa lại
+        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > 200)) {
+            $status = 'absent';
+        } elseif ($now->format('H:i:s') > $shiftStart) {
+            $status = 'late';
+        } else {
+            $status = 'present';
+        }
+        if ($status === 'absent') {
+            return redirect()->back()->with('error', 'Chấm công thất bại! Khuôn mặt không khớp hoặc ngoài phạm vi cho phép. Điểm: ' . ($confidence ?? 'N/A'));
         }
 
         // Nếu thành công: tạo hoặc update bản ghi
@@ -518,10 +528,14 @@ class AttendanceController extends Controller
         } elseif ($action === 'check_out') {
             $attendance->check_out_time = $currentTime->format('H:i:s');
         }
-        $attendance->status = 'present';
+        $attendance->status = $status;
+        // Lưu thêm vị trí nếu có cột
+        // $attendance->latitude = $latitude;
+        // $attendance->longitude = $longitude;
+        // $attendance->distance = $distance;
         $attendance->save();
 
-        return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence);
+        return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);
     }
 
     /**
