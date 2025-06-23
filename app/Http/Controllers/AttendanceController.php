@@ -548,6 +548,37 @@ class AttendanceController extends Controller
         // $attendance->distance = $distance;
         $attendance->save();
 
+        // === Tạo hoặc cập nhật work summary ===
+        $month = $currentTime->month;
+        $year = $currentTime->year;
+        $workSummary = \App\Models\WorkSummary::firstOrNew([
+            'user_id' => $user->id,
+            'month' => $month,
+            'year' => $year,
+        ]);
+        // Lấy tất cả attendance của user trong tháng
+        $attendances = \App\Models\Attendance::where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->get();
+        // Tổng số giờ làm (chỉ tính các bản ghi có check_in và check_out)
+        $totalWorkHours = 0;
+        $totalLateDays = 0;
+        foreach ($attendances as $att) {
+            if ($att->check_in_time && $att->check_out_time) {
+                $in = \Carbon\Carbon::parse($att->check_in_time);
+                $out = \Carbon\Carbon::parse($att->check_out_time);
+                $totalWorkHours += $out->diffInMinutes($in) / 60;
+            }
+            if ($att->status === 'late') {
+                $totalLateDays++;
+            }
+        }
+        $workSummary->total_work_hours = $totalWorkHours;
+        $workSummary->total_late_days = $totalLateDays;
+        // Các trường khác giữ nguyên hoặc tính thêm nếu cần
+        $workSummary->save();
+
         return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);
     }
 
