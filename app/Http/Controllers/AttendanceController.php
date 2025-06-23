@@ -203,6 +203,10 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
         $currentTime = now();
 
+        // Khởi tạo mặc định để tránh lỗi undefined variable
+        $canCheckIn = false;
+        $canCheckOut = false;
+
         // Tìm tất cả ca làm việc của user hôm nay
         $todayAttendances = Attendance::with(['shift', 'overtimeShift'])
             ->where('user_id', $user->id)
@@ -211,7 +215,6 @@ class AttendanceController extends Controller
 
         // Xác định trạng thái ca làm việc hiện tại
         $shiftStatus = 'no_shift';
-        $canCheckIn = false;
         $shiftInfo = null;
         $todayAttendance = null;
 

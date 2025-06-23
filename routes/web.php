@@ -18,6 +18,9 @@ use App\Http\Controllers\FaceCompareController;
 Route::get('/face-compare', [FaceCompareController::class, 'showForm']);
 Route::post('/face-compare', [FaceCompareController::class, 'compare']);
 
+// API so sánh khuôn mặt cho frontend gọi AJAX
+Route::post('/api/face-compare', [FaceCompareController::class, 'apiCompare'])->middleware(['auth']);
+
 // giao diện ban đầu
 Route::get('/', function () {
     return view('auth.login');
