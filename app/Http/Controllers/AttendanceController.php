@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\OvertimeShift;
+use Illuminate\Support\Facades\Http;
 
 class AttendanceController extends Controller
 {
@@ -505,41 +506,66 @@ class AttendanceController extends Controller
                 return redirect()->back()->with('error', 'Bạn đã chấm công vào hôm nay');
             }
 
-        // Xác định trạng thái chấm công
-        $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
-        $currentTimeOnly = $currentTime->format('H:i:s');
-        
-        $status = 'present';
-        if ($currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')) {
-            $status = 'late';
-        }
+            // So sánh khuôn mặt với avatar user
+            $userAvatarPath = storage_path('app/public/' . $user->avatar);
+            if (!file_exists($userAvatarPath)) {
+                return redirect()->back()->with('error', 'Không tìm thấy ảnh mẫu (avatar) của bạn.');
+            }
+            // Lưu ảnh chụp thành file tạm
+            $image1Path = storage_path('app/temp_image1.png');
+            file_put_contents($image1Path, base64_decode($image1));
+            $image2Path = storage_path('app/temp_avatar.png');
+            copy($userAvatarPath, $image2Path);
+            $api_key = env('FACEPP_API_KEY');
+            $api_secret = env('FACEPP_API_SECRET');
+            $url = 'https://api-us.faceplusplus.com/facepp/v3/compare';
+            $response = Http::asMultipart()->post($url, [
+                'api_key' => $api_key,
+                'api_secret' => $api_secret,
+                'image_file1' => fopen($image1Path, 'r'),
+                'image_file2' => fopen($image2Path, 'r'),
+            ]);
+            // Xóa file tạm
+            @unlink($image1Path);
+            @unlink($image2Path);
+            $result = $response->json();
+            $confidence = $result['confidence'] ?? null;
+            $threshold = 70;
+            if ($confidence === null) {
+                return redirect()->back()->with('error', 'Không nhận diện được khuôn mặt.');
+            }
+            if ($confidence < $threshold) {
+                return redirect()->back()->with('error', 'Khuôn mặt không khớp. Điểm so sánh: ' . $confidence);
+            }
 
-        // Kiểm tra vị trí nếu có
-        $latitude = $request->input('latitude');
-        $longitude = $request->input('longitude');
-        $distance = $request->input('distance');
-
-        // Tọa độ công ty (thay bằng tọa độ thực tế)
-        $officeLat = 21.028511;
-        $officeLng = 105.804817;
-
-        // Nếu chưa có distance từ client thì tính lại
-        if ($latitude && $longitude && !$distance) {
-            $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
-        }
-
-        // Nếu khoảng cách quá xa (>200m) thì đánh dấu vắng mặt
-        if ($distance && $distance > 200) {
-            $status = 'absent';
-        }
-
+            // Xác định trạng thái chấm công
+            $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+            $currentTimeOnly = $currentTime->format('H:i:s');
+            $status = 'present';
+            if ($currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')) {
+                $status = 'late';
+            }
+            // Kiểm tra vị trí nếu có
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+            $distance = $request->input('distance');
+            // Tọa độ công ty (thay bằng tọa độ thực tế)
+            $officeLat = 21.028511;
+            $officeLng = 105.804817;
+            // Nếu chưa có distance từ client thì tính lại
+            if ($latitude && $longitude && !$distance) {
+                $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
+            }
+            // Nếu khoảng cách quá xa (>200m) thì đánh dấu vắng mặt
+            if ($distance && $distance > 200) {
+                $status = 'absent';
+            }
             // Cập nhật bản ghi chấm công
             $todayAttendance->check_in_time = $currentTime->format('H:i:s');
             $todayAttendance->face_image = $imagePath;
             $todayAttendance->status = $status;
             $todayAttendance->save();
-
-            return redirect()->back()->with('success', 'Chấm công vào thành công! Thời gian: ' . $currentTime->format('H:i:s'));
+            return redirect()->back()->with('success', 'Chấm công vào thành công! Thời gian: ' . $currentTime->format('H:i:s') . '. Điểm so sánh khuôn mặt: ' . $confidence);
         }
         
         // Xử lý check-out
