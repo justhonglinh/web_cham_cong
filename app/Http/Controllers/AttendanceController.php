@@ -203,56 +203,237 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
         $currentTime = now();
 
-        // Lấy ca làm việc của user hiện tại
-        $currentShift = Shift::where('user_id', $user->id)->first();
-        
-        // Kiểm tra xem đã chấm công hôm nay chưa
-        $todayAttendance = Attendance::where('user_id', $user->id)
+        // Tìm tất cả ca làm việc của user hôm nay
+        $todayAttendances = Attendance::with(['shift', 'overtimeShift'])
+            ->where('user_id', $user->id)
             ->where('date', $today)
-            ->whereNotNull('shift_id')
-            ->first();
+            ->get();
 
         // Xác định trạng thái ca làm việc hiện tại
         $shiftStatus = 'no_shift';
         $canCheckIn = false;
         $shiftInfo = null;
+        $todayAttendance = null;
+
+        if ($todayAttendances->count() > 0) {
+            // Tìm ca làm việc đang hoạt động hoặc sắp tới
+            $activeShift = null;
+            $upcomingShift = null;
+            $endedShift = null;
+            $checkedInShift = null;
+
+            foreach ($todayAttendances as $attendance) {
+                $currentShift = null;
+                $shiftType = '';
+                
+                if ($attendance->shift_id) {
+                    $currentShift = $attendance->shift;
+                    $shiftType = 'shift';
+                } elseif ($attendance->overtime_id) {
+                    $currentShift = $attendance->overtimeShift;
+                    $shiftType = 'overtime';
+                }
 
         if ($currentShift) {
+                    // Ưu tiên ca đã check-in nhưng chưa check-out
+                    if ($attendance->check_in_time && !$attendance->check_out_time) {
+                        if (!$checkedInShift) {
+                            $checkedInShift = [
+                                'attendance' => $attendance,
+                                'shift' => $currentShift,
+                                'type' => $shiftType
+                            ];
+                        }
+                        continue; // Bỏ qua logic khác nếu đã tìm thấy ca check-in
+                    }
+                    
+                    // Xử lý thời gian khác nhau cho shift và overtime
+                    if ($shiftType === 'shift') {
+                        // Shift chỉ có giờ phút, cần thêm ngày hôm nay
+                        $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
+                        $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
+                    } else {
+                        // Overtime có cả ngày tháng
             $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
             $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                    }
+                    
             $currentTimeOnly = $currentTime->format('H:i:s');
             
-            // Kiểm tra xem có đang trong giờ làm việc không
+                    // Kiểm tra trạng thái ca làm việc
             if ($currentTimeOnly >= $shiftStartTime->format('H:i:s') && $currentTimeOnly <= $shiftEndTime->format('H:i:s')) {
+                        // Ca đang hoạt động
+                        if (!$activeShift || $shiftStartTime < \Carbon\Carbon::parse($activeShift['shift']->start_time)) {
+                            $activeShift = [
+                                'attendance' => $attendance,
+                                'shift' => $currentShift,
+                                'type' => $shiftType
+                            ];
+                        }
+                    } elseif ($currentTimeOnly < $shiftStartTime->format('H:i:s')) {
+                        // Kiểm tra xem có thể chấm công sớm không (trước 15 phút)
+                        $earlyCheckInTime = $shiftStartTime->copy()->subMinutes(15);
+                        if ($currentTimeOnly >= $earlyCheckInTime->format('H:i:s')) {
+                            // Có thể chấm công sớm
+                            if (!$activeShift || $shiftStartTime < \Carbon\Carbon::parse($activeShift['shift']->start_time)) {
+                                $activeShift = [
+                                    'attendance' => $attendance,
+                                    'shift' => $currentShift,
+                                    'type' => $shiftType,
+                                    'is_early_checkin' => true
+                                ];
+                            }
+                        } else {
+                            // Ca sắp tới (chưa đến thời gian chấm công sớm)
+                            if (!$upcomingShift || $shiftStartTime < \Carbon\Carbon::parse($upcomingShift['shift']->start_time)) {
+                                $upcomingShift = [
+                                    'attendance' => $attendance,
+                                    'shift' => $currentShift,
+                                    'type' => $shiftType
+                                ];
+                            }
+                        }
+                    } else {
+                        // Ca đã kết thúc
+                        if (!$endedShift || $shiftEndTime > \Carbon\Carbon::parse($endedShift['shift']->end_time)) {
+                            $endedShift = [
+                                'attendance' => $attendance,
+                                'shift' => $currentShift,
+                                'type' => $shiftType
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Ưu tiên hiển thị ca đã check-in trước
+            if ($checkedInShift) {
+                $todayAttendance = $checkedInShift['attendance'];
+                $currentShift = $checkedInShift['shift'];
+                $shiftType = $checkedInShift['type'];
+                
+                // Xử lý thời gian hiển thị
+                if ($shiftType === 'shift') {
+                    $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
+                } else {
+                    $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                }
+                
+                $currentTimeOnly = $currentTime->format('H:i:s');
+                
                 $shiftStatus = 'active';
-                $canCheckIn = !$todayAttendance || !$todayAttendance->check_in_time;
+                $canCheckIn = false;
+                $canCheckOut = true;
+                
                 $shiftInfo = [
                     'name' => $currentShift->name,
                     'start_time' => $shiftStartTime->format('H:i'),
                     'end_time' => $shiftEndTime->format('H:i'),
                     'current_time' => $currentTime->format('H:i'),
-                    'is_late' => $currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')
+                    'is_late' => $currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s'),
+                    'is_early_checkin' => false,
+                    'type' => $shiftType,
+                    'check_in_time' => $todayAttendance->check_in_time,
+                    'check_out_time' => $todayAttendance->check_out_time
                 ];
-            } elseif ($currentTimeOnly < $shiftStartTime->format('H:i:s')) {
+            } elseif ($activeShift) {
+                $todayAttendance = $activeShift['attendance'];
+                $currentShift = $activeShift['shift'];
+                $shiftType = $activeShift['type'];
+                $isEarlyCheckIn = isset($activeShift['is_early_checkin']) ? $activeShift['is_early_checkin'] : false;
+                
+                // Xử lý thời gian hiển thị
+                if ($shiftType === 'shift') {
+                    $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
+                } else {
+                    $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                }
+                
+                $currentTimeOnly = $currentTime->format('H:i:s');
+                
+                $shiftStatus = $isEarlyCheckIn ? 'early_checkin' : 'active';
+                
+                // Kiểm tra trạng thái chấm công
+                $hasCheckedIn = $todayAttendance->check_in_time;
+                $hasCheckedOut = $todayAttendance->check_out_time;
+                
+                if ($hasCheckedIn && !$hasCheckedOut) {
+                    // Đã check-in, chưa check-out
+                    $canCheckIn = false;
+                    $canCheckOut = true;
+                } elseif (!$hasCheckedIn) {
+                    // Chưa check-in
+                    $canCheckIn = true;
+                    $canCheckOut = false;
+                } else {
+                    // Đã check-in và check-out
+                    $canCheckIn = false;
+                    $canCheckOut = false;
+                }
+                
+                $shiftInfo = [
+                    'name' => $currentShift->name,
+                    'start_time' => $shiftStartTime->format('H:i'),
+                    'end_time' => $shiftEndTime->format('H:i'),
+                    'current_time' => $currentTime->format('H:i'),
+                    'is_late' => $currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s'),
+                    'is_early_checkin' => $isEarlyCheckIn,
+                    'type' => $shiftType,
+                    'check_in_time' => $hasCheckedIn ? $todayAttendance->check_in_time : null,
+                    'check_out_time' => $hasCheckedOut ? $todayAttendance->check_out_time : null
+                ];
+            } elseif ($upcomingShift) {
+                $todayAttendance = $upcomingShift['attendance'];
+                $currentShift = $upcomingShift['shift'];
+                $shiftType = $upcomingShift['type'];
+                
+                // Xử lý thời gian hiển thị
+                if ($shiftType === 'shift') {
+                    $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
+                } else {
+                    $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                }
+                
                 $shiftStatus = 'upcoming';
                 $shiftInfo = [
                     'name' => $currentShift->name,
                     'start_time' => $shiftStartTime->format('H:i'),
                     'end_time' => $shiftEndTime->format('H:i'),
-                    'current_time' => $currentTime->format('H:i')
+                    'current_time' => $currentTime->format('H:i'),
+                    'type' => $shiftType
                 ];
+            } elseif ($endedShift) {
+                $todayAttendance = $endedShift['attendance'];
+                $currentShift = $endedShift['shift'];
+                $shiftType = $endedShift['type'];
+                
+                // Xử lý thời gian hiển thị
+                if ($shiftType === 'shift') {
+                    $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
             } else {
+                    $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+                    $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                }
+                
                 $shiftStatus = 'ended';
                 $shiftInfo = [
                     'name' => $currentShift->name,
                     'start_time' => $shiftStartTime->format('H:i'),
                     'end_time' => $shiftEndTime->format('H:i'),
-                    'current_time' => $currentTime->format('H:i')
+                    'current_time' => $currentTime->format('H:i'),
+                    'type' => $shiftType
                 ];
             }
         }
 
-        return view('employees.attendance', compact('currentShift', 'todayAttendance', 'shiftStatus', 'canCheckIn', 'shiftInfo'));
+        return view('employees.attendance', compact('todayAttendance', 'shiftStatus', 'canCheckIn', 'canCheckOut', 'shiftInfo'));
     }
 
     /**
@@ -265,27 +446,38 @@ class AttendanceController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'distance' => 'nullable|numeric',
+            'action' => 'required|in:check_in,check_out',
         ]);
 
         $user = Auth::user();
         $today = now()->toDateString();
         $currentTime = now();
-
-        // Lấy ca làm việc hiện tại
-        $currentShift = Shift::where('user_id', $user->id)->first();
+        $action = $request->input('action');
         
-        if (!$currentShift) {
-            return redirect()->back()->with('error', 'Bạn chưa được phân công ca làm việc');
-        }
-
-        // Kiểm tra xem đã chấm công hôm nay chưa
-        $todayAttendance = Attendance::where('user_id', $user->id)
+        // Tìm ca làm việc thông qua bảng Attendance
+        $todayAttendance = Attendance::with(['shift', 'overtimeShift'])
+            ->where('user_id', $user->id)
             ->where('date', $today)
-            ->whereNotNull('shift_id')
             ->first();
 
-        if ($todayAttendance && $todayAttendance->check_in_time) {
-            return redirect()->back()->with('error', 'Bạn đã chấm công vào hôm nay');
+        if (!$todayAttendance) {
+            return redirect()->back()->with('error', 'Bạn chưa được phân công ca làm việc hôm nay');
+        }
+
+        // Kiểm tra xem có ca làm việc thường hay tăng ca
+        $currentShift = null;
+        $shiftType = '';
+        
+        if ($todayAttendance->shift_id) {
+            $currentShift = $todayAttendance->shift;
+            $shiftType = 'shift';
+        } elseif ($todayAttendance->overtime_id) {
+            $currentShift = $todayAttendance->overtimeShift;
+            $shiftType = 'overtime';
+        }
+
+        if (!$currentShift) {
+            return redirect()->back()->with('error', 'Không tìm thấy thông tin ca làm việc');
         }
 
         // Xử lý ảnh chụp từ camera
@@ -303,6 +495,12 @@ class AttendanceController extends Controller
         }
         
         file_put_contents($fullPath, base64_decode($image1));
+
+        // Xử lý check-in
+        if ($action === 'check_in') {
+            if ($todayAttendance->check_in_time) {
+                return redirect()->back()->with('error', 'Bạn đã chấm công vào hôm nay');
+            }
 
         // Xác định trạng thái chấm công
         $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
@@ -332,25 +530,34 @@ class AttendanceController extends Controller
             $status = 'absent';
         }
 
-        // Tạo hoặc cập nhật bản ghi chấm công
-        if ($todayAttendance) {
-            $todayAttendance->update([
-                'check_in_time' => $currentTime,
-                'status' => $status,
-                'face_image' => $imagePath,
-            ]);
-        } else {
-            Attendance::create([
-                'user_id' => $user->id,
-                'shift_id' => $currentShift->id,
-                'date' => $today,
-                'check_in_time' => $currentTime,
-                'status' => $status,
-                'face_image' => $imagePath,
-            ]);
+            // Cập nhật bản ghi chấm công
+            $todayAttendance->check_in_time = $currentTime->format('H:i:s');
+            $todayAttendance->face_image = $imagePath;
+            $todayAttendance->status = $status;
+            $todayAttendance->save();
+
+            return redirect()->back()->with('success', 'Chấm công vào thành công! Thời gian: ' . $currentTime->format('H:i:s'));
+        }
+        
+        // Xử lý check-out
+        if ($action === 'check_out') {
+            if (!$todayAttendance->check_in_time) {
+                return redirect()->back()->with('error', 'Bạn chưa chấm công vào hôm nay');
+            }
+            
+            if ($todayAttendance->check_out_time) {
+                return redirect()->back()->with('error', 'Bạn đã chấm công ra hôm nay');
+            }
+
+            // Cập nhật bản ghi chấm công ra
+            $todayAttendance->check_out_time = $currentTime->format('H:i:s');
+            $todayAttendance->face_image = $imagePath; // Ghi đè ảnh check-out lên face_image
+            $todayAttendance->save();
+
+            return redirect()->back()->with('success', 'Chấm công ra thành công! Thời gian: ' . $currentTime->format('H:i:s'));
         }
 
-        return redirect()->route('employees.dashboard')->with('success', 'Chấm công thành công!');
+        return redirect()->back()->with('error', 'Hành động không hợp lệ');
     }
 
     /**
