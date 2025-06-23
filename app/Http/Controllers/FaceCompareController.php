@@ -162,11 +162,24 @@ class FaceCompareController extends Controller
         $threshold = 70; // Ngưỡng nhận diện thành công
 
         if ($confidence === null) {
-            return response()->json(['success' => false, 'message' => 'Không nhận diện được khuôn mặt']);
+            return response()->json([
+                'success' => false,
+                'message' => 'Không nhận diện được khuôn mặt',
+                'score' => null
+            ]);
         }
         if ($confidence < $threshold) {
-            return response()->json(['success' => false, 'message' => 'Khuôn mặt không khớp', 'score' => $confidence]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Khuôn mặt không khớp',
+                'score' => $confidence
+            ]);
         }
-        return response()->json(['success' => true, 'score' => $confidence]);
+        // Trả về điểm số và message rõ ràng khi thành công
+        return response()->json([
+            'success' => true,
+            'message' => 'Khuôn mặt khớp',
+            'score' => $confidence
+        ]);
     }
 }
