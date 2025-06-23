@@ -463,14 +463,27 @@ class AttendanceController extends Controller
 
         // Xử lý ảnh chụp từ camera
         $capturedUrl = $request->input('image1');
-        $image1 = str_replace('data:image/png;base64,', '', $capturedUrl);
+        if (strpos($capturedUrl, 'data:image/jpeg') === 0) {
+            $image1 = preg_replace('/^data:image\/jpeg;base64,/', '', $capturedUrl);
+            $image1Path = storage_path('app/temp_image1.jpg');
+        } elseif (strpos($capturedUrl, 'data:image/png') === 0) {
+            $image1 = preg_replace('/^data:image\/png;base64,/', '', $capturedUrl);
+            $image1Path = storage_path('app/temp_image1.png');
+        } else {
+            return redirect()->back()->with('error', 'Định dạng ảnh không được hỗ trợ!');
+        }
         $image1 = str_replace(' ', '+', $image1);
-        $imagePath = 'attendance_images/' . $user->id . '_' . $today . '_' . time() . '.png';
+        file_put_contents($image1Path, base64_decode($image1));
+        if (!file_exists($image1Path) || filesize($image1Path) === 0) {
+            return redirect()->back()->with('error', 'Ảnh chụp bị lỗi, vui lòng thử lại.');
+        }
+        // Lưu ảnh vào thư mục public như cũ
+        $imagePath = 'attendance_images/' . $user->id . '_' . $today . '_' . time() . (strpos($capturedUrl, 'jpeg') !== false ? '.jpg' : '.png');
         $fullPath = storage_path('app/public/' . $imagePath);
         if (!file_exists(dirname($fullPath))) {
             mkdir(dirname($fullPath), 0755, true);
         }
-        file_put_contents($fullPath, base64_decode($image1));
+        copy($image1Path, $fullPath);
 
         // Lấy vị trí nếu có
         $latitude = $request->input('latitude');
