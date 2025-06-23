@@ -9,30 +9,17 @@ use Illuminate\Support\Facades\Validator;
 
 class LocationController extends Controller
 {
-    // Lấy danh sách vị trí của user hiện tại
-    public function index()
+    // Lấy vị trí active hiện tại của user
+    public function show()
     {
-        $locations = Location::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $locations
-        ]);
-    }
-
-    // Lấy thông tin một vị trí cụ thể
-    public function show($id)
-    {
-        $location = Location::where('id', $id)
-            ->where('user_id', Auth::id())
+        $location = Location::where('user_id', Auth::id())
+            ->where('is_active', true)
             ->first();
 
         if (!$location) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy vị trí'
+                'message' => 'Chưa có vị trí nào được lưu'
             ], 404);
         }
 
@@ -42,7 +29,7 @@ class LocationController extends Controller
         ]);
     }
 
-    // Lưu vị trí mới
+    // Tạo mới hoặc cập nhật vị trí active
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -63,28 +50,42 @@ class LocationController extends Controller
         }
 
         try {
-            // Tắt tất cả vị trí active hiện tại trước khi tạo mới
-            Location::where('user_id', Auth::id())
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
+            // Kiểm tra đã có vị trí active chưa
+            $currentLocation = Location::where('user_id', Auth::id())
+                ->orderByDesc('id')
+                ->first();
 
-            $location = Location::create([
-                'user_id' => Auth::id(),
-                'name' => $request->name,
-                'address' => $request->address,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'radius' => $request->radius ?? 100,
-                'description' => $request->description,
-                'is_active' => true,
-            ]);
+            if ($currentLocation) {
+                // Update vị trí hiện tại
+                $currentLocation->update([
+                    'name' => $request->name,
+                    'address' => $request->address,
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'radius' => $request->radius ?? 100,
+                    'description' => $request->description,
+                    'is_active' => true,
+                ]);
+                $location = $currentLocation;
+            } else {
+                // Tạo mới vị trí
+                $location = Location::create([
+                    'user_id' => Auth::id(),
+                    'name' => $request->name,
+                    'address' => $request->address,
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'radius' => $request->radius ?? 100,
+                    'description' => $request->description,
+                    'is_active' => true,
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Vị trí đã được lưu thành công',
+                'message' => 'Thao tác thành công',
                 'data' => $location
-            ], 201);
-
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
