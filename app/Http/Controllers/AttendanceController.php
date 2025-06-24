@@ -596,12 +596,12 @@ class AttendanceController extends Controller
                 $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
                 $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
                 $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
-                $workMinutes = $shiftEnd->diffInMinutes($shiftStart);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
                 $totalWorkHours += $workMinutes / 60;
             } elseif ($att->overtime_id && $att->overtimeShift) {
                 $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
                 $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
-                $workMinutes = $shiftEnd->diffInMinutes($shiftStart);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
                 $totalWorkHours += $workMinutes / 60;
             }
             if ($att->status === 'late') {
