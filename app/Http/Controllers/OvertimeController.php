@@ -14,21 +14,14 @@ class OvertimeController extends Controller
     {
         if(Auth::user()->role == 'manager'){
             $managerId = Auth::user()->id;
-            $employeeIds = User::where('role', 'employee')
-                ->where('manager', $managerId)
-                ->pluck('id');
 
-            if ($employeeIds->isEmpty()) {
-                $overtimeShifts = collect();
-            } else {
-                $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) use ($employeeIds) {
-                    $query->whereIn('user_id', $employeeIds)
-                        ->with('user')
-                        ->orderBy('created_at', 'asc');
-                }])
-                ->where('date', '>=', now()->toDateString())
-                ->paginate(10);
-            }
+            $overtimeShifts = OvertimeShift::with(['overtimeRequests' => function ($query) {
+                $query->with('user')->orderBy('created_at', 'asc');
+            }])
+            ->where('date', '>=', now()->toDateString())
+            ->where('user_id', $managerId)
+            ->paginate(10);
+
             return view('overtime_management', compact('overtimeShifts'));
 
         }else{
