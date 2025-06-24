@@ -34,7 +34,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 function getDate(val) {
                     if (!val) return '';
-                    if (typeof val === 'string') return val.slice(0,10);
+                    if (typeof val === 'string') {
+                        const d = new Date(val);
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    }
                     if (typeof val === 'object' && val.date) return val.date.slice(0,10);
                     return '';
                 }

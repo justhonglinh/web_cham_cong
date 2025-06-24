@@ -32,7 +32,7 @@ class OvertimeController extends Controller
                 ->where('user_id', $managerId)
                 ->where('date', '>=', now()->toDateString())
                 ->get();
-
+            
             return view('employees.overtime', compact('overtimeShifts'));
         }
     }

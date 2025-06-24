@@ -17,6 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('detailCheckOut').textContent = attendance.check_out_time || '';
             document.getElementById('detailStatus').textContent = attendance.status || '';
 
+            // Hiển thị trạng thái tiếng Việt
+            const statusMap = {
+                'present': 'Có mặt',
+                'leave': 'Nghỉ phép',
+                'absent': 'Vắng mặt',
+                'late': 'Đi muộn',
+                'early_leave': 'Về sớm',
+            };
+            document.getElementById('detailStatus').textContent = statusMap[attendance.status] || attendance.status || '';
+
             // Hiển thị modal
             document.getElementById('attendanceDetailModal').classList.remove('hidden');
         });
