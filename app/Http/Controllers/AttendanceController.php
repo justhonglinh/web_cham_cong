@@ -538,7 +538,33 @@ class AttendanceController extends Controller
             return redirect()->back()->with('error', 'Chấm công thất bại! Khuôn mặt không khớp hoặc ngoài phạm vi cho phép. Điểm: ' . ($confidence ?? 'N/A'));
         }
 
-        // Nếu thành công: tạo hoặc update bản ghi
+        // === Xử lý tạo/cập nhật attendance ===
+        // Xác định shift hay overtime
+        $shiftId = $request->input('shift_id');
+        $overtimeId = $request->input('overtime_id');
+        $attendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->where('date', $today)
+            ->first();
+        if ($attendance) {
+            // Update bản ghi cũ
+            if ($shiftId) {
+                $attendance->shift_id = $shiftId;
+                $attendance->overtime_id = null;
+            } elseif ($overtimeId) {
+                $attendance->overtime_id = $overtimeId;
+                $attendance->shift_id = null;
+            }
+        } else {
+            // Tạo mới
+            $attendance = new \App\Models\Attendance();
+            $attendance->user_id = $user->id;
+            $attendance->date = $today;
+            if ($shiftId) {
+                $attendance->shift_id = $shiftId;
+            } elseif ($overtimeId) {
+                $attendance->overtime_id = $overtimeId;
+            }
+        }
         $attendance->face_image = $imagePath;
         if ($action === 'check_in') {
             $attendance->check_in_time = $currentTime->format('H:i:s');
@@ -566,9 +592,27 @@ class AttendanceController extends Controller
         $totalLateDays = 0;
         foreach ($attendances as $att) {
             if ($att->check_in_time && $att->check_out_time) {
+                // Lấy shift start time
+                $shiftStart = null;
+                if ($att->shift_id && $att->shift) {
+                    $shiftStart = \Carbon\Carbon::parse($att->date . ' ' . $att->shift->start_time);
+                } elseif ($att->overtime_id && $att->overtimeShift) {
+                    $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
+                }
                 $in = \Carbon\Carbon::parse($att->check_in_time);
                 $out = \Carbon\Carbon::parse($att->check_out_time);
-                $totalWorkHours += $out->diffInMinutes($in) / 60;
+                $workMinutes = $out->diffInMinutes($in);
+                // Nếu đi muộn
+                if ($shiftStart && $in->gt($shiftStart)) {
+                    $lateMinutes = $in->diffInMinutes($shiftStart);
+                    if ($lateMinutes >= 1 && $lateMinutes <= 15) {
+                        $workMinutes -= 30;
+                    } elseif ($lateMinutes > 30 && $lateMinutes <= 45) {
+                        $workMinutes -= 60;
+                    }
+                }
+                $workMinutes = max(0, $workMinutes);
+                $totalWorkHours += $workMinutes / 60;
             }
             if ($att->status === 'late') {
                 $totalLateDays++;
@@ -576,7 +620,6 @@ class AttendanceController extends Controller
         }
         $workSummary->total_work_hours = $totalWorkHours;
         $workSummary->total_late_days = $totalLateDays;
-        // Các trường khác giữ nguyên hoặc tính thêm nếu cần
         $workSummary->save();
 
         return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);

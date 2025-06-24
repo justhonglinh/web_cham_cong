@@ -1,8 +1,8 @@
 <!-- Detail Attendance Modal -->
 <div id="attendanceDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50 backdrop-blur-sm">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 relative overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xl mx-4 relative overflow-hidden max-h-[80vh] overflow-y-auto">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2">
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-bold text-white flex items-center">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,7 +19,7 @@
         </div>
 
         <!-- Content -->
-        <div class="p-6">
+        <div class="p-4">
             <!-- User Info Card -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 mb-6">
                 <div class="flex items-center space-x-4">
@@ -102,7 +102,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4">
+        <div class="bg-gray-50 dark:bg-gray-700 px-6 py-2">
             <!-- Footer content can be added here if needed -->
         </div>
     </div>
