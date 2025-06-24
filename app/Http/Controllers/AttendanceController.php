@@ -591,29 +591,17 @@ class AttendanceController extends Controller
         $totalWorkHours = 0;
         $totalLateDays = 0;
         foreach ($attendances as $att) {
-            if ($att->check_in_time && $att->check_out_time) {
-                // Lấy shift start time
-                $shiftStart = null;
-                if ($att->shift_id && $att->shift) {
-                    // Đảm bảo chỉ lấy ngày
-                    $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
-                    $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
-                } elseif ($att->overtime_id && $att->overtimeShift) {
-                    $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
-                }
-                $in = \Carbon\Carbon::parse($att->check_in_time);
-                $out = \Carbon\Carbon::parse($att->check_out_time);
-                $workMinutes = $out->diffInMinutes($in);
-                // Nếu đi muộn
-                if ($shiftStart && $in->gt($shiftStart)) {
-                    $lateMinutes = $in->diffInMinutes($shiftStart);
-                    if ($lateMinutes >= 1 && $lateMinutes <= 15) {
-                        $workMinutes -= 30;
-                    } elseif ($lateMinutes > 30 && $lateMinutes <= 45) {
-                        $workMinutes -= 60;
-                    }
-                }
-                $workMinutes = max(0, $workMinutes);
+            // Chỉ tính nếu có shift hoặc overtime và đã check-in/check-out
+            if ($att->shift_id && $att->shift) {
+                $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
+                $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
+                $workMinutes = $shiftEnd->diffInMinutes($shiftStart);
+                $totalWorkHours += $workMinutes / 60;
+            } elseif ($att->overtime_id && $att->overtimeShift) {
+                $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
+                $workMinutes = $shiftEnd->diffInMinutes($shiftStart);
                 $totalWorkHours += $workMinutes / 60;
             }
             if ($att->status === 'late') {
