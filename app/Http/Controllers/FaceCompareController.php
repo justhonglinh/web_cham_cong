@@ -113,4 +113,73 @@ class FaceCompareController extends Controller
         $distance = $earthRadius * $c;
         return $distance;
     }
+
+    // API so sánh khuôn mặt cho frontend gọi AJAX
+    public function apiCompare(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|string',
+        ]);
+
+        // Lấy user hiện tại
+        $user = Auth::user();
+        if (!$user || !$user->avatar) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy ảnh mẫu nhân viên']);
+        }
+
+        // Lưu ảnh chụp từ webcam (base64) thành file tạm
+        $image1 = str_replace('data:image/jpeg;base64,', '', $request->input('image'));
+        $image1 = str_replace('data:image/png;base64,', '', $image1);
+        $image1 = str_replace(' ', '+', $image1);
+        $image1Path = storage_path('app/temp_image1.png');
+        file_put_contents($image1Path, base64_decode($image1));
+
+        // Lấy avatar từ ổ đĩa
+        $avatarPath = storage_path('app/public/' . $user->avatar);
+        if (!file_exists($avatarPath)) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy file ảnh mẫu']);
+        }
+        $image2Path = storage_path('app/temp_avatar.png');
+        copy($avatarPath, $image2Path);
+
+        $api_key = env('FACEPP_API_KEY');
+        $api_secret = env('FACEPP_API_SECRET');
+        $url = 'https://api-us.faceplusplus.com/facepp/v3/compare';
+
+        $response = Http::asMultipart()->post($url, [
+            'api_key' => $api_key,
+            'api_secret' => $api_secret,
+            'image_file1' => fopen($image1Path, 'r'),
+            'image_file2' => fopen($image2Path, 'r'),
+        ]);
+
+        // Xóa file tạm
+        @unlink($image1Path);
+        @unlink($image2Path);
+
+        $result = $response->json();
+        $confidence = $result['confidence'] ?? null;
+        $threshold = 70; // Ngưỡng nhận diện thành công
+
+        if ($confidence === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không nhận diện được khuôn mặt',
+                'score' => null
+            ]);
+        }
+        if ($confidence < $threshold) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khuôn mặt không khớp',
+                'score' => $confidence
+            ]);
+        }
+        // Trả về điểm số và message rõ ràng khi thành công
+        return response()->json([
+            'success' => true,
+            'message' => 'Khuôn mặt khớp',
+            'score' => $confidence
+        ]);
+    }
 }

@@ -55,7 +55,7 @@
                             </svg>
                         </span>
                     </div>
-                    
+{{--                     
                     <!-- Add Attendance Button -->
                     <button id="openAttendanceModal"
                         class="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all text-base whitespace-nowrap">
@@ -63,7 +63,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
                         Thêm chấm công
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>

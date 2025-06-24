@@ -28,6 +28,16 @@ class ProfileController extends Controller
     {
         $request->user()->fill($request->validated());
 
+        // Lưu thông tin user detail
+        $user = $request->user();
+        $detailData = $request->only(['phone', 'address', 'birthday', 'emergency_contact']);
+        if (!empty(array_filter($detailData))) {
+            $userDetail = $user->details ?: new \App\Models\UserDetail(['user_id' => $user->id]);
+            $userDetail->fill($detailData);
+            $userDetail->user_id = $user->id;
+            $userDetail->save();
+        }
+
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }

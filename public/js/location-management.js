@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form elements
     const locationForm = document.getElementById('locationForm');
     const getCurrentLocation = document.getElementById('getCurrentLocation');
-    const loadExistingLocations = document.getElementById('loadExistingLocations');
     
     // Loading and message elements
     const locationLoading = document.getElementById('locationLoading');
@@ -233,8 +232,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
+                timeout: 20000,
+                maximumAge: 0
             }
         );
     });
@@ -269,87 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.log('Không thể lấy địa chỉ từ tọa độ:', error);
             });
-    }
-
-    // Load existing locations
-    loadExistingLocations.addEventListener('click', function() {
-        showModal(existingLocationsModal);
-        loadExistingLocationsData();
-    });
-
-    function loadExistingLocationsData() {
-        fetch('/locations', {
-            method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.data.length > 0) {
-                displayExistingLocations(data.data);
-                noLocationsMessage.classList.add('hidden');
-                existingLocationsList.classList.remove('hidden');
-            } else {
-                noLocationsMessage.classList.remove('hidden');
-                existingLocationsList.classList.add('hidden');
-            }
-        })
-        .catch(error => {
-            console.error('Lỗi khi tải danh sách vị trí:', error);
-            noLocationsMessage.classList.remove('hidden');
-            existingLocationsList.classList.add('hidden');
-        });
-    }
-
-    function displayExistingLocations(locations) {
-        existingLocationsList.innerHTML = '';
-        
-        // Find the current location index to ensure only one is marked
-        let currentLocationIndex = -1;
-        if (window.currentLocationData && window.currentLocationData.name) {
-            currentLocationIndex = locations.findIndex(location => 
-                location.name === window.currentLocationData.name &&
-                location.address === window.currentLocationData.address &&
-                parseFloat(location.latitude) === parseFloat(window.currentLocationData.latitude) &&
-                parseFloat(location.longitude) === parseFloat(window.currentLocationData.longitude)
-            );
-        }
-        
-        locations.forEach((location, index) => {
-            // Only mark as current location if it's the first match found
-            const isCurrentLocation = index === currentLocationIndex;
-            
-            const locationItem = document.createElement('div');
-            locationItem.className = `p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${
-                isCurrentLocation ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-            }`;
-            locationItem.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                            <h4 class="font-medium text-gray-900">${location.name}</h4>
-                            ${isCurrentLocation ? '<span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Đang sử dụng</span>' : ''}
-                        </div>
-                        <p class="text-sm text-gray-600">${location.address}</p>
-                        <div class="flex items-center mt-1 text-xs text-gray-500">
-                            <span>Bán kính: ${location.radius}m</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs rounded-full ${location.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                            ${location.is_active ? 'Hoạt động' : 'Không hoạt động'}
-                        </span>
-                        <button onclick="selectLocation(${location.id})" class="text-blue-600 hover:text-blue-800 text-sm">
-                            ${isCurrentLocation ? 'Chọn lại' : 'Chọn'}
-                        </button>
-                    </div>
-                </div>
-            `;
-            existingLocationsList.appendChild(locationItem);
-        });
     }
 
     // Select existing location
@@ -509,11 +427,4 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('Có lỗi xảy ra khi lưu vị trí', 'error');
         });
     });
-
-    // Show/hide action buttons based on mode
-    if (isEditing) {
-        document.getElementById('loadExistingLocations').style.display = 'none';
-    } else {
-        document.getElementById('loadExistingLocations').style.display = 'flex';
-    }
 }); 

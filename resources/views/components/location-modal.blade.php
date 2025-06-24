@@ -81,25 +81,6 @@
                         placeholder="Mô tả thêm về địa điểm này"></textarea>
                 </div>
 
-                <!-- Action Selection (only show when editing) -->
-                <div id="actionSelection" class="hidden">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">
-                        Chọn hành động:
-                    </label>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="action_type" value="update" checked
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">Cập nhật vị trí hiện tại</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="action_type" value="create"
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">Tạo vị trí mới</span>
-                        </label>
-                    </div>
-                </div>
-
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                     <div class="flex space-x-3">
@@ -112,25 +93,16 @@
                             </svg>
                             <span class="text-center leading-tight">Lấy vị trí hiện tại</span>
                         </button>
-                        
-                        <!-- Load Existing Locations Button -->
-                        <button type="button" id="loadExistingLocations" 
-                            class="flex items-center justify-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-xs font-medium w-32 h-10">
-                            <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                            </svg>
-                            <span class="text-center leading-tight">Tải vị trí có sẵn</span>
-                        </button>
                     </div>
                     
                     <div class="flex space-x-3">
-                        <button type="button" id="cancelLocation" 
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium w-20 h-10">
-                            Hủy
-                        </button>
                         <button type="submit" 
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium w-20 h-10">
                             Lưu 
+                        </button>
+                        <button type="button" id="cancelLocation" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium w-20 h-10">
+                            Hủy
                         </button>
                     </div>
                 </div>

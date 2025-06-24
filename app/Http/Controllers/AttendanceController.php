@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Shift;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\OvertimeShift;
+use Illuminate\Support\Facades\Http;
 
 class AttendanceController extends Controller
 {
@@ -17,6 +18,11 @@ class AttendanceController extends Controller
         $managerId = Auth::user()->id;
         $today = now()->toDateString();
 
+
+        $shifts = Shift::where('user_id', $managerId)->get();
+        if($shifts->count() == 0){
+            return redirect()->route('shifts.index')->with('warning', 'Vui lòng tạo ca làm việc trước khi chấm công');
+        }
         // Lấy danh sách nhân viên dưới quyền manager
         $users = User::where('role', 'employee')
             ->where('manager', $managerId)
@@ -203,6 +209,10 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
         $currentTime = now();
 
+        // Khởi tạo mặc định để tránh lỗi undefined variable
+        $canCheckIn = false;
+        $canCheckOut = false;
+
         // Tìm tất cả ca làm việc của user hôm nay
         $todayAttendances = Attendance::with(['shift', 'overtimeShift'])
             ->where('user_id', $user->id)
@@ -211,7 +221,6 @@ class AttendanceController extends Controller
 
         // Xác định trạng thái ca làm việc hiện tại
         $shiftStatus = 'no_shift';
-        $canCheckIn = false;
         $shiftInfo = null;
         $todayAttendance = null;
 
@@ -234,7 +243,7 @@ class AttendanceController extends Controller
                     $shiftType = 'overtime';
                 }
 
-        if ($currentShift) {
+                if ($currentShift) {
                     // Ưu tiên ca đã check-in nhưng chưa check-out
                     if ($attendance->check_in_time && !$attendance->check_out_time) {
                         if (!$checkedInShift) {
@@ -254,15 +263,14 @@ class AttendanceController extends Controller
                         $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
                     } else {
                         // Overtime có cả ngày tháng
-            $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
-            $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
+                        $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
+                        $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                     }
-                    
-            $currentTimeOnly = $currentTime->format('H:i:s');
-            
+                    $latestCheckIn = $shiftStartTime->copy()->addHour();
+                    $currentTimeOnly = $currentTime->format('H:i:s');
                     // Kiểm tra trạng thái ca làm việc
-            if ($currentTimeOnly >= $shiftStartTime->format('H:i:s') && $currentTimeOnly <= $shiftEndTime->format('H:i:s')) {
-                        // Ca đang hoạt động
+                    if ($currentTimeOnly >= $shiftStartTime->format('H:i:s') && $currentTimeOnly <= $latestCheckIn->format('H:i:s')) {
+                        // Cho phép check-in muộn tối đa 1 tiếng
                         if (!$activeShift || $shiftStartTime < \Carbon\Carbon::parse($activeShift['shift']->start_time)) {
                             $activeShift = [
                                 'attendance' => $attendance,
@@ -417,7 +425,7 @@ class AttendanceController extends Controller
                 if ($shiftType === 'shift') {
                     $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->end_time);
-            } else {
+                } else {
                     $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                 }
@@ -443,9 +451,6 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'image1' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'distance' => 'nullable|numeric',
             'action' => 'required|in:check_in,check_out',
         ]);
 
@@ -453,111 +458,161 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
         $currentTime = now();
         $action = $request->input('action');
-        
-        // Tìm ca làm việc thông qua bảng Attendance
-        $todayAttendance = Attendance::with(['shift', 'overtimeShift'])
-            ->where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
 
-        if (!$todayAttendance) {
-            return redirect()->back()->with('error', 'Bạn chưa được phân công ca làm việc hôm nay');
-        }
-
-        // Kiểm tra xem có ca làm việc thường hay tăng ca
-        $currentShift = null;
-        $shiftType = '';
-        
-        if ($todayAttendance->shift_id) {
-            $currentShift = $todayAttendance->shift;
-            $shiftType = 'shift';
-        } elseif ($todayAttendance->overtime_id) {
-            $currentShift = $todayAttendance->overtimeShift;
-            $shiftType = 'overtime';
-        }
-
-        if (!$currentShift) {
-            return redirect()->back()->with('error', 'Không tìm thấy thông tin ca làm việc');
-        }
+        // Lấy hoặc tạo bản ghi chấm công hôm nay
+        $attendance = Attendance::firstOrNew([
+            'user_id' => $user->id,
+            'date' => $today,
+        ]);
 
         // Xử lý ảnh chụp từ camera
         $capturedUrl = $request->input('image1');
-        $image1 = str_replace('data:image/png;base64,', '', $capturedUrl);
+        if (strpos($capturedUrl, 'data:image/jpeg') === 0) {
+            $image1 = preg_replace('/^data:image\/jpeg;base64,/', '', $capturedUrl);
+            $image1Path = storage_path('app/temp_image1.jpg');
+        } elseif (strpos($capturedUrl, 'data:image/png') === 0) {
+            $image1 = preg_replace('/^data:image\/png;base64,/', '', $capturedUrl);
+            $image1Path = storage_path('app/temp_image1.png');
+        } else {
+            return redirect()->back()->with('error', 'Định dạng ảnh không được hỗ trợ!');
+        }
         $image1 = str_replace(' ', '+', $image1);
-        
-        // Lưu ảnh chấm công
-        $imagePath = 'attendance_images/' . $user->id . '_' . $today . '_' . time() . '.png';
+        file_put_contents($image1Path, base64_decode($image1));
+        if (!file_exists($image1Path) || filesize($image1Path) === 0) {
+            return redirect()->back()->with('error', 'Ảnh chụp bị lỗi, vui lòng thử lại.');
+        }
+        // Lưu ảnh vào thư mục public như cũ
+        $imagePath = 'attendance_images/' . $user->id . '_' . $today . '_' . time() . (strpos($capturedUrl, 'jpeg') !== false ? '.jpg' : '.png');
         $fullPath = storage_path('app/public/' . $imagePath);
-        
-        // Tạo thư mục nếu chưa có
         if (!file_exists(dirname($fullPath))) {
             mkdir(dirname($fullPath), 0755, true);
         }
-        
-        file_put_contents($fullPath, base64_decode($image1));
+        copy($image1Path, $fullPath);
 
-        // Xử lý check-in
-        if ($action === 'check_in') {
-            if ($todayAttendance->check_in_time) {
-                return redirect()->back()->with('error', 'Bạn đã chấm công vào hôm nay');
-            }
-
-        // Xác định trạng thái chấm công
-        $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
-        $currentTimeOnly = $currentTime->format('H:i:s');
-        
-        $status = 'present';
-        if ($currentTimeOnly > $shiftStartTime->addMinutes(15)->format('H:i:s')) {
-            $status = 'late';
-        }
-
-        // Kiểm tra vị trí nếu có
+        // Lấy vị trí nếu có
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $distance = $request->input('distance');
-
-        // Tọa độ công ty (thay bằng tọa độ thực tế)
         $officeLat = 21.028511;
         $officeLng = 105.804817;
-
-        // Nếu chưa có distance từ client thì tính lại
         if ($latitude && $longitude && !$distance) {
             $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
         }
 
-        // Nếu khoảng cách quá xa (>200m) thì đánh dấu vắng mặt
-        if ($distance && $distance > 200) {
+        // So sánh khuôn mặt với avatar user
+        $userAvatarPath = storage_path('app/public/' . $user->avatar);
+        if (!file_exists($userAvatarPath)) {
+            return redirect()->back()->with('error', 'Không tìm thấy ảnh mẫu (avatar) của bạn.');
+        }
+        $image1Path = storage_path('app/temp_image1.png');
+        file_put_contents($image1Path, base64_decode($image1));
+        $image2Path = storage_path('app/temp_avatar.png');
+        copy($userAvatarPath, $image2Path);
+        $api_key = env('FACEPP_API_KEY');
+        $api_secret = env('FACEPP_API_SECRET');
+        $url = 'https://api-us.faceplusplus.com/facepp/v3/compare';
+        $response = Http::asMultipart()->post($url, [
+            'api_key' => $api_key,
+            'api_secret' => $api_secret,
+            'image_file1' => fopen($image1Path, 'r'),
+            'image_file2' => fopen($image2Path, 'r'),
+        ]);
+        @unlink($image1Path);
+        @unlink($image2Path);
+        $result = $response->json();
+        $confidence = $result['confidence'] ?? null;
+        $threshold = 70;
+
+        // Xác định status giống logic FaceCompareController
+        $status = 'present';
+        $now = $currentTime;
+        $shiftStart = '08:00:00'; // Nếu muốn lấy từ DB thì sửa lại
+        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > 200)) {
             $status = 'absent';
+        } elseif ($now->format('H:i:s') > $shiftStart) {
+            $status = 'late';
+        } else {
+            $status = 'present';
+        }
+        if ($status === 'absent') {
+            return redirect()->back()->with('error', 'Chấm công thất bại! Khuôn mặt không khớp hoặc ngoài phạm vi cho phép. Điểm: ' . ($confidence ?? 'N/A'));
         }
 
-            // Cập nhật bản ghi chấm công
-            $todayAttendance->check_in_time = $currentTime->format('H:i:s');
-            $todayAttendance->face_image = $imagePath;
-            $todayAttendance->status = $status;
-            $todayAttendance->save();
-
-            return redirect()->back()->with('success', 'Chấm công vào thành công! Thời gian: ' . $currentTime->format('H:i:s'));
-        }
-        
-        // Xử lý check-out
-        if ($action === 'check_out') {
-            if (!$todayAttendance->check_in_time) {
-                return redirect()->back()->with('error', 'Bạn chưa chấm công vào hôm nay');
+        // === Xử lý tạo/cập nhật attendance ===
+        // Xác định shift hay overtime
+        $shiftId = $request->input('shift_id');
+        $overtimeId = $request->input('overtime_id');
+        $attendance = \App\Models\Attendance::where('user_id', $user->id)
+            ->where('date', $today)
+            ->first();
+        if ($attendance) {
+            // Update bản ghi cũ
+            if ($shiftId) {
+                $attendance->shift_id = $shiftId;
+                $attendance->overtime_id = null;
+            } elseif ($overtimeId) {
+                $attendance->overtime_id = $overtimeId;
+                $attendance->shift_id = null;
             }
-            
-            if ($todayAttendance->check_out_time) {
-                return redirect()->back()->with('error', 'Bạn đã chấm công ra hôm nay');
+        } else {
+            // Tạo mới
+            $attendance = new \App\Models\Attendance();
+            $attendance->user_id = $user->id;
+            $attendance->date = $today;
+            if ($shiftId) {
+                $attendance->shift_id = $shiftId;
+            } elseif ($overtimeId) {
+                $attendance->overtime_id = $overtimeId;
             }
-
-            // Cập nhật bản ghi chấm công ra
-            $todayAttendance->check_out_time = $currentTime->format('H:i:s');
-            $todayAttendance->face_image = $imagePath; // Ghi đè ảnh check-out lên face_image
-            $todayAttendance->save();
-
-            return redirect()->back()->with('success', 'Chấm công ra thành công! Thời gian: ' . $currentTime->format('H:i:s'));
         }
+        $attendance->face_image = $imagePath;
+        if ($action === 'check_in') {
+            $attendance->check_in_time = $currentTime->format('H:i:s');
+        } elseif ($action === 'check_out') {
+            $attendance->check_out_time = $currentTime->format('H:i:s');
+        }
+        $attendance->status = $status;
+        $attendance->save();
 
-        return redirect()->back()->with('error', 'Hành động không hợp lệ');
+        // === Tạo hoặc cập nhật work summary ===
+        $month = $currentTime->month;
+        $year = $currentTime->year;
+        $workSummary = \App\Models\WorkSummary::firstOrNew([
+            'user_id' => $user->id,
+            'month' => $month,
+            'year' => $year,
+        ]);
+        // Lấy tất cả attendance của user trong tháng
+        $attendances = \App\Models\Attendance::where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->get();
+        // Tổng số giờ làm (chỉ tính các bản ghi có check_in và check_out)
+        $totalWorkHours = 0;
+        $totalLateDays = 0;
+        foreach ($attendances as $att) {
+            // Chỉ tính nếu có shift hoặc overtime và đã check-in/check-out
+            if ($att->shift_id && $att->shift) {
+                $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
+                $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+                $totalWorkHours += $workMinutes / 60;
+            } elseif ($att->overtime_id && $att->overtimeShift) {
+                $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+                $totalWorkHours += $workMinutes / 60;
+            }
+            if ($att->status === 'late') {
+                $totalLateDays++;
+            }
+        }
+        $workSummary->total_work_hours = $totalWorkHours;
+        $workSummary->total_late_days = $totalLateDays;
+        $workSummary->save();
+
+        return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);
     }
 
     /**

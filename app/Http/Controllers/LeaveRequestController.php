@@ -134,6 +134,33 @@ class LeaveRequestController extends Controller
         $user = $leaveRequest->user;
         $requestDate = $leaveRequest->request_date;
 
+        // Nếu là nghỉ làm (leave), vẫn tạo attendance nhưng shift_id và overtime_id đều null
+        if ($leaveRequest->type === 'leave') {
+            $attendance = Attendance::where('user_id', $user->id)
+                ->where('date', $requestDate)
+                ->whereNull('overtime_id')
+                ->first();
+            if (!$attendance) {
+                Attendance::create([
+                    'user_id' => $user->id,
+                    'date' => $requestDate,
+                    'shift_id' => null,
+                    'overtime_id' => null,
+                    'check_in_time' => null,
+                    'check_out_time' => null,
+                    'status' => 'leave',
+                    'face_image' => null,
+                ]);
+            } else {
+                $attendance->update([
+                    'shift_id' => null,
+                    'overtime_id' => null,
+                    'status' => 'leave',
+                ]);
+            }
+            return;
+        }
+
         // Tìm attendance record hiện tại cho ngày này
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $requestDate)

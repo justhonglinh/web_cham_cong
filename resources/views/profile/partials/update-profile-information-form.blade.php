@@ -47,6 +47,27 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="phone" :value="__('Số điện thoại')" />
+            <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', optional($user->details)->phone)" autocomplete="phone" />
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+        <div>
+            <x-input-label for="address" :value="__('Địa chỉ')" />
+            <x-text-input id="address" name="address" type="text" class="mt-1 block w-full" :value="old('address', optional($user->details)->address)" autocomplete="address" />
+            <x-input-error class="mt-2" :messages="$errors->get('address')" />
+        </div>
+        <div>
+            <x-input-label for="birthday" :value="__('Ngày sinh')" />
+            <x-text-input id="birthday" name="birthday" type="date" class="mt-1 block w-full" :value="old('birthday', optional($user->details)->birthday)" autocomplete="bday" />
+            <x-input-error class="mt-2" :messages="$errors->get('birthday')" />
+        </div>
+        <div>
+            <x-input-label for="emergency_contact" :value="__('Liên hệ khẩn cấp')" />
+            <x-text-input id="emergency_contact" name="emergency_contact" type="text" class="mt-1 block w-full" :value="old('emergency_contact', optional($user->details)->emergency_contact)" autocomplete="emergency_contact" />
+            <x-input-error class="mt-2" :messages="$errors->get('emergency_contact')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Lưu') }}</x-primary-button>
 
