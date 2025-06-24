@@ -595,7 +595,9 @@ class AttendanceController extends Controller
                 // Lấy shift start time
                 $shiftStart = null;
                 if ($att->shift_id && $att->shift) {
-                    $shiftStart = \Carbon\Carbon::parse($att->date . ' ' . $att->shift->start_time);
+                    // Đảm bảo chỉ lấy ngày
+                    $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
+                    $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
                 } elseif ($att->overtime_id && $att->overtimeShift) {
                     $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
                 }
