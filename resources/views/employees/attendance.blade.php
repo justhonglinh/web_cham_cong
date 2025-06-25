@@ -676,8 +676,8 @@
                             const locationData = await getCurrentLocation();
                             
                             // Lưu vị trí vào form
-                            latitudeInput.value = locationData.latitude;
-                            longitudeInput.value = locationData.longitude;
+                            latitudeInput.value = Number(locationData.latitude).toFixed(6);
+                            longitudeInput.value = Number(locationData.longitude).toFixed(6);
                             distanceInput.value = locationData.distance;
                             
                             // Hiển thị thông tin vị trí

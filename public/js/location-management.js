@@ -114,8 +114,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill the form fields with current data
             document.getElementById('location_name').value = window.currentLocationData.name || '';
             document.getElementById('location_address').value = window.currentLocationData.address || '';
-            document.getElementById('location_latitude').value = window.currentLocationData.latitude || '';
-            document.getElementById('location_longitude').value = window.currentLocationData.longitude || '';
+            document.getElementById('location_latitude').value = window.currentLocationData.latitude ? Number(window.currentLocationData.latitude).toFixed(6) : '';
+            document.getElementById('location_longitude').value = window.currentLocationData.longitude ? Number(window.currentLocationData.longitude).toFixed(6) : '';
             document.getElementById('location_radius').value = window.currentLocationData.radius || 100;
             document.getElementById('location_description').value = window.currentLocationData.description || '';
         }

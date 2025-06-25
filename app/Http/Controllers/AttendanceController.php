@@ -579,6 +579,9 @@ class AttendanceController extends Controller
         
         // Lấy location active của manager
         $manager = $user->manager; // quan hệ belongsTo
+        if (is_numeric($manager)) {
+            $manager = \App\Models\User::find($manager);
+        }
         if (!$manager) {
             return redirect()->back()->with('error', 'Không xác định được quản lý của bạn.');
         }
@@ -592,7 +595,13 @@ class AttendanceController extends Controller
         $officeLng = $managerLocation->longitude;
         $officeRadius = $managerLocation->radius;
         if ($latitude && $longitude && !$distance) {
+            // Làm tròn lat/lng về 6 chữ số thập phân để giảm sai số GPS
+            $latitude = round($latitude, 6);
+            $longitude = round($longitude, 6);
+            $officeLat = round($officeLat, 6);
+            $officeLng = round($officeLng, 6);
             $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
+            $distance = round($distance, 2); // làm tròn về 2 số thập phân
         }
 
         // So sánh khuôn mặt với avatar user
@@ -640,7 +649,7 @@ class AttendanceController extends Controller
         if (!$shiftStart) {
             return redirect()->back()->with('error', 'Không xác định được giờ bắt đầu ca làm việc. Vui lòng kiểm tra lại thông tin ca.');
         }
-        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > 200)) {
+        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > $officeRadius)) {
             $status = 'absent';
         } elseif ($now->format('H:i:s') > $shiftStart) {
             $status = 'late';
