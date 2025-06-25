@@ -576,8 +576,21 @@ class AttendanceController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $distance = $request->input('distance');
-        $officeLat = 21.028511;
-        $officeLng = 105.804817;
+        
+        // Lấy location active của manager
+        $manager = $user->manager; // quan hệ belongsTo
+        if (!$manager) {
+            return redirect()->back()->with('error', 'Không xác định được quản lý của bạn.');
+        }
+        $managerLocation = \App\Models\Location::where('user_id', $manager->id)
+            ->where('is_active', true)
+            ->first();
+        if (!$managerLocation) {
+            return redirect()->back()->with('error', 'Quản lý của bạn chưa thiết lập vị trí chấm công.');
+        }
+        $officeLat = $managerLocation->latitude;
+        $officeLng = $managerLocation->longitude;
+        $officeRadius = $managerLocation->radius;
         if ($latitude && $longitude && !$distance) {
             $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
         }
@@ -609,7 +622,24 @@ class AttendanceController extends Controller
         // Xác định status giống logic FaceCompareController
         $status = 'present';
         $now = $currentTime;
-        $shiftStart = '08:00:00'; // Nếu muốn lấy từ DB thì sửa lại
+        // Lấy shiftStart từ DB
+        $shiftId = $request->input('shift_id');
+        $overtimeId = $request->input('overtime_id');
+        $shiftStart = null;
+        if ($shiftId) {
+            $shift = \App\Models\Shift::find($shiftId);
+            if ($shift) {
+                $shiftStart = $shift->start_time;
+            }
+        } elseif ($overtimeId) {
+            $overtimeShift = \App\Models\OvertimeShift::find($overtimeId);
+            if ($overtimeShift) {
+                $shiftStart = \Carbon\Carbon::parse($overtimeShift->start_time)->format('H:i:s');
+            }
+        }
+        if (!$shiftStart) {
+            return redirect()->back()->with('error', 'Không xác định được giờ bắt đầu ca làm việc. Vui lòng kiểm tra lại thông tin ca.');
+        }
         if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > 200)) {
             $status = 'absent';
         } elseif ($now->format('H:i:s') > $shiftStart) {
