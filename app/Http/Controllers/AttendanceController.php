@@ -75,6 +75,13 @@ class AttendanceController extends Controller
     public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
+        
+        // Lưu thông tin cũ để so sánh
+        $oldDate = $attendance->date;
+        $oldShiftId = $attendance->shift_id;
+        $oldOvertimeId = $attendance->overtime_id;
+        $oldStatus = $attendance->status;
+        
         // Nếu là ca làm việc thường
         if ($request->filled('shift_id')) {
             $attendance->shift_id = $request->shift_id;
@@ -99,10 +106,86 @@ class AttendanceController extends Controller
             $attendance->status = $request->status;
         }
         $attendance->save();
+        
+        // Cập nhật work_summary sau khi thay đổi attendance
+        $this->updateWorkSummary($attendance->user_id, $attendance->date);
+        
+        // Nếu ngày thay đổi, cũng cập nhật work_summary cho ngày cũ
+        if ($oldDate != $attendance->date) {
+            $this->updateWorkSummary($attendance->user_id, $oldDate);
+        }
+        
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
         }
         return redirect()->route('attendance.index')->with('success', 'Cập nhật thành công');
+    }
+
+    /**
+     * Cập nhật work_summary cho user trong tháng/năm cụ thể
+     */
+    private function updateWorkSummary($userId, $date)
+    {
+        $dateObj = \Carbon\Carbon::parse($date);
+        $month = $dateObj->month;
+        $year = $dateObj->year;
+        
+        // Tạo hoặc cập nhật work summary
+        $workSummary = \App\Models\WorkSummary::firstOrNew([
+            'user_id' => $userId,
+            'month' => $month,
+            'year' => $year,
+        ]);
+        
+        // Lấy tất cả attendance của user trong tháng
+        $attendances = \App\Models\Attendance::where('user_id', $userId)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->get();
+        
+        // Tính toán lại các chỉ số
+        $totalWorkHours = 0;
+        $totalOvertimeHours = 0;
+        $totalLeaveDays = 0;
+        $totalLateDays = 0;
+        
+        foreach ($attendances as $att) {
+            // Tính giờ làm việc thường
+            if ($att->shift_id && $att->shift) {
+                $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
+                $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+                $totalWorkHours += $workMinutes / 60;
+            }
+            
+            // Tính giờ làm thêm
+            if ($att->overtime_id && $att->overtimeShift) {
+                $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
+                $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
+                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+                $totalOvertimeHours += $workMinutes / 60;
+            }
+            
+            // Đếm ngày nghỉ phép
+            if ($att->status === 'leave') {
+                $totalLeaveDays++;
+            }
+            
+            // Đếm ngày đi muộn
+            if ($att->status === 'late') {
+                $totalLateDays++;
+            }
+        }
+        
+        // Cập nhật work summary
+        $workSummary->total_work_hours = $totalWorkHours;
+        $workSummary->total_overtime_hours = $totalOvertimeHours;
+        $workSummary->total_leave_days = $totalLeaveDays;
+        $workSummary->total_late_days = $totalLateDays;
+        $workSummary->save();
+        
+        return $workSummary;
     }
 
     public function history()
