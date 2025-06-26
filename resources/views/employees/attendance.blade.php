@@ -408,8 +408,22 @@
         </div>
     </div>
 
+    {{-- Truyền allowedRadius từ backend sang JS --}}
+    @if(isset($managerLocation) && $managerLocation && $managerLocation->radius)
+        <script>window.allowedRadius = {{ $managerLocation->radius }};</script>
+    @else
+        <script>window.allowedRadius = null;</script>
+    @endif
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            let allowedRadius = window.allowedRadius;
+            if (allowedRadius === null) {
+                alert('Không xác định được bán kính vị trí chấm công. Vui lòng liên hệ quản lý để thiết lập vị trí.');
+                // Ẩn nút chụp/chấm công nếu muốn
+                const captureBtn = document.getElementById('captureBtn');
+                if (captureBtn) captureBtn.disabled = true;
+                return;
+            }
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const captureBtn = document.getElementById('captureBtn');
@@ -437,22 +451,13 @@
 
             // Kiểm tra thiết bị mobile
             function isMobileDevice() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            }
-
-            // Cập nhật trạng thái camera
-            function updateCameraStatus(status, isError = false) {
-                if (cameraStatusText) {
-                    cameraStatusText.textContent = status;
-                    const cameraStatus = document.getElementById('cameraStatus');
-                    if (cameraStatus) {
-                        if (isError) {
-                            cameraStatus.className = 'absolute top-2 left-2 z-10 bg-red-500/80 text-white px-2 py-1 rounded text-xs';
-                        } else {
-                            cameraStatus.className = 'absolute top-2 left-2 z-10 bg-green-500/80 text-white px-2 py-1 rounded text-xs';
-                        }
-                    }
+                if (allowedRadius === null) {
+                    alert('Không xác định được bán kính vị trí chấm công. Vui lòng liên hệ quản lý để thiết lập vị trí.');
+                    // Ẩn nút chụp/chấm công nếu muốn
+                    if (captureBtn) captureBtn.disabled = true;
+                    return false;
                 }
+                return true;
             }
 
             // Cập nhật trạng thái quyền truy cập
@@ -685,7 +690,7 @@
                             
                         } catch (locationError) {
                             console.error('Lỗi vị trí:', locationError);
-                            displayLocationError(locationError.message);
+                        displayLocationError(locationError.message);
                             
                             // Vẫn cho phép submit nhưng cảnh báo
                             alert('Không thể xác định vị trí: ' + locationError.message + '\nBạn vẫn có thể chấm công nhưng vị trí sẽ không được ghi nhận.');

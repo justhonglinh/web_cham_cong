@@ -576,6 +576,7 @@ class AttendanceController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $distance = $request->input('distance');
+        $accuracy = $request->input('accuracy'); // Lấy thêm accuracy từ request nếu có
         
         // Lấy location active của manager
         $manager = $user->manager; // quan hệ belongsTo
@@ -598,10 +599,20 @@ class AttendanceController extends Controller
             // Làm tròn lat/lng về 6 chữ số thập phân để giảm sai số GPS
             $latitude = round($latitude, 6);
             $longitude = round($longitude, 6);
-            $officeLat = round($officeLat, 6);
-            $officeLng = round($officeLng, 6);
+        }
+        // Tính lại distance nếu chưa có
+        if ($latitude && $longitude && !$distance) {
             $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
-            $distance = round($distance, 2); // làm tròn về 2 số thập phân
+        }
+        // Nếu có accuracy, cộng thêm vào bán kính cho phép
+        $allowedRadius = $officeRadius;
+        if ($accuracy && is_numeric($accuracy)) {
+            $allowedRadius += floatval($accuracy);
+        }
+
+        // Kiểm tra khoảng cách cho phép (cộng thêm sai số accuracy)
+        if ($distance !== null && $distance > $allowedRadius) {
+            return redirect()->back()->with('error', 'Bạn đang ở ngoài phạm vi cho phép để chấm công. (Khoảng cách: ' . round($distance) . 'm, Bán kính cho phép: ' . round($allowedRadius) . 'm)');
         }
 
         // So sánh khuôn mặt với avatar user
@@ -649,7 +660,7 @@ class AttendanceController extends Controller
         if (!$shiftStart) {
             return redirect()->back()->with('error', 'Không xác định được giờ bắt đầu ca làm việc. Vui lòng kiểm tra lại thông tin ca.');
         }
-        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > $officeRadius)) {
+        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > $allowedRadius)) {
             $status = 'absent';
         } elseif ($now->format('H:i:s') > $shiftStart) {
             $status = 'late';
