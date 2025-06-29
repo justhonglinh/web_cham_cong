@@ -272,6 +272,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Select existing location
     window.selectLocation = function(locationId) {
+        showLoading();
+        
         fetch(`/locations/${locationId}`, {
             method: 'GET',
             headers: {
@@ -280,7 +282,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 const location = data.data;
@@ -292,13 +299,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     latitude: location.latitude || '',
                     longitude: location.longitude || '',
                     radius: location.radius || 100,
-                    description: location.description || '',
-                    action: 'update' // Always update current location
+                    description: location.description || ''
                 };
                 
-                showLoading();
-                
-                fetch('/locations/update', {
+                return fetch('/locations/update', {
                     method: 'PUT',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
@@ -306,125 +310,71 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(locationData)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    hideLoading();
-                    
-                    if (result.success) {
-                        // Update currentLocationData with the saved location
-                        window.currentLocationData = {
-                            name: location.name,
-                            address: location.address,
-                            latitude: location.latitude,
-                            longitude: location.longitude,
-                            radius: location.radius,
-                            description: location.description || ''
-                        };
-                        
-                        // Update the UI to reflect the new current location
-                        updateLocationModalText();
-                        
-                        hideModal(existingLocationsModal);
-                        showMessage('Đã thay đổi vị trí chấm công hiện tại', 'success');
-                        
-                        // Reload page to refresh all data
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        showMessage(result.message || 'Có lỗi xảy ra khi thay đổi vị trí', 'error');
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Lỗi khi lưu vị trí:', error);
-                    showMessage('Có lỗi xảy ra khi thay đổi vị trí', 'error');
                 });
+            } else {
+                throw new Error(data.message || 'Không thể tải thông tin vị trí');
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            hideLoading();
+            
+            if (result.success) {
+                // Update currentLocationData with the saved location
+                if (result.data) {
+                    window.currentLocationData = {
+                        name: result.data.name,
+                        address: result.data.address,
+                        latitude: result.data.latitude,
+                        longitude: result.data.longitude,
+                        radius: result.data.radius,
+                        description: result.data.description || ''
+                    };
+                }
+                
+                // Update the UI to reflect the new current location
+                updateLocationModalText();
+                
+                hideModal(existingLocationsModal);
+                showMessage('Đã thay đổi vị trí chấm công hiện tại', 'success');
+                
+                // Reload page to refresh all data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(result.message || 'Có lỗi xảy ra khi thay đổi vị trí', 'error');
             }
         })
         .catch(error => {
-            console.error('Lỗi khi tải thông tin vị trí:', error);
-            showMessage('Không thể tải thông tin vị trí', 'error');
+            hideLoading();
+            console.error('Lỗi khi xử lý vị trí:', error);
+            
+            // Chỉ hiển thị thông báo chung, không hiển thị chi tiết lỗi
+            showMessage('Có lỗi xảy ra khi thay đổi vị trí', 'error');
         });
     };
 
     // Handle form submission
     locationForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+        // Không prevent default nữa, để form submit bình thường
+        // e.preventDefault();
         
-        const formData = new FormData(locationForm);
-        const data = Object.fromEntries(formData);
+        // Validate required fields
+        const name = document.getElementById('location_name').value;
+        const address = document.getElementById('location_address').value;
         
-        // Get action from radio button if available, otherwise use automatic detection
-        let action = 'update'; // Default to update
-        
-        const actionType = formData.get('action_type');
-        if (actionType) {
-            action = actionType;
-        } else {
-            // Fallback to automatic detection
-            const hasUsedCurrentLocation = document.getElementById('location_latitude').value && 
-                                         document.getElementById('location_latitude').value !== (window.currentLocationData?.latitude || '');
-            
-            if (hasUsedCurrentLocation || !window.currentLocationData || !window.currentLocationData.name) {
-                action = 'create';
-            }
+        if (!name || !address) {
+            e.preventDefault(); // Prevent submit nếu validation fail
+            showMessage('Vui lòng điền đầy đủ tên và địa chỉ vị trí', 'error');
+            return false;
         }
         
-        // Add action to data
-        data.action = action;
-        
-        showLoading();
-        
-        // Always use PUT method for updateCurrent endpoint
-        const method = 'PUT';
-        const url = '/locations/update';
-        
-        fetch(url, {
-            method: method,
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            hideLoading();
-            
-            if (data.success) {
-                showMessage(data.message, 'success');
-                
-                // Update currentLocationData with the saved location
-                if (data.data) {
-                    window.currentLocationData = {
-                        name: data.data.name,
-                        address: data.data.address,
-                        latitude: data.data.latitude,
-                        longitude: data.data.longitude,
-                        radius: data.data.radius,
-                        description: data.data.description || ''
-                    };
-                    
-                    // Update button text immediately
-                    updateLocationModalText();
-                }
-                
-                setTimeout(() => {
-                    hideModal(locationModal);
-                    // Reload page to refresh data after showing success message
-                    window.location.reload();
-                }, 2000);
-            } else {
-                showMessage(data.message || 'Có lỗi xảy ra', 'error');
-            }
-        })
-        .catch(error => {
-            hideLoading();
-            console.error('Lỗi khi lưu vị trí:', error);
-            showMessage('Có lỗi xảy ra khi lưu vị trí', 'error');
-        });
+        // Form sẽ submit bình thường và redirect về trang trước với flash message
     });
 }); 

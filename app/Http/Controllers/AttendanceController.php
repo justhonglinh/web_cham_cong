@@ -524,7 +524,15 @@ class AttendanceController extends Controller
             }
         }
 
-        return view('employees.attendance', compact('todayAttendance', 'shiftStatus', 'canCheckIn', 'canCheckOut', 'shiftInfo'));
+        $manager = $user->manager;
+        if (is_numeric($manager)) {
+            $manager = \App\Models\User::find($manager);
+        }
+        $managerLocation = \App\Models\Location::where('user_id', $manager->id)
+            ->where('is_active', true)
+            ->first();
+        $locationName = $managerLocation ? $managerLocation->name : null;
+        return view('employees.attendance', compact('todayAttendance', 'shiftStatus', 'canCheckIn', 'canCheckOut', 'shiftInfo', 'locationName'));
     }
 
     /**
@@ -604,21 +612,22 @@ class AttendanceController extends Controller
         if ($latitude && $longitude && !$distance) {
             $distance = $this->haversine($latitude, $longitude, $officeLat, $officeLng) * 1000; // m
         }
-        // Nếu có accuracy, cộng thêm vào bán kính cho phép
+
+        // Nếu có accuracy, cộng thêm vào bán kính cho phép (làm tròn về số dương, nếu không có thì chỉ dùng officeRadius)
         $allowedRadius = $officeRadius;
-        if ($accuracy && is_numeric($accuracy)) {
-            $allowedRadius += floatval($accuracy);
+        if (isset($accuracy) && is_numeric($accuracy) && $accuracy > 0) {
+            $allowedRadius += abs(floatval($accuracy));
         }
 
         // Kiểm tra khoảng cách cho phép (cộng thêm sai số accuracy)
         if ($distance !== null && $distance > $allowedRadius) {
-            return redirect()->back()->with('error', 'Bạn đang ở ngoài phạm vi cho phép để chấm công. (Khoảng cách: ' . round($distance) . 'm, Bán kính cho phép: ' . round($allowedRadius) . 'm)');
+            return redirect()->back()->with('warning', 'Bạn đang ở ngoài phạm vi cho phép để chấm công. (Khoảng cách: ' . round($distance) . 'm, Bán kính cho phép: ' . round($allowedRadius) . 'm)');
         }
 
         // So sánh khuôn mặt với avatar user
         $userAvatarPath = storage_path('app/public/' . $user->avatar);
         if (!file_exists($userAvatarPath)) {
-            return redirect()->back()->with('error', 'Không tìm thấy ảnh mẫu (avatar) của bạn.');
+            return redirect()->back()->with('warning', 'Không tìm thấy ảnh mẫu (avatar) của bạn.');
         }
         $image1Path = storage_path('app/temp_image1.png');
         file_put_contents($image1Path, base64_decode($image1));
@@ -639,12 +648,11 @@ class AttendanceController extends Controller
         $confidence = $result['confidence'] ?? null;
         $threshold = 70;
 
-        // Xác định status giống logic FaceCompareController
-        $status = 'present';
-        $now = $currentTime;
-        // Lấy shiftStart từ DB
         $shiftId = $request->input('shift_id');
         $overtimeId = $request->input('overtime_id');
+        $status = 'present'; // hoặc logic xác định status phía trên
+
+        // Lấy giờ bắt đầu ca làm việc
         $shiftStart = null;
         if ($shiftId) {
             $shift = \App\Models\Shift::find($shiftId);
@@ -657,24 +665,15 @@ class AttendanceController extends Controller
                 $shiftStart = \Carbon\Carbon::parse($overtimeShift->start_time)->format('H:i:s');
             }
         }
-        if (!$shiftStart) {
-            return redirect()->back()->with('error', 'Không xác định được giờ bắt đầu ca làm việc. Vui lòng kiểm tra lại thông tin ca.');
-        }
-        if ($confidence === null || $confidence < $threshold || ($distance !== null && $distance > $allowedRadius)) {
-            $status = 'absent';
-        } elseif ($now->format('H:i:s') > $shiftStart) {
-            $status = 'late';
-        } else {
-            $status = 'present';
-        }
-        if ($status === 'absent') {
-            return redirect()->back()->with('error', 'Chấm công thất bại! Khuôn mặt không khớp hoặc ngoài phạm vi cho phép. Điểm: ' . ($confidence ?? 'N/A'));
+        if ($status !== 'absent' && $shiftStart) {
+            $now = $currentTime->format('H:i:s');
+            if (strtotime($now) > strtotime($shiftStart)) {
+                $status = 'late';
+            }
         }
 
         // === Xử lý tạo/cập nhật attendance ===
         // Xác định shift hay overtime
-        $shiftId = $request->input('shift_id');
-        $overtimeId = $request->input('overtime_id');
         $attendance = \App\Models\Attendance::where('user_id', $user->id)
             ->where('date', $today)
             ->first();
@@ -700,9 +699,13 @@ class AttendanceController extends Controller
         }
         $attendance->face_image = $imagePath;
         if ($action === 'check_in') {
-            $attendance->check_in_time = $currentTime->format('H:i:s');
+            if (!$attendance->check_in_time) {
+                $attendance->check_in_time = $currentTime->format('H:i:s');
+            }
         } elseif ($action === 'check_out') {
-            $attendance->check_out_time = $currentTime->format('H:i:s');
+            if ($attendance->check_in_time && !$attendance->check_out_time) {
+                $attendance->check_out_time = $currentTime->format('H:i:s');
+            }
         }
         $attendance->status = $status;
         $attendance->save();
@@ -745,6 +748,9 @@ class AttendanceController extends Controller
         $workSummary->total_late_days = $totalLateDays;
         $workSummary->save();
 
+        $locationName = $request->input('location_name');
+        // Có thể so sánh $locationName với tên địa điểm trong DB hoặc lưu lại nếu muốn
+        
         return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);
     }
 

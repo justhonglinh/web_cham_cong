@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class LocationController extends Controller
@@ -16,20 +17,12 @@ class LocationController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$location) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Chưa có vị trí nào được lưu'
-            ], 404);
-        }
-
         return response()->json([
             'success' => true,
             'data' => $location
         ]);
     }
 
-    // Cập nhật vị trí hiện tại (active location) hoặc tạo mới
     public function updateCurrent(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -39,101 +32,57 @@ class LocationController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'radius' => 'nullable|integer|min:10|max:1000',
             'description' => 'nullable|string|max:1000',
-            'action' => 'nullable|string|in:create,update', // Thêm tham số action
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $action = $request->input('action', 'update'); // Mặc định là update
-
-        // Nếu action là create hoặc không có vị trí active, tạo mới
-        if ($action === 'create') {
-            try {
-                $location = Location::create([
-                    'user_id' => Auth::id(),
-                    'name' => $request->name,
-                    'address' => $request->address,
-                    'latitude' => $request->latitude,
-                    'longitude' => $request->longitude,
-                    'radius' => $request->radius ?? 100,
-                    'description' => $request->description,
-                    'is_active' => true,
-                ]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Thao tác thành công',
-                    'data' => $location
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Có lỗi xảy ra khi lưu vị trí',
-                    'error' => $e->getMessage()
-                ], 500);
-            }
-        }
-
-        // Tìm vị trí active hiện tại của user
-        $currentLocation = Location::where('user_id', Auth::id())
-            ->where('is_active', true)
-            ->first();
-
-        if (!$currentLocation) {
-            // Nếu không có vị trí active, tạo mới
-            try {
-                $location = Location::create([
-                    'user_id' => Auth::id(),
-                    'name' => $request->name,
-                    'address' => $request->address,
-                    'latitude' => $request->latitude,
-                    'longitude' => $request->longitude,
-                    'radius' => $request->radius ?? 100,
-                    'description' => $request->description,
-                    'is_active' => true,
-                ]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Thao tác thành công',
-                    'data' => $location
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Có lỗi xảy ra khi lưu vị trí',
-                    'error' => $e->getMessage()
-                ], 500);
-            }
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Dữ liệu không hợp lệ');
         }
 
         try {
-            $currentLocation->update([
+            $userId = Auth::id();
+
+            // Tìm vị trí active hiện tại của user
+            $currentLocation = Location::where('user_id', $userId)
+                ->where('is_active', true)
+                ->first();
+
+            // Chuẩn bị dữ liệu location
+            $locationData = [
+                'user_id' => $userId,
                 'name' => $request->name,
                 'address' => $request->address,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
                 'radius' => $request->radius ?? 100,
                 'description' => $request->description,
-                'is_active' => true, // Đảm bảo vị trí này được active
-            ]);
+                'is_active' => true,
+            ];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Vị trí đã được cập nhật thành công',
-                'data' => $currentLocation
-            ]);
+            // Logic mới: Kiểm tra location có mapping với user hay không
+            if ($currentLocation) {
+                // Nếu user đã có location active -> UPDATE
+                $currentLocation->update($locationData);
+                $location = $currentLocation->fresh();
+                $message = 'Vị trí đã được cập nhật thành công';
+            } else {
+                // Nếu user chưa có location active -> CREATE
+                $location = Location::create($locationData);
+                $message = 'Vị trí đã được tạo thành công';
+            }
+
+            return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật vị trí',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Location update error: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi lưu vị trí');
         }
     }
 } 

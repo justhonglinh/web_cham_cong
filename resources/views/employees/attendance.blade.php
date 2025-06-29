@@ -69,27 +69,43 @@
                             @if(($shiftStatus === 'active' || $shiftStatus === 'early_checkin') && $canCheckIn)
                                 <div class="mt-3 p-2 {{ $shiftStatus === 'early_checkin' ? 'bg-yellow-100' : 'bg-green-100' }} rounded-lg">
                                     <div class="flex items-center {{ $shiftStatus === 'early_checkin' ? 'text-yellow-800' : 'text-green-800' }} text-sm">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                         @if($shiftStatus === 'early_checkin')
-                                            ⏰ Bạn có thể chấm công sớm! Ca làm việc sẽ bắt đầu lúc {{ $shiftInfo['start_time'] }}
+                                            ⏰ Bạn có thể chấm công sớm!
                                         @elseif(isset($shiftInfo['is_late']) && $shiftInfo['is_late'])
-                                                ⚠️ Bạn đang đi muộn! Vui lòng chấm công ngay.
-                                            @else
-                                                ✅ Bạn có thể chấm công ngay bây giờ.
-                                            @endif
-                                        </div>
-                                    </div>
-                            @elseif(($shiftStatus === 'active' || $shiftStatus === 'early_checkin') && $canCheckOut)
-                                    <div class="mt-3 p-2 bg-blue-100 rounded-lg">
-                                        <div class="flex items-center text-blue-800 text-sm">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                            </svg>
-                                        ✅ Bạn đã chấm công vào lúc {{ $shiftInfo['check_in_time'] }}. Bây giờ có thể chấm công ra.
+                                            ⚠️ Bạn đang đi muộn! Vui lòng chấm công ngay.
+                                        @else
+                                            ✅ Bạn có thể chấm công ngay bây giờ.
+                                        @endif
                                     </div>
                                 </div>
+                            @elseif(($shiftStatus === 'active' || $shiftStatus === 'early_checkin') && $canCheckOut)
+                                @php
+                                    $now = \Carbon\Carbon::now();
+                                    $shiftEnd = isset($shiftInfo['end_time']) ? \Carbon\Carbon::createFromFormat('H:i', $shiftInfo['end_time']) : null;
+                                    $canShowCheckout = $shiftEnd && $now->greaterThanOrEqualTo($shiftEnd);
+                                @endphp
+                                @if($canShowCheckout)
+                                    <div class="mt-3 p-2 bg-red-100 rounded-lg">
+                                        <div class="flex items-center text-red-800 text-sm">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                            </svg>
+                                            ✅ Bạn có thể chấm công ra ngay bây giờ.
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-3 p-2 bg-gray-100 rounded-lg">
+                                        <div class="flex items-center text-gray-600 text-sm">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            ⏰ Chưa đến giờ kết thúc ca.
+                                        </div>
+                                    </div>
+                                @endif
                             @elseif($shiftStatus === 'upcoming')
                                 <div class="mt-3 p-2 bg-blue-100 rounded-lg">
                                     <div class="flex items-center text-blue-800 text-sm">
@@ -97,19 +113,6 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                         ⏰ Ca làm việc sẽ bắt đầu lúc {{ $shiftInfo['start_time'] }}
-                                    </div>
-                                </div>
-                            @else
-                                <div class="mt-3 p-2 bg-gray-100 rounded-lg">
-                                    <div class="flex items-center text-gray-800 text-sm">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        @if(isset($shiftInfo['check_in_time']) && isset($shiftInfo['check_out_time']))
-                                            ✅ Đã hoàn thành chấm công hôm nay (Vào: {{ $shiftInfo['check_in_time'] }}, Ra: {{ $shiftInfo['check_out_time'] }})
-                                        @else
-                                            Bạn đã chấm công hôm nay
-                                        @endif
                                     </div>
                                 </div>
                             @endif
@@ -187,7 +190,6 @@
                             <div id="locationDetails" class="text-xs text-gray-300 mt-1 hidden">
                                 <div>Kinh độ: <span id="longitudeText">-</span></div>
                                 <div>Vĩ độ: <span id="latitudeText">-</span></div>
-                                <div>Khoảng cách: <span id="distanceText">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -196,156 +198,87 @@
                 <!-- Action Buttons -->
                 <div class="relative z-10 space-y-3">
                     @if(($shiftStatus === 'active' || $shiftStatus === 'early_checkin') && $canCheckIn)
-                        <!-- Nút chấm công với thông tin ca làm việc -->
-                        <div class="bg-gradient-to-r {{ $shiftStatus === 'early_checkin' ? 'from-yellow-500 to-orange-600' : 'from-blue-500 to-purple-600' }} rounded-xl p-1 shadow-lg">
-                        <button id="captureBtn" 
-                                    class="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-lg transform hover:scale-105 transition-all duration-200 flex flex-col items-center justify-center">
-                                <!-- Header với tên ca -->
-                                <div class="flex items-center mb-2">
-                                    <div class="bg-white/20 rounded-full p-2 mr-3">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="text-sm font-medium opacity-90">
-                                            @if($shiftStatus === 'early_checkin')
-                                                Đang chấm công sớm cho:
-                                            @else
-                                                Đang chấm công vào:
-                                            @endif
-                                        </div>
-                                        <div class="text-lg font-bold">{{ $shiftInfo['name'] }}</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Thông tin thời gian -->
-                                <div class="text-center mb-3">
-                                    <div class="text-xs opacity-80 mb-1">Thời gian hiện tại</div>
-                                    <div class="text-xl font-bold">{{ $shiftInfo['current_time'] }}</div>
-                                </div>
-                                
-                                <!-- Nút chụp ảnh -->
-                                <div class="flex items-center bg-white/20 rounded-lg px-4 py-2">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                                    <span class="font-semibold">
-                                        @if($shiftStatus === 'early_checkin')
-                                            📸 Chụp ảnh & Chấm công sớm
-                                        @else
-                            📸 Chụp ảnh & Chấm công
-                                        @endif
-                                    </span>
-                                </div>
-                                
-                                @if($shiftStatus === 'early_checkin')
-                                    <div class="mt-2 text-xs bg-yellow-500/30 text-yellow-100 px-2 py-1 rounded-full">
-                                        ⏰ Chấm công sớm (trước 15 phút)
-                                    </div>
-                                @elseif(isset($shiftInfo['is_late']) && $shiftInfo['is_late'])
-                                    <div class="mt-2 text-xs bg-yellow-500/30 text-yellow-100 px-2 py-1 rounded-full">
-                                        ⚠️ Bạn đang đi muộn!
-                                    </div>
-                                @endif
-                        </button>
+                        <!-- Nút chấm công vào -->
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-1 shadow-lg">
+                            <button id="captureBtn" 
+                                    class="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
+                                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="font-semibold">📸 Chụp ảnh & Chấm công vào</span>
+                            </button>
                         </div>
-
-                        <!-- Submit Form -->
                         <form id="attendanceForm" method="POST" action="{{ route('employees.attendance.process') }}" enctype="multipart/form-data" class="hidden">
                             @csrf
                             <input type="hidden" name="image1" id="image1">
                             <input type="hidden" name="latitude" id="latitude">
                             <input type="hidden" name="longitude" id="longitude">
-                            <input type="hidden" name="distance" id="distance">
                             <input type="hidden" name="action" value="check_in">
-                            
+                            @if(isset($todayAttendance->shift_id) && $todayAttendance->shift_id)
+                                <input type="hidden" name="shift_id" value="{{ $todayAttendance->shift_id }}">
+                            @endif
+                            @if(isset($todayAttendance->overtime_id) && $todayAttendance->overtime_id)
+                                <input type="hidden" name="overtime_id" value="{{ $todayAttendance->overtime_id }}">
+                            @endif
                             <button type="submit" id="submitBtn" 
                                     class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                 </svg>
-                                🚀 Gửi chấm công cho ca {{ $shiftInfo['name'] }}
+                                🚀 Gửi chấm công
                             </button>
                         </form>
                     @elseif(($shiftStatus === 'active' || $shiftStatus === 'early_checkin') && $canCheckOut)
-                        <!-- Nút chấm công ra -->
-                        <div class="bg-gradient-to-r from-red-500 to-pink-600 rounded-xl p-1 shadow-lg">
-                            <button id="captureBtn" 
-                                    class="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-lg transform hover:scale-105 transition-all duration-200 flex flex-col items-center justify-center">
-                                <!-- Header với tên ca -->
-                                <div class="flex items-center mb-2">
-                                    <div class="bg-white/20 rounded-full p-2 mr-3">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <div class="text-sm font-medium opacity-90">Đang chấm công ra:</div>
-                                        <div class="text-lg font-bold">{{ $shiftInfo['name'] }}</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Thông tin thời gian -->
-                                <div class="text-center mb-3">
-                                    <div class="text-xs opacity-80 mb-1">Thời gian hiện tại</div>
-                                    <div class="text-xl font-bold">{{ $shiftInfo['current_time'] }}</div>
-                                </div>
-                                
-                                <!-- Thông tin check-in -->
-                                <div class="text-center mb-3">
-                                    <div class="text-xs opacity-80 mb-1">Đã chấm công vào lúc</div>
-                                    <div class="text-lg font-bold text-green-300">{{ $shiftInfo['check_in_time'] }}</div>
-                                </div>
-                                
-                                <!-- Nút chụp ảnh -->
-                                <div class="flex items-center bg-white/20 rounded-lg px-4 py-2">
-                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        @php
+                            $now = \Carbon\Carbon::now();
+                            $shiftEnd = isset($shiftInfo['end_time']) ? \Carbon\Carbon::createFromFormat('H:i', $shiftInfo['end_time']) : null;
+                            $canShowCheckout = $shiftEnd && $now->greaterThanOrEqualTo($shiftEnd);
+                        @endphp
+                        @if($canShowCheckout)
+                            <!-- Nút chấm công ra -->
+                            <div class="bg-gradient-to-r from-red-500 to-pink-600 rounded-xl p-1 shadow-lg">
+                                <button id="captureBtn" 
+                                        class="w-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
+                                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                                     </svg>
                                     <span class="font-semibold">📸 Chụp ảnh & Chấm công ra</span>
-                                </div>
-                                
-                                <div class="mt-2 text-xs bg-red-500/30 text-red-100 px-2 py-1 rounded-full">
-                                    🏠 Hoàn thành ca làm việc
-                                </div>
-                            </button>
-                        </div>
+                                </button>
+                            </div>
 
-                        <!-- Submit Form for Check-out -->
-                        <form id="attendanceForm" method="POST" action="{{ route('employees.attendance.process') }}" enctype="multipart/form-data" class="hidden">
-                            @csrf
-                            <input type="hidden" name="image1" id="image1">
-                            <input type="hidden" name="latitude" id="latitude">
-                            <input type="hidden" name="longitude" id="longitude">
-                            <input type="hidden" name="distance" id="distance">
-                            <input type="hidden" name="action" value="check_out">
-                            
-                            <button type="submit" id="submitBtn" 
-                                    class="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                </svg>
-                                🏠 Hoàn thành chấm công cho ca {{ $shiftInfo['name'] }}
-                            </button>
-                        </form>
+                            <!-- Submit Form for Check-out -->
+                            <form id="attendanceForm" method="POST" action="{{ route('employees.attendance.process') }}" enctype="multipart/form-data" class="hidden">
+                                @csrf
+                                <input type="hidden" name="image1" id="image1">
+                                <input type="hidden" name="latitude" id="latitude">
+                                <input type="hidden" name="longitude" id="longitude">
+                                <input type="hidden" name="distance" id="distance">
+                                <input type="hidden" name="action" value="check_out">
+                                
+                                <button type="submit" id="submitBtn" 
+                                        class="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    🏠 Hoàn thành chấm công
+                                </button>
+                            </form>
+                        @else
+                            <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
+                                Chưa đến giờ kết thúc ca
+                            </div>
+                        @endif
+                    @elseif($shiftStatus === 'upcoming')
+                        <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
+                            Ca làm việc chưa bắt đầu
+                        </div>
+                    @elseif($shiftStatus === 'ended')
+                        <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
+                            Ca làm việc đã kết thúc
+                        </div>
                     @else
                         <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
-                            @if($shiftStatus === 'no_shift')
-                                Chưa có ca làm việc
-                            @elseif($shiftStatus === 'upcoming')
-                                Ca làm việc chưa bắt đầu
-                            @elseif($shiftStatus === 'ended')
-                                Ca làm việc đã kết thúc
-                            @else
-                                @if(isset($shiftInfo['check_in_time']) && isset($shiftInfo['check_out_time']))
-                                    ✅ Đã hoàn thành chấm công hôm nay
-                            @else
-                                Đã chấm công hôm nay
-                                @endif
-                            @endif
+                            Chưa đến giờ chấm công
                         </div>
                     @endif
                 </div>
@@ -371,24 +304,8 @@
                                 </li>
                                 <li class="flex items-start">
                                     <span class="text-purple-600 mr-2">3.</span>
-                                    <span>Hệ thống sẽ kiểm tra vị trí của bạn khi chấm công</span>
-                                </li>
-                                <li class="flex items-start">
-                                    <span class="text-purple-600 mr-2">4.</span>
                                     <span>Vui lòng bật GPS để xác định vị trí chính xác</span>
                                 </li>
-                                @if($shiftInfo && $shiftStatus === 'active')
-                                    <li class="flex items-start">
-                                        <span class="text-purple-600 mr-2">5.</span>
-                                        <span>Bạn đang chấm công cho ca <strong>{{ $shiftInfo['name'] }}</strong></span>
-                                    </li>
-                                    @if(isset($shiftInfo['is_late']) && $shiftInfo['is_late'])
-                                        <li class="flex items-start">
-                                            <span class="text-red-600 mr-2">⚠️</span>
-                                            <span class="text-red-700">Bạn đang đi muộn! Vui lòng chấm công ngay.</span>
-                                        </li>
-                                    @endif
-                                @endif
                             </ul>
                         </div>
                     </div>
@@ -408,21 +325,10 @@
         </div>
     </div>
 
-    {{-- Truyền allowedRadius từ backend sang JS --}}
-    @if(isset($managerLocation) && $managerLocation && $managerLocation->radius)
-        <script>window.allowedRadius = {{ $managerLocation->radius }};</script>
-    @else
-        <script>window.allowedRadius = null;</script>
-    @endif
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let allowedRadius = window.allowedRadius;
-            if (allowedRadius === null) {
-                alert('Không xác định được bán kính vị trí chấm công. Vui lòng liên hệ quản lý để thiết lập vị trí.');
-                // Ẩn nút chụp/chấm công nếu muốn
-                const captureBtn = document.getElementById('captureBtn');
-                if (captureBtn) captureBtn.disabled = true;
-                return;
+            function isMobileDevice() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             }
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -434,7 +340,6 @@
             const image1Input = document.getElementById('image1');
             const latitudeInput = document.getElementById('latitude');
             const longitudeInput = document.getElementById('longitude');
-            const distanceInput = document.getElementById('distance');
             const permissionStatus = document.getElementById('permissionStatus');
             const cameraStatusText = document.getElementById('cameraStatusText');
             
@@ -443,22 +348,10 @@
             const locationDetails = document.getElementById('locationDetails');
             const longitudeText = document.getElementById('longitudeText');
             const latitudeText = document.getElementById('latitudeText');
-            const distanceText = document.getElementById('distanceText');
 
             let stream = null;
             let capturedImage = null;
             let cameraApproved = false;
-
-            // Kiểm tra thiết bị mobile
-            function isMobileDevice() {
-                if (allowedRadius === null) {
-                    alert('Không xác định được bán kính vị trí chấm công. Vui lòng liên hệ quản lý để thiết lập vị trí.');
-                    // Ẩn nút chụp/chấm công nếu muốn
-                    if (captureBtn) captureBtn.disabled = true;
-                    return false;
-                }
-                return true;
-            }
 
             // Cập nhật trạng thái quyền truy cập
             function updatePermissionStatus() {
@@ -568,16 +461,10 @@
                             
                             console.log('Vị trí đã lấy được:', { lat, lng, accuracy });
                             
-                            // Tính khoảng cách đến công ty (tọa độ mẫu)
-                            const officeLat = 21.028511;
-                            const officeLng = 105.804817;
-                            const distance = calculateDistance(lat, lng, officeLat, officeLng);
-                            
                             resolve({
                                 latitude: lat,
                                 longitude: lng,
-                                accuracy: accuracy,
-                                distance: distance
+                                accuracy: accuracy
                             });
                         },
                         function(error) {
@@ -614,7 +501,6 @@
                     locationDetails.classList.remove('hidden');
                     if (longitudeText) longitudeText.textContent = locationData.longitude.toFixed(6);
                     if (latitudeText) latitudeText.textContent = locationData.latitude.toFixed(6);
-                    if (distanceText) distanceText.textContent = `${locationData.distance.toFixed(0)}m`;
                 }
             }
 
@@ -628,19 +514,6 @@
                 if (locationDetails) {
                     locationDetails.classList.add('hidden');
                 }
-            }
-
-            // Tính khoảng cách Haversine
-            function calculateDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371; // Bán kính Trái Đất (km)
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                const distance = R * c; // km
-                return distance * 1000; // m
             }
 
             // Chụp ảnh và lấy vị trí
@@ -683,7 +556,9 @@
                             // Lưu vị trí vào form
                             latitudeInput.value = Number(locationData.latitude).toFixed(6);
                             longitudeInput.value = Number(locationData.longitude).toFixed(6);
-                            distanceInput.value = locationData.distance;
+                            if (longitudeText) longitudeText.textContent = locationData.longitude.toFixed(6);
+                            if (latitudeText) latitudeText.textContent = locationData.latitude.toFixed(6);
+                            locationDetails.classList.remove('hidden');
                             
                             // Hiển thị thông tin vị trí
                             displayLocationInfo(locationData);
@@ -753,6 +628,14 @@
                     stream.getTracks().forEach(track => track.stop());
                 }
             });
+
+            // Thêm hàm cập nhật trạng thái camera
+            function updateCameraStatus(message, isError = false) {
+                if (cameraStatusText) {
+                    cameraStatusText.textContent = message;
+                    cameraStatusText.style.color = isError ? 'red' : '';
+                }
+            }
         });
     </script>
 </x-app-layout>

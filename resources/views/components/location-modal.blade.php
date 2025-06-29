@@ -19,8 +19,9 @@
             </div>
 
             <!-- Form -->
-            <form id="locationForm" class="space-y-5">
+            <form id="locationForm" class="space-y-5" method="POST" action="{{ route('locations.updateCurrent') }}">
                 @csrf
+                @method('PUT')
                 
                 <!-- Location Name -->
                 <div>
