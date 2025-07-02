@@ -77,10 +77,6 @@ class OvertimeController extends Controller
             ->where('overtime_shift_id', $shiftId)
             ->first();
 
-        if (!$overtimeRequest) {
-            return back()->withErrors(['error' => 'Không tìm thấy yêu cầu đăng ký.']);
-        }
-
         // Chỉ cho phép hủy nếu chưa được phê duyệt
         if ($overtimeRequest->status !== 'pending') {
             return back()->withErrors(['error' => 'Không thể hủy yêu cầu đã được phê duyệt.']);

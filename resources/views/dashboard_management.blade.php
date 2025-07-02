@@ -767,7 +767,7 @@
     <!-- Location Management Script -->
     <script src="{{ asset('js/location-management.js') }}"></script>
     
-    <!-- Pass current location data to JavaScript -->
+    <!-- lấy dữ liệu trả về locationlocation modalmodal -->
     <script>
         @if($currentLocation)
         window.currentLocationData = {

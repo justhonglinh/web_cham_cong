@@ -423,6 +423,7 @@
         </div>
     </div>
 
+    //logic chức năng search 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('search');
@@ -446,24 +447,6 @@
                         }
                     });
                 });
-            }
-
-            if (typeof Alpine !== 'undefined') {
-                console.log('Alpine.js is loaded successfully!');
-
-                // Test view mode toggle buttons
-                const overviewBtn = document.querySelector('[x-data] button[onclick*="viewMode"]');
-                const detailedBtn = document.querySelector('[x-data] button[onclick*="viewMode"]');
-
-                if (overviewBtn && detailedBtn) {
-                    console.log('Toggle buttons found!');
-                } else {
-                    console.log('Toggle buttons not found, checking for @click buttons...');
-                    const clickButtons = document.querySelectorAll('[@click]');
-                    console.log('Found @click buttons:', clickButtons.length);
-                }
-            } else {
-                console.log('Alpine.js is not loaded!');
             }
         });
     </script>

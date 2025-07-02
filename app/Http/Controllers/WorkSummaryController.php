@@ -86,7 +86,6 @@ class WorkSummaryController extends Controller
         // Lọc theo ngày
         if ($request->filled('date')) {
             $date = $request->input('date');
-            // Kiểm tra định dạng ngày và áp dụng bộ lọc
             $query->whereDate('created_at', '=', $date); // Hoặc thay 'created_at' bằng cột ngày mà bạn sử dụng trong bảng WorkSummary
         }
 

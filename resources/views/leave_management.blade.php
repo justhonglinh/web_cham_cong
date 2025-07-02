@@ -260,54 +260,27 @@
     </div>
 
     <script>
-        function openApprovalModal(requestId, status) {
-            const modal = document.getElementById('approvalModal');
-            const form = document.getElementById('approvalForm');
-            const statusInput = document.getElementById('statusInput');
-            const title = document.getElementById('modalTitle');
-            
-            form.action = `/leave-requests/${requestId}/status`;
-            statusInput.value = status;
-            
-            if (status === 'approved') {
-                title.textContent = 'Phê duyệt yêu cầu';
-            } else {
-                title.textContent = 'Từ chối yêu cầu';
-            }
-            
-            modal.classList.remove('hidden');
-        }
-        
-        function closeApprovalModal() {
-            const modal = document.getElementById('approvalModal');
-            modal.classList.add('hidden');
-        }
-        
-        // Đóng modal khi click bên ngoài
-        document.getElementById('approvalModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeApprovalModal();
-            }
+    function openApprovalModal(requestId, status) {
+        document.getElementById('approvalForm').action = `/leave-requests/${requestId}/status`;
+        document.getElementById('statusInput').value = status;
+        document.getElementById('modalTitle').textContent = status === 'approved' ? 'Phê duyệt yêu cầu' : 'Từ chối yêu cầu';
+        document.getElementById('approvalModal').classList.remove('hidden');
+    }
+    function closeApprovalModal() {
+        document.getElementById('approvalModal').classList.add('hidden');
+    }
+    document.getElementById('approvalModal').addEventListener('click', function(e) {
+        if (e.target === this) closeApprovalModal();
+    });
+    document.getElementById('search').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const name = row.querySelector('td:first-child .text-sm.font-medium')?.textContent.toLowerCase() || '';
+            const email = row.querySelector('td:first-child .text-sm.text-gray-500')?.textContent.toLowerCase() || '';
+            const type = row.querySelector('td:nth-child(2) span')?.textContent.toLowerCase() || '';
+            const reason = row.querySelector('td:nth-child(5) div')?.textContent.toLowerCase() || '';
+            row.style.display = (name.includes(searchTerm) || email.includes(searchTerm) || type.includes(searchTerm) || reason.includes(searchTerm)) ? '' : 'none';
         });
-
-        // Xử lý tìm kiếm
-        document.getElementById('search').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
-            
-            rows.forEach(row => {
-                const employeeName = row.querySelector('td:first-child .text-sm.font-medium')?.textContent.toLowerCase() || '';
-                const employeeEmail = row.querySelector('td:first-child .text-sm.text-gray-500')?.textContent.toLowerCase() || '';
-                const requestType = row.querySelector('td:nth-child(2) span')?.textContent.toLowerCase() || '';
-                const reason = row.querySelector('td:nth-child(5) div')?.textContent.toLowerCase() || '';
-                
-                const matches = employeeName.includes(searchTerm) || 
-                               employeeEmail.includes(searchTerm) || 
-                               requestType.includes(searchTerm) || 
-                               reason.includes(searchTerm);
-                
-                row.style.display = matches ? '' : 'none';
-            });
-        });
+    });
     </script>
 </x-app-layout> 

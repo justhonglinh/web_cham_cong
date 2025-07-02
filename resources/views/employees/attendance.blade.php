@@ -346,316 +346,72 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            function isMobileDevice() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            }
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const captureBtn = document.getElementById('captureBtn');
-            const submitBtn = document.getElementById('submitBtn');
-            const attendanceForm = document.getElementById('attendanceForm');
-            const preview = document.getElementById('preview');
-            const previewImage = document.getElementById('previewImage');
-            const image1Input = document.getElementById('image1');
-            const latitudeInput = document.getElementById('latitude');
-            const longitudeInput = document.getElementById('longitude');
-            const permissionStatus = document.getElementById('permissionStatus');
-            const cameraStatusText = document.getElementById('cameraStatusText');
-            
-            // Location display elements
-            const locationText = document.getElementById('locationText');
-            const locationDetails = document.getElementById('locationDetails');
-            const longitudeText = document.getElementById('longitudeText');
-            const latitudeText = document.getElementById('latitudeText');
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const attendanceForm = document.getElementById('attendanceForm');
+        const preview = document.getElementById('preview');
+        const previewImage = document.getElementById('previewImage');
+        const image1Input = document.getElementById('image1');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        let stream = null, capturedImage = null;
 
-            let stream = null;
-            let capturedImage = null;
-            let cameraApproved = false;
-
-            // Cập nhật trạng thái quyền truy cập
-            function updatePermissionStatus() {
-                if (permissionStatus) {
-                    if (cameraApproved) {
-                        permissionStatus.innerHTML = `
-                            <div class="bg-green-50 border border-green-200 rounded-xl p-3">
-                                <div class="text-center">
-                                    <div class="flex items-center justify-center text-green-700 font-medium text-sm">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Camera sẵn sàng! ✅
-                                    </div>
-                                    <div class="text-xs text-green-600 mt-1">
-                                        Vị trí sẽ được xác định khi chụp ảnh
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        permissionStatus.innerHTML = `
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-                                <div class="text-center">
-                                    <div class="flex items-center justify-center text-yellow-700 font-medium text-sm mb-2">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                        </svg>
-                                        Cần cấp quyền camera
-                                    </div>
-                                    <div class="text-xs text-yellow-600">
-                                        Vui lòng cho phép quyền truy cập camera khi được hỏi
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-            }
-
-            // Khởi tạo camera
-            async function initCamera() {
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = stream;
+            } catch (err) { alert('Không thể truy cập camera'); }
+        }
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) return reject(new Error('Không hỗ trợ GPS'));
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+                    err => reject(new Error('Không lấy được vị trí')),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            });
+        }
+        if (captureBtn) {
+            captureBtn.addEventListener('click', async function() {
+                if (video.readyState < 2) return alert('Camera chưa sẵn sàng');
+                captureBtn.disabled = true;
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+                image1Input.value = capturedImage;
+                previewImage.src = capturedImage;
+                preview.classList.remove('hidden');
+                video.parentElement.classList.add('hidden');
                 try {
-                    updateCameraStatus('Đang khởi tạo...');
-                    
-                    // Cấu hình camera tối ưu cho mobile
-                    const constraints = {
-                        video: { 
-                            facingMode: 'user',
-                            width: { 
-                                ideal: isMobileDevice() ? 1280 : 640,
-                                min: 320,
-                                max: 1920
-                            },
-                            height: { 
-                                ideal: isMobileDevice() ? 720 : 480,
-                                min: 240,
-                                max: 1080
-                            }
-                        }
-                    };
-
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    video.srcObject = stream;
-                    
-                    video.onloadedmetadata = function() {
-                        console.log('Camera đã sẵn sàng:', video.videoWidth + 'x' + video.videoHeight);
-                        updateCameraStatus('Sẵn sàng');
-                        cameraApproved = true;
-                        updatePermissionStatus();
-                    };
-
-                    video.onerror = function() {
-                        console.error('Lỗi video stream');
-                        updateCameraStatus('Lỗi video', true);
-                        cameraApproved = false;
-                        updatePermissionStatus();
-                    };
-
-                } catch (err) {
-                    console.error('Lỗi khi truy cập camera:', err);
-                    updateCameraStatus('Cần cấp quyền', true);
-                    cameraApproved = false;
-                    updatePermissionStatus();
+                    const loc = await getCurrentLocation();
+                    latitudeInput.value = Number(loc.latitude).toFixed(6);
+                    longitudeInput.value = Number(loc.longitude).toFixed(6);
+                } catch (e) {
+                    alert('Không thể xác định vị trí: ' + e.message);
                 }
-            }
-
-            // Lấy vị trí hiện tại khi chụp ảnh
-            function getCurrentLocation() {
-                return new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject(new Error('Trình duyệt không hỗ trợ GPS'));
-                        return;
-                    }
-
-                    const options = {
-                        enableHighAccuracy: true,
-                        timeout: isMobileDevice() ? 30000 : 10000,
-                        maximumAge: 60000
-                    };
-
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            const accuracy = position.coords.accuracy;
-                            
-                            console.log('Vị trí đã lấy được:', { lat, lng, accuracy });
-                            
-                            resolve({
-                                latitude: lat,
-                                longitude: lng,
-                                accuracy: accuracy
-                            });
-                        },
-                        function(error) {
-                            console.error('Lỗi khi lấy vị trí:', error);
-                            let errorMessage = '';
-                            switch(error.code) {
-                                case error.PERMISSION_DENIED:
-                                    errorMessage = 'Bị từ chối quyền truy cập vị trí';
-                                    break;
-                                case error.POSITION_UNAVAILABLE:
-                                    errorMessage = 'Không thể xác định vị trí';
-                                    break;
-                                case error.TIMEOUT:
-                                    errorMessage = 'Hết thời gian chờ GPS';
-                                    break;
-                                default:
-                                    errorMessage = 'Lỗi không xác định';
-                            }
-                            reject(new Error(errorMessage));
-                        },
-                        options
-                    );
-                });
-            }
-
-            // Hiển thị thông tin vị trí trong preview
-            function displayLocationInfo(locationData) {
-                if (locationText) {
-                    locationText.textContent = '✅ Đã xác định';
-                    locationText.className = 'text-green-400 font-medium';
-                }
-                
-                if (locationDetails) {
-                    locationDetails.classList.remove('hidden');
-                    if (longitudeText) longitudeText.textContent = locationData.longitude.toFixed(6);
-                    if (latitudeText) latitudeText.textContent = locationData.latitude.toFixed(6);
-                }
-            }
-
-            // Hiển thị lỗi vị trí trong preview
-            function displayLocationError(errorMessage) {
-                if (locationText) {
-                    locationText.textContent = '❌ ' + errorMessage;
-                    locationText.className = 'text-red-400 font-medium';
-                }
-                
-                if (locationDetails) {
-                    locationDetails.classList.add('hidden');
-                }
-            }
-
-            // Chụp ảnh và lấy vị trí
-            if (captureBtn) {
-                captureBtn.addEventListener('click', async function() {
-                    try {
-                        if (video.readyState < 2) {
-                            alert('Camera chưa sẵn sàng. Vui lòng đợi một chút.');
-                            return;
-                        }
-
-                        // Disable button và hiển thị loading
-                        captureBtn.disabled = true;
-                        captureBtn.innerHTML = `
-                            <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Đang chụp ảnh và xác định vị trí...
-                        `;
-
-                        // Chụp ảnh
-                    const context = canvas.getContext('2d');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                        capturedImage = canvas.toDataURL('image/jpeg', 0.8);
-                    image1Input.value = capturedImage;
-                    
-                    // Hiển thị preview
-                    previewImage.src = capturedImage;
-                    preview.classList.remove('hidden');
-                    video.parentElement.classList.add('hidden');
-                        
-                        // Lấy vị trí
-                        try {
-                            const locationData = await getCurrentLocation();
-                            
-                            // Lưu vị trí vào form
-                            latitudeInput.value = Number(locationData.latitude).toFixed(6);
-                            longitudeInput.value = Number(locationData.longitude).toFixed(6);
-                            if (longitudeText) longitudeText.textContent = locationData.longitude.toFixed(6);
-                            if (latitudeText) latitudeText.textContent = locationData.latitude.toFixed(6);
-                            locationDetails.classList.remove('hidden');
-                            
-                            // Hiển thị thông tin vị trí
-                            displayLocationInfo(locationData);
-                            
-                        } catch (locationError) {
-                            console.error('Lỗi vị trí:', locationError);
-                        displayLocationError(locationError.message);
-                            
-                            // Vẫn cho phép submit nhưng cảnh báo
-                            alert('Không thể xác định vị trí: ' + locationError.message + '\nBạn vẫn có thể chấm công nhưng vị trí sẽ không được ghi nhận.');
-                        }
-                    
-                    // Ẩn nút chụp, hiện form submit
-                        captureBtn.parentElement.classList.add('hidden');
-                    attendanceForm.classList.remove('hidden');
-                        
-                        console.log('Đã chụp ảnh thành công:', canvas.width + 'x' + canvas.height);
-                        
-                    } catch (error) {
-                        console.error('Lỗi khi chụp ảnh:', error);
-                        alert('Có lỗi khi chụp ảnh. Vui lòng thử lại.');
-                        
-                        // Reset button
-                        captureBtn.disabled = false;
-                        captureBtn.innerHTML = `
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <span class="font-semibold">📸 Chụp ảnh & Chấm công</span>
-                        `;
-                    }
-                });
-            }
-
-            // Submit form
-            if (submitBtn) {
-                submitBtn.addEventListener('click', function(e) {
-                    if (!capturedImage) {
-                        alert('Vui lòng chụp ảnh trước khi chấm công');
-                        e.preventDefault();
-                        return;
-                    }
-                    // Không cần gọi API so sánh khuôn mặt, chỉ submit form truyền thống
-                });
-            }
-
-            // Khởi tạo
-            initCamera();
-
-            // Xử lý khi trang bị ẩn/hiện (cho mobile)
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    if (stream) {
-                        stream.getTracks().forEach(track => track.stop());
-                    }
-                } else {
-                    if (!stream || stream.getTracks().every(track => track.readyState === 'ended')) {
-                        initCamera();
-                    }
-                }
+                captureBtn.parentElement.classList.add('hidden');
+                attendanceForm.classList.remove('hidden');
             });
-
-            // Cleanup khi rời trang
-            window.addEventListener('beforeunload', function() {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+        }
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                if (!capturedImage) { alert('Vui lòng chụp ảnh trước khi chấm công'); e.preventDefault(); }
             });
-
-            // Thêm hàm cập nhật trạng thái camera
-            function updateCameraStatus(message, isError = false) {
-                if (cameraStatusText) {
-                    cameraStatusText.textContent = message;
-                    cameraStatusText.style.color = isError ? 'red' : '';
-                }
-            }
+        }
+        initCamera();
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && stream) stream.getTracks().forEach(track => track.stop());
+            else if (!stream || stream.getTracks().every(track => track.readyState === 'ended')) initCamera();
         });
+        window.addEventListener('beforeunload', function() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        });
+    });
     </script>
 </x-app-layout>

@@ -22,10 +22,6 @@ class LeaveRequestController extends Controller
     public function store(Request $request)
     {
         try {
-          
-
-
-
                 $leaveRequest = LeaveRequest::create([
                     'user_id' => Auth::id(),
                     'type' => $request->type,
@@ -85,10 +81,6 @@ class LeaveRequestController extends Controller
             ->where('manager', $managerId)
             ->pluck('id');
             
-        if (!in_array($leaveRequest->user_id, $employeeIds->toArray())) {
-            abort(403, 'Bạn không có quyền phê duyệt yêu cầu này.');
-        }
-        
         $request->validate([
             'status' => 'required|in:approved,rejected',
             'manager_note' => 'nullable|string|max:500',

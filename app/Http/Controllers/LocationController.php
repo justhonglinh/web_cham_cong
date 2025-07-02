@@ -41,7 +41,6 @@ class LocationController extends Controller
                 ->with('error', 'Dữ liệu không hợp lệ');
         }
 
-        try {
             $userId = Auth::id();
 
             // Tìm vị trí active hiện tại của user
@@ -75,14 +74,5 @@ class LocationController extends Controller
 
             return redirect()->back()->with('success', $message);
 
-        } catch (\Exception $e) {
-            Log::error('Location update error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'request_data' => $request->all(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return redirect()->back()->with('error', 'Có lỗi xảy ra khi lưu vị trí');
-        }
     }
 } 

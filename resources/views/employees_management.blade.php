@@ -212,120 +212,64 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality
-            const searchInput = document.getElementById('search');
-            const employeeRows = document.querySelectorAll('tbody tr');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tìm kiếm nhân viên
+        document.getElementById('search').addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const email = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+                row.style.display = (name.includes(searchText) || email.includes(searchText)) ? '' : 'none';
+            });
+            const visible = document.querySelectorAll('tbody tr:not([style*="display: none"])').length;
+            const total = document.querySelectorAll('tbody tr').length;
+            const info = document.querySelector('.text-sm.text-gray-700');
+            if (info) info.textContent = `Hiển thị ${visible} của ${total} kết quả`;
+        });
 
-            searchInput.addEventListener('input', function() {
-                const searchText = this.value.toLowerCase().trim();
-                
-                employeeRows.forEach(row => {
-                    const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                    const email = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-                    
-                    if (name.includes(searchText) || email.includes(searchText)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                // Update pagination info
-                const visibleRows = document.querySelectorAll('tbody tr:not([style*="display: none"])');
-                const totalRows = employeeRows.length;
-                const visibleCount = visibleRows.length;
-                
-                const infoText = document.querySelector('.text-sm.text-gray-700');
-                if (infoText) {
-                    infoText.textContent = `Hiển thị ${visibleCount} của ${totalRows} kết quả`;
+        // Mở modal chi tiết
+        document.querySelectorAll('.openDetailModal').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const user = JSON.parse(this.getAttribute('data-user'));
+                document.getElementById('detailName').textContent = user.name;
+                document.getElementById('detailEmail').textContent = user.email;
+                if (user.created_at) {
+                    const [d, t] = user.created_at.split('T');
+                    document.getElementById('detailCreatedDate').textContent = d;
+                    document.getElementById('detailCreatedTime').textContent = t ? t.split('.')[0] : '';
+                    document.getElementById('rowCreatedDate').style.display = '';
+                    document.getElementById('rowCreatedTime').style.display = '';
+                } else {
+                    document.getElementById('rowCreatedDate').style.display = 'none';
+                    document.getElementById('rowCreatedTime').style.display = 'none';
                 }
-            });
-
-            // Bind events for detail and edit buttons
-            document.querySelectorAll('.openDetailModal').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const user = JSON.parse(this.getAttribute('data-user'));
-                    document.getElementById('detailName').textContent = user.name || '';
-                    document.getElementById('detailEmail').textContent = user.email || '';
-                    
-                    if (user.created_at) {
-                        const [datePart, timeWithZone] = user.created_at.split('T');
-                        const timePart = timeWithZone ? timeWithZone.split('.')[0] : '';
-                        document.getElementById('detailCreatedDate').textContent = datePart || '';
-                        document.getElementById('detailCreatedTime').textContent = timePart || '';
-                        document.getElementById('rowCreatedDate').style.display = '';
-                        document.getElementById('rowCreatedTime').style.display = '';
-                    } else {
-                        document.getElementById('detailCreatedDate').textContent = '';
-                        document.getElementById('detailCreatedTime').textContent = '';
-                        document.getElementById('rowCreatedDate').style.display = 'none';
-                        document.getElementById('rowCreatedTime').style.display = 'none';
-                    }
-
-                    document.getElementById('detailAvatar').src = user.avatar ? `/storage/${user.avatar}` : 'https://via.placeholder.com/80';
-
-                    // Phone
-                    if (user.details && user.details.phone) {
-                        document.getElementById('detailPhone').textContent = user.details.phone;
-                        document.getElementById('rowPhone').style.display = '';
-                    } else {
-                        document.getElementById('detailPhone').textContent = '';
-                        document.getElementById('rowPhone').style.display = 'none';
-                    }
-
-                    // Address
-                    if (user.details && user.details.address) {
-                        document.getElementById('detailAddress').textContent = user.details.address;
-                        document.getElementById('rowAddress').style.display = '';
-                    } else {
-                        document.getElementById('detailAddress').textContent = '';
-                        document.getElementById('rowAddress').style.display = 'none';
-                    }
-
-                    // Birthday
-                    if (user.details && user.details.birthday) {
-                        document.getElementById('detailBirthday').textContent = user.details.birthday;
-                        document.getElementById('rowBirthday').style.display = '';
-                    } else {
-                        document.getElementById('detailBirthday').textContent = '';
-                        document.getElementById('rowBirthday').style.display = 'none';
-                    }
-
-                    // Emergency Contact
-                    if (user.details && user.details.emergency_contact) {
-                        document.getElementById('detailEmergencyContact').textContent = user.details.emergency_contact;
-                        document.getElementById('rowEmergencyContact').style.display = '';
-                    } else {
-                        document.getElementById('detailEmergencyContact').textContent = '';
-                        document.getElementById('rowEmergencyContact').style.display = 'none';
-                    }
-
-                    document.getElementById('userDetailModal').classList.remove('hidden');
-                });
-            });
-
-            document.querySelectorAll('.openEditModal').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const user = JSON.parse(this.getAttribute('data-user'));
-                    document.getElementById('editUserId').value = user.id;
-                    document.getElementById('editName').value = user.name;
-                    document.getElementById('editEmail').value = user.email;
-                    document.getElementById('editPassword').value = '';
-                    document.getElementById('editAvatar').value = '';
-                    document.getElementById('editUserForm').action = `/users/${user.id}`;
-                    document.getElementById('userEditModal').classList.remove('hidden');
-                });
-            });
-
-            // Close modal buttons
-            document.querySelectorAll('.close-modal').forEach(button => {
-                button.addEventListener('click', function() {
-                    this.closest('.modal').classList.add('hidden');
-                });
+                document.getElementById('detailAvatar').src = user.avatar ? `/storage/${user.avatar}` : 'https://via.placeholder.com/80';
+                document.getElementById('userDetailModal').classList.remove('hidden');
             });
         });
+
+        // Mở modal chỉnh sửa
+        document.querySelectorAll('.openEditModal').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const user = JSON.parse(this.getAttribute('data-user'));
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editName').value = user.name;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editAvatar').value = '';
+                document.getElementById('editUserForm').action = `/users/${user.id}`;
+                document.getElementById('userEditModal').classList.remove('hidden');
+            });
+        });
+
+        // Đóng modal
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.modal').classList.add('hidden');
+            });
+        });
+    });
     </script>
 </x-app-layout>

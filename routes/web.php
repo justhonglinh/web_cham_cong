@@ -40,7 +40,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Các route chỉ dành cho manager
 Route::middleware(['auth', 'role:manager'])->group(function () {
-//    // employees management page
+   // employees management page
    Route::get('/employees/management', function () {
        $employees = (new UserController())->show();
        return view('employees_management', compact('employees'));
@@ -105,6 +105,9 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
     // Route chấm công cho nhân viên (giao diện bật cam chụp ảnh)
     Route::get('/employees/attendance', [AttendanceController::class, 'showAttendanceForm'])->name('employees.attendance');
     Route::post('/employees/attendance', [AttendanceController::class, 'processAttendance'])->name('employees.attendance.process');
+    
+    //Lich su cham cong  
+    Route::get('/employees/attendance/history', [AttendanceController::class, 'history'])->name('employees.attendance.history');
 
     // Face compare route
     Route::get('/employees/face-compare', [FaceCompareController::class, 'showForm'])->name('employees.face-compare');
@@ -113,9 +116,6 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/overtime/employee', [OvertimeController::class, 'show'])->name('employees.overtime.index');
     Route::post('/overtime/register/{shiftId}', [OvertimeController::class, 'register'])->name('employees.overtime.register');
     Route::delete('/overtime/unregister/{shiftId}', [OvertimeController::class, 'unregister'])->name('employees.overtime.unregister');
-
-    //Lich su cham cong
-    Route::get('/employees/attendance/history', [AttendanceController::class, 'history'])->name('employees.attendance.history');
 
     // Leave request routes
     Route::get('/employees/leave/request', [LeaveRequestController::class, 'showForm'])->name('employees.leave.request');

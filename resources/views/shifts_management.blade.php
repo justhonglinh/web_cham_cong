@@ -320,261 +320,53 @@
     </div>
 
     <script>
-        let currentPage = 1;
-        const rowsPerPage = 10;
-        const shifts = @json($shifts);
-        let filteredShifts = shifts;
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    const shifts = @json($shifts);
+    let filteredShifts = shifts;
 
-        function updateTableInfo(data) {
-            const start = (data.length === 0) ? 0 : (currentPage - 1) * rowsPerPage + 1;
-            const end = Math.min(currentPage * rowsPerPage, data.length);
-            const total = data.length;
-            document.getElementById('table-info').textContent = `Hiển thị ${start} đến ${end} của ${total} kết quả`;
-        }
-
-        function updatePageInfo(data) {
-            const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
-            document.getElementById('page-info').textContent = `Trang ${currentPage} của ${totalPages}`;
-        }
-
-        function renderTable(data) {
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const pageData = data.slice(start, end);
-            const tbody = document.querySelector('tbody');
-            tbody.innerHTML = "";
-            pageData.forEach(shift => {
-                const row = document.createElement("tr");
-                row.className = "hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200";
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-lg flex items-center justify-center mr-3">
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="text-sm font-medium text-gray-900 dark:text-white">${shift.name}</div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span class="text-sm text-gray-600 dark:text-gray-300">${shift.start_time}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <svg class="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span class="text-sm text-gray-600 dark:text-gray-300">${shift.end_time}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Chưa sử dụng
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div class="flex items-center justify-center space-x-2">
-                            <!-- Nút Sửa -->
-                            <a href="javascript:void(0);" 
-                               data-user='${JSON.stringify(shift)}'
-                               class="openEditModal inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition duration-200 shadow-sm" 
-                               title="Sửa ca làm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </a>
-                            
-                            <!-- Nút Xóa -->
-                            <form action="/shift/management/${shift.id}" method="POST" class="inline-block" 
-                                  onsubmit="return confirm('Bạn có chắc muốn xóa ca làm này không?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" 
-                                    class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition duration-200 shadow-sm" 
-                                    title="Xóa ca làm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-            
-            // Update pagination buttons
-            const prevBtn = document.getElementById('prevPage');
-            const nextBtn = document.getElementById('nextPage');
-            
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage * rowsPerPage >= data.length;
-            
-            if (prevBtn.disabled) {
-                prevBtn.className = "px-3 py-2 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed text-sm opacity-50";
-            } else {
-                prevBtn.className = "px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm";
-            }
-            
-            if (nextBtn.disabled) {
-                nextBtn.className = "px-3 py-2 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed text-sm opacity-50";
-            } else {
-                nextBtn.className = "px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm";
-            }
-            
-            updateTableInfo(data);
-            updatePageInfo(data);
-        }
-
-        function changePage(direction) {
-            if (direction === 'next' && currentPage * rowsPerPage < filteredShifts.length) {
-                currentPage++;
-            } else if (direction === 'prev' && currentPage > 1) {
-                currentPage--;
-            }
-            renderTable(filteredShifts);
-        }
-
-        document.getElementById('search').addEventListener('input', function () {
-            const q = this.value.toLowerCase();
-            filteredShifts = shifts.filter(s => {
-                let all = [
-                    s.id,
-                    s.name,
-                    s.start_time,
-                    s.end_time
-                ].filter(Boolean).join(' ').toLowerCase();
-                return all.includes(q);
-            });
-            currentPage = 1;
-            renderTable(filteredShifts);
+    function renderTable(data) {
+        const start = (currentPage - 1) * rowsPerPage;
+        const pageData = data.slice(start, start + rowsPerPage);
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = "";
+        pageData.forEach(shift => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${shift.name}</td>
+                <td>${shift.start_time}</td>
+                <td>${shift.end_time}</td>
+                <td class="text-center">Chưa sử dụng</td>
+                <td class="text-center">
+                    <a href="javascript:void(0);" data-user='${JSON.stringify(shift)}' class="openEditModal">Sửa</a>
+                    <form action="/shift/management/${shift.id}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn xóa ca làm này không?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit">Xóa</button>
+                    </form>
+                </td>
+            `;
+            tbody.appendChild(row);
         });
+        document.getElementById('table-info').textContent = `Hiển thị ${data.length ? (start + 1) : 0} đến ${Math.min(currentPage * rowsPerPage, data.length)} của ${data.length} kết quả`;
+        document.getElementById('page-info').textContent = `Trang ${currentPage} của ${Math.ceil(data.length / rowsPerPage) || 1}`;
+        document.getElementById('prevPage').disabled = currentPage === 1;
+        document.getElementById('nextPage').disabled = currentPage * rowsPerPage >= data.length;
+    }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality
-            const searchInput = document.getElementById('search');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const rows = document.querySelectorAll('tbody tr');
-                    
-                    rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(searchTerm) ? '' : 'none';
-                    });
-                });
-            }
+    function changePage(direction) {
+        if (direction === 'next' && currentPage * rowsPerPage < filteredShifts.length) currentPage++;
+        else if (direction === 'prev' && currentPage > 1) currentPage--;
+        renderTable(filteredShifts);
+    }
 
-            // Initialize table
-            renderTable(filteredShifts);
+    document.getElementById('search').addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        filteredShifts = shifts.filter(s => [s.id, s.name, s.start_time, s.end_time].join(' ').toLowerCase().includes(q));
+        currentPage = 1;
+        renderTable(filteredShifts);
+    });
 
-            // Form validation
-            const createShiftForm = document.getElementById('createShiftForm');
-            if (createShiftForm) {
-                createShiftForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Reset error messages
-                    document.querySelectorAll('[id$="Error"]').forEach(el => {
-                        el.classList.add('hidden');
-                        el.textContent = '';
-                    });
-                    
-                    let isValid = true;
-                    const name = document.getElementById('shiftName').value.trim();
-                    const startTime = document.getElementById('startTime').value;
-                    const endTime = document.getElementById('endTime').value;
-                    
-                    // Validate name
-                    if (!name) {
-                        document.getElementById('nameError').textContent = 'Tên ca làm không được để trống';
-                        document.getElementById('nameError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate start time
-                    if (!startTime) {
-                        document.getElementById('startTimeError').textContent = 'Thời gian bắt đầu không được để trống';
-                        document.getElementById('startTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate end time
-                    if (!endTime) {
-                        document.getElementById('endTimeError').textContent = 'Thời gian kết thúc không được để trống';
-                        document.getElementById('endTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate time logic
-                    if (startTime && endTime && startTime >= endTime) {
-                        document.getElementById('endTimeError').textContent = 'Thời gian kết thúc phải sau thời gian bắt đầu';
-                        document.getElementById('endTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    if (isValid) {
-                        this.submit();
-                    }
-                });
-            }
-
-            // Edit form validation
-            const editShiftForm = document.getElementById('editShiftForm');
-            if (editShiftForm) {
-                editShiftForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Reset error messages
-                    document.querySelectorAll('[id^="edit"][id$="Error"]').forEach(el => {
-                        el.classList.add('hidden');
-                        el.textContent = '';
-                    });
-                    
-                    let isValid = true;
-                    const name = document.getElementById('editShiftName').value.trim();
-                    const startTime = document.getElementById('editStartTime').value;
-                    const endTime = document.getElementById('editEndTime').value;
-                    
-                    // Validate name
-                    if (!name) {
-                        document.getElementById('editNameError').textContent = 'Tên ca làm không được để trống';
-                        document.getElementById('editNameError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate start time
-                    if (!startTime) {
-                        document.getElementById('editStartTimeError').textContent = 'Thời gian bắt đầu không được để trống';
-                        document.getElementById('editStartTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate end time
-                    if (!endTime) {
-                        document.getElementById('editEndTimeError').textContent = 'Thời gian kết thúc không được để trống';
-                        document.getElementById('editEndTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    // Validate time logic
-                    if (startTime && endTime && startTime >= endTime) {
-                        document.getElementById('editEndTimeError').textContent = 'Thời gian kết thúc phải sau thời gian bắt đầu';
-                        document.getElementById('editEndTimeError').classList.remove('hidden');
-                        isValid = false;
-                    }
-                    
-                    if (isValid) {
-                        this.submit();
-                    }
-                });
-            }
-        });
     </script>
     
     <!-- Load model-shift.js to ensure edit button functionality -->

@@ -12,11 +12,6 @@ class ShiftController extends Controller
 {
     public function show()
     {
-        // Kiểm tra quyền truy cập
-        if (Auth::user()->role !== 'manager') {
-            return redirect()->back()->withErrors(['error' => 'Bạn không có quyền truy cập trang này.']);
-        }
-
         $userId = Auth::user()->id;
         $today = now()->toDateString();
         
@@ -53,11 +48,6 @@ class ShiftController extends Controller
      */
     public function showAll()
     {
-        // Kiểm tra quyền truy cập
-        if (Auth::user()->role !== 'manager') {
-            return redirect()->back()->withErrors(['error' => 'Bạn không có quyền truy cập trang này.']);
-        }
-
         $userId = Auth::user()->id;
         $today = now()->toDateString();
         
@@ -98,11 +88,6 @@ class ShiftController extends Controller
 
     public function store(Request $request)
     {
-        // Kiểm tra quyền truy cập
-        if (Auth::user()->role !== 'manager') {
-            return redirect()->back()->withErrors(['error' => 'Bạn không có quyền thực hiện hành động này.']);
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
             'start_time' => 'required|date_format:H:i',
@@ -121,12 +106,6 @@ class ShiftController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Kiểm tra quyền truy cập
-        if (Auth::user()->role !== 'manager') {
-            return redirect()->back()->withErrors(['error' => 'Bạn không có quyền thực hiện hành động này.']);
-        }
-
-
         $shift = Shift::findOrFail($id);
         
         // Đảm bảo manager chỉ có thể sửa ca làm của chính mình
@@ -166,7 +145,7 @@ class ShiftController extends Controller
             ->exists();
         
         if ($hasCurrentAttendance) {
-            return redirect()->back()->withErrors(['error' => 'Không thể xóa ca làm đang được sử dụng cho các ngày hiện tại hoặc tương lai.']);
+            return redirect()->back()->withErrors(['warning' => 'Không thể xóa ca làm đang được sử dụng cho các ngày hiện tại hoặc tương lai.']);
         }
         
         // Nếu có attendance cũ, hiển thị cảnh báo nhưng vẫn cho phép xóa
@@ -183,11 +162,6 @@ class ShiftController extends Controller
 
     public function search(Request $request)
     {
-        // Kiểm tra quyền truy cập
-        if (Auth::user()->role !== 'manager') {
-            return response()->json(['error' => 'Bạn không có quyền thực hiện hành động này.'], 403);
-        }
-
         $query = $request->input('query');
         $userId = Auth::user()->id;
         $today = now()->toDateString();
