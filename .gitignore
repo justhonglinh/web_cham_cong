@@ -6,6 +6,9 @@
 /storage/*.key
 /storage/pail
 /vendor
+/database/migrations
+/database/seeders
+/public/js
 .env
 .env.backup
 .env.production
