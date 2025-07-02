@@ -18,7 +18,7 @@ class AttendanceController extends Controller
         $managerId = Auth::user()->id;
         $today = now()->toDateString();
 
-
+        $default_shift = Shift::where('user_id',$managerId)->first();
         $shifts = Shift::where('user_id', $managerId)->get();
         if($shifts->count() == 0){
             return redirect()->route('shifts.index')->with('warning', 'Vui lòng tạo ca làm việc trước khi chấm công');
@@ -27,7 +27,6 @@ class AttendanceController extends Controller
         $users = User::where('role', 'employee')
             ->where('manager', $managerId)
             ->get();
-
         $employeeIds = $users->pluck('id');
 
         foreach ($employeeIds as $employeeId) {
@@ -42,7 +41,7 @@ class AttendanceController extends Controller
                 Attendance::create([
                     'user_id' => $employeeId,
                     'date' => $today,
-                    'shift_id' => '1',
+                    'shift_id' => $default_shift->id,
                     'check_in_time' => null,
                     'check_out_time' => null,
                     'status' => 'absent', // trạng thái mặc định
@@ -75,13 +74,13 @@ class AttendanceController extends Controller
     public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
-        
+
         // Lưu thông tin cũ để so sánh
         $oldDate = $attendance->date;
         $oldShiftId = $attendance->shift_id;
         $oldOvertimeId = $attendance->overtime_id;
         $oldStatus = $attendance->status;
-        
+
         // Nếu là ca làm việc thường
         if ($request->filled('shift_id')) {
             $attendance->shift_id = $request->shift_id;
@@ -106,15 +105,15 @@ class AttendanceController extends Controller
             $attendance->status = $request->status;
         }
         $attendance->save();
-        
+
         // Cập nhật work_summary sau khi thay đổi attendance
         $this->updateWorkSummary($attendance->user_id, $attendance->date);
-        
+
         // Nếu ngày thay đổi, cũng cập nhật work_summary cho ngày cũ
         if ($oldDate != $attendance->date) {
             $this->updateWorkSummary($attendance->user_id, $oldDate);
         }
-        
+
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
         }
@@ -124,69 +123,69 @@ class AttendanceController extends Controller
     /**
      * Cập nhật work_summary cho user trong tháng/năm cụ thể
      */
-    private function updateWorkSummary($userId, $date)
-    {
-        $dateObj = \Carbon\Carbon::parse($date);
-        $month = $dateObj->month;
-        $year = $dateObj->year;
-        
-        // Tạo hoặc cập nhật work summary
-        $workSummary = \App\Models\WorkSummary::firstOrNew([
-            'user_id' => $userId,
-            'month' => $month,
-            'year' => $year,
-        ]);
-        
-        // Lấy tất cả attendance của user trong tháng
-        $attendances = \App\Models\Attendance::where('user_id', $userId)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->get();
-        
-        // Tính toán lại các chỉ số
-        $totalWorkHours = 0;
-        $totalOvertimeHours = 0;
-        $totalLeaveDays = 0;
-        $totalLateDays = 0;
-        
-        foreach ($attendances as $att) {
-            // Tính giờ làm việc thường
-            if ($att->shift_id && $att->shift) {
-                $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
-                $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
-                $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
-                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
-                $totalWorkHours += $workMinutes / 60;
-            }
-            
-            // Tính giờ làm thêm
-            if ($att->overtime_id && $att->overtimeShift) {
-                $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
-                $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
-                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
-                $totalOvertimeHours += $workMinutes / 60;
-            }
-            
-            // Đếm ngày nghỉ phép
-            if ($att->status === 'leave') {
-                $totalLeaveDays++;
-            }
-            
-            // Đếm ngày đi muộn
-            if ($att->status === 'late') {
-                $totalLateDays++;
-            }
-        }
-        
-        // Cập nhật work summary
-        $workSummary->total_work_hours = $totalWorkHours;
-        $workSummary->total_overtime_hours = $totalOvertimeHours;
-        $workSummary->total_leave_days = $totalLeaveDays;
-        $workSummary->total_late_days = $totalLateDays;
-        $workSummary->save();
-        
-        return $workSummary;
-    }
+//    private function updateWorkSummary($userId, $date)
+//    {
+//        $dateObj = \Carbon\Carbon::parse($date);
+//        $month = $dateObj->month;
+//        $year = $dateObj->year;
+//
+//        // Tạo hoặc cập nhật work summary
+//        $workSummary = \App\Models\WorkSummary::firstOrNew([
+//            'user_id' => $userId,
+//            'month' => $month,
+//            'year' => $year,
+//        ]);
+//
+//        // Lấy tất cả attendance của user trong tháng
+//        $attendances = \App\Models\Attendance::where('user_id', $userId)
+//            ->whereMonth('date', $month)
+//            ->whereYear('date', $year)
+//            ->get();
+//
+//        // Tính toán lại các chỉ số
+//        $totalWorkHours = 0;
+//        $totalOvertimeHours = 0;
+//        $totalLeaveDays = 0;
+//        $totalLateDays = 0;
+//
+//        foreach ($attendances as $att) {
+//            // Tính giờ làm việc thường
+//            if ($att->shift_id && $att->shift) {
+//                $date = is_string($att->date) ? substr($att->date, 0, 10) : $att->date->format('Y-m-d');
+//                $shiftStart = \Carbon\Carbon::parse($date . ' ' . $att->shift->start_time);
+//                $shiftEnd = \Carbon\Carbon::parse($date . ' ' . $att->shift->end_time);
+//                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+//                $totalWorkHours += $workMinutes / 60;
+//            }
+//
+//            // Tính giờ làm thêm
+//            if ($att->overtime_id && $att->overtimeShift) {
+//                $shiftStart = \Carbon\Carbon::parse($att->overtimeShift->start_time);
+//                $shiftEnd = \Carbon\Carbon::parse($att->overtimeShift->end_time);
+//                $workMinutes = abs($shiftEnd->diffInMinutes($shiftStart));
+//                $totalOvertimeHours += $workMinutes / 60;
+//            }
+//
+//            // Đếm ngày nghỉ phép
+//            if ($att->status === 'leave') {
+//                $totalLeaveDays++;
+//            }
+//
+//            // Đếm ngày đi muộn
+//            if ($att->status === 'late') {
+//                $totalLateDays++;
+//            }
+//        }
+//
+//        // Cập nhật work summary
+//        $workSummary->total_work_hours = $totalWorkHours;
+//        $workSummary->total_overtime_hours = $totalOvertimeHours;
+//        $workSummary->total_leave_days = $totalLeaveDays;
+//        $workSummary->total_late_days = $totalLateDays;
+//        $workSummary->save();
+//
+//        return $workSummary;
+//    }
 
     public function history()
     {
@@ -203,7 +202,7 @@ class AttendanceController extends Controller
     {
         $today = now()->toDateString();
         $table = $request->get('table', 'attendance');
-        
+
         $query = Attendance::with(['user', 'shift'])
             ->whereNull('overtime_id') // Chỉ lấy attendance thông thường
             ->orderBy('date', 'desc')
@@ -317,7 +316,7 @@ class AttendanceController extends Controller
             foreach ($todayAttendances as $attendance) {
                 $currentShift = null;
                 $shiftType = '';
-                
+
                 if ($attendance->shift_id) {
                     $currentShift = $attendance->shift;
                     $shiftType = 'shift';
@@ -338,7 +337,7 @@ class AttendanceController extends Controller
                         }
                         continue; // Bỏ qua logic khác nếu đã tìm thấy ca check-in
                     }
-                    
+
                     // Xử lý thời gian khác nhau cho shift và overtime
                     if ($shiftType === 'shift') {
                         // Shift chỉ có giờ phút, cần thêm ngày hôm nay
@@ -402,7 +401,7 @@ class AttendanceController extends Controller
                 $todayAttendance = $checkedInShift['attendance'];
                 $currentShift = $checkedInShift['shift'];
                 $shiftType = $checkedInShift['type'];
-                
+
                 // Xử lý thời gian hiển thị
                 if ($shiftType === 'shift') {
                     $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
@@ -411,13 +410,13 @@ class AttendanceController extends Controller
                     $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                 }
-                
+
                 $currentTimeOnly = $currentTime->format('H:i:s');
-                
+
                 $shiftStatus = 'active';
                 $canCheckIn = false;
                 $canCheckOut = true;
-                
+
                 $shiftInfo = [
                     'name' => $currentShift->name,
                     'start_time' => $shiftStartTime->format('H:i'),
@@ -434,7 +433,7 @@ class AttendanceController extends Controller
                 $currentShift = $activeShift['shift'];
                 $shiftType = $activeShift['type'];
                 $isEarlyCheckIn = isset($activeShift['is_early_checkin']) ? $activeShift['is_early_checkin'] : false;
-                
+
                 // Xử lý thời gian hiển thị
                 if ($shiftType === 'shift') {
                     $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
@@ -443,15 +442,15 @@ class AttendanceController extends Controller
                     $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                 }
-                
+
                 $currentTimeOnly = $currentTime->format('H:i:s');
-                
+
                 $shiftStatus = $isEarlyCheckIn ? 'early_checkin' : 'active';
-                
+
                 // Kiểm tra trạng thái chấm công
                 $hasCheckedIn = $todayAttendance->check_in_time;
                 $hasCheckedOut = $todayAttendance->check_out_time;
-                
+
                 if ($hasCheckedIn && !$hasCheckedOut) {
                     // Đã check-in, chưa check-out
                     $canCheckIn = false;
@@ -465,7 +464,7 @@ class AttendanceController extends Controller
                     $canCheckIn = false;
                     $canCheckOut = false;
                 }
-                
+
                 $shiftInfo = [
                     'name' => $currentShift->name,
                     'start_time' => $shiftStartTime->format('H:i'),
@@ -481,7 +480,7 @@ class AttendanceController extends Controller
                 $todayAttendance = $upcomingShift['attendance'];
                 $currentShift = $upcomingShift['shift'];
                 $shiftType = $upcomingShift['type'];
-                
+
                 // Xử lý thời gian hiển thị
                 if ($shiftType === 'shift') {
                     $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
@@ -490,7 +489,7 @@ class AttendanceController extends Controller
                     $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                 }
-                
+
                 $shiftStatus = 'upcoming';
                 $shiftInfo = [
                     'name' => $currentShift->name,
@@ -503,7 +502,7 @@ class AttendanceController extends Controller
                 $todayAttendance = $endedShift['attendance'];
                 $currentShift = $endedShift['shift'];
                 $shiftType = $endedShift['type'];
-                
+
                 // Xử lý thời gian hiển thị
                 if ($shiftType === 'shift') {
                     $shiftStartTime = \Carbon\Carbon::parse($today . ' ' . $currentShift->start_time);
@@ -512,7 +511,7 @@ class AttendanceController extends Controller
                     $shiftStartTime = \Carbon\Carbon::parse($currentShift->start_time);
                     $shiftEndTime = \Carbon\Carbon::parse($currentShift->end_time);
                 }
-                
+
                 $shiftStatus = 'ended';
                 $shiftInfo = [
                     'name' => $currentShift->name,
@@ -585,7 +584,7 @@ class AttendanceController extends Controller
         $longitude = $request->input('longitude');
         $distance = $request->input('distance');
         $accuracy = $request->input('accuracy'); // Lấy thêm accuracy từ request nếu có
-        
+
         // Lấy location active của manager
         $manager = $user->manager; // quan hệ belongsTo
         if (is_numeric($manager)) {
@@ -646,12 +645,19 @@ class AttendanceController extends Controller
         @unlink($image2Path);
         $result = $response->json();
         $confidence = $result['confidence'] ?? null;
-        $threshold = 70;
+        $default_confidence = 60;
 
         $shiftId = $request->input('shift_id');
         $overtimeId = $request->input('overtime_id');
         $status = 'present'; // hoặc logic xác định status phía trên
 
+        if ($confidence !== null && $confidence < $default_confidence) {
+            return redirect()
+                ->back()
+                ->with(
+                    'warning', 'Người Dùng Không Chính Xác. (Độ giống nhau: ' . $confidence .'/100'
+            );
+        }
         // Lấy giờ bắt đầu ca làm việc
         $shiftStart = null;
         if ($shiftId) {
@@ -665,7 +671,7 @@ class AttendanceController extends Controller
                 $shiftStart = \Carbon\Carbon::parse($overtimeShift->start_time)->format('H:i:s');
             }
         }
-        if ($status !== 'absent' && $shiftStart) {
+        if ($shiftStart) {
             $now = $currentTime->format('H:i:s');
             if (strtotime($now) > strtotime($shiftStart)) {
                 $status = 'late';
@@ -748,9 +754,6 @@ class AttendanceController extends Controller
         $workSummary->total_late_days = $totalLateDays;
         $workSummary->save();
 
-        $locationName = $request->input('location_name');
-        // Có thể so sánh $locationName với tên địa điểm trong DB hoặc lưu lại nếu muốn
-        
         return redirect()->back()->with('success', 'Chấm công thành công! Điểm so sánh khuôn mặt: ' . $confidence . '. Trạng thái: ' . $status);
     }
 

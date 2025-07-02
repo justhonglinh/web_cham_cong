@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="py-6 sm:py-8 lg:py-12" style="background: linear-gradient(135deg, #e0e7ff 0%, #fdf2f8 50%, #e0f2fe 100%); min-height: calc(100vh - 64px);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
+
             <!-- Header Section -->
             <div class="bg-white/95 rounded-3xl shadow-2xl p-6 sm:p-8 border border-blue-200/50 backdrop-blur-xl mb-8">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -9,7 +9,7 @@
                         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📊 Lịch sử chấm công</h1>
                         <p class="text-gray-600 text-base sm:text-lg">Xem chi tiết các ca làm việc và thống kê thời gian</p>
                     </div>
-                    
+
                     <!-- Thống kê tổng quan -->
                     <div class="flex flex-wrap gap-4">
                         <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
@@ -34,7 +34,7 @@
                                         $totalWorkMinutes += $checkIn->diffInMinutes($checkOut);
                                     }
                                 }
-                                
+
                                 // Làm tròn tổng thời gian đến 15 phút gần nhất
                                 $roundedTotalMinutes = round($totalWorkMinutes / 15) * 15;
                                 $totalWorkHours = intval($roundedTotalMinutes / 60);
@@ -201,7 +201,7 @@
                                             $checkIn = \Carbon\Carbon::parse($attendance->check_in_time);
                                             $checkOut = \Carbon\Carbon::parse($attendance->check_out_time);
                                             $totalMinutes = $checkIn->diffInMinutes($checkOut);
-                                            
+
                                             // Làm tròn đến 15 phút gần nhất
                                             $roundedMinutes = round($totalMinutes / 15) * 15;
                                             $totalHours = intval($roundedMinutes / 60);
@@ -238,37 +238,37 @@
 
                                 <!-- Trạng thái -->
                                 <td class="px-6 py-4">
-                                @if($attendance->status == 'success')
+                                @if($attendance->status == 'present')
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                             </svg>
-                                            Thành công
+                                            Đã Chấm Công
                                         </span>
-                                    @elseif($attendance->status == 'overtime')
+                                    @elseif($attendance->status == 'early_leave')
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            Overtime
+                                            Về Sớm
                                         </span>
-                                    @elseif($attendance->status == 'late')
+                                    @elseif($attendance->status == 'leave')
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            Muộn
+                                            Nghỉ
                                         </span>
-                                @elseif($attendance->status == 'fail')
+                                @elseif($attendance->status == 'late')
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                                             <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                             </svg>
-                                            Thất bại
+                                            Muộn
                                         </span>
                                 @else
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                                            {{ $attendance->status }}
+                                            Vắng Mặt
                                         </span>
                                 @endif
                             </td>
@@ -297,7 +297,7 @@
 
             <!-- Nút quay lại -->
             <div class="mt-8 flex justify-center">
-                <a href="{{ route('employees.dashboard') }}" 
+                <a href="{{ route('employees.dashboard') }}"
                    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>

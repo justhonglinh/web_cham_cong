@@ -3,7 +3,7 @@
         <x-attendance-modal :shifts="$shifts" />
         <x-attendance-overtime-modal :shifts="$overtimes" />
     </x-slot>
-    
+
     <!-- Header Section -->
     <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 -mt-6 -mx-6 px-6 py-8 mb-8">
         <div class="max-w-7xl mx-auto">
@@ -12,13 +12,13 @@
                     <h1 class="text-3xl font-bold mb-2">Quản lý chấm công</h1>
                     <p class="text-blue-100 text-lg">Theo dõi và quản lý chấm công nhân viên</p>
                 </div>
-                
+
                 <!-- View Mode Toggle -->
                 <div class="flex items-center space-x-4">
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl p-1">
                         <div class="flex">
-                            <button 
-                                @click="viewMode = 'overview'" 
+                            <button
+                                @click="viewMode = 'overview'"
                                 :class="viewMode === 'overview' ? 'bg-white text-blue-600 shadow-lg' : 'text-white hover:bg-white/20'"
                                 class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2"
                             >
@@ -27,8 +27,8 @@
                                 </svg>
                                 <span>Tổng quan</span>
                             </button>
-                            <button 
-                                @click="viewMode = 'detailed'" 
+                            <button
+                                @click="viewMode = 'detailed'"
                                 :class="viewMode === 'detailed' ? 'bg-white text-blue-600 shadow-lg' : 'text-white hover:bg-white/20'"
                                 class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2"
                             >
@@ -55,7 +55,7 @@
                             </svg>
                         </span>
                     </div>
-{{--                     
+{{--
                     <!-- Add Attendance Button -->
                     <button id="openAttendanceModal"
                         class="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-xl shadow-lg transition-all text-base whitespace-nowrap">
@@ -70,7 +70,7 @@
     </div>
 
     <!-- Main Content -->
-    <div x-data="{ viewMode: 'overview', activeTab: 'attendance' }" 
+    <div x-data="{ viewMode: 'overview', activeTab: 'attendance' }"
          x-init="console.log('Alpine.js initialized:', { viewMode, activeTab })"
          class="max-w-7xl mx-auto">
         <!-- Overview Mode -->
@@ -90,7 +90,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                     <div class="flex items-center">
                         <div class="p-3 bg-purple-100 rounded-xl">
@@ -104,7 +104,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                     <div class="flex items-center">
                         <div class="p-3 bg-green-100 rounded-xl">
@@ -118,7 +118,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                     <div class="flex items-center">
                         <div class="p-3 bg-yellow-100 rounded-xl">
@@ -160,16 +160,16 @@
                                         <p class="text-sm text-gray-600">{{ $shift->shift->name ?? 'N/A' }} • {{ $shift->start_time }}</p>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                            {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' : 
-                                               ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' : 
-                                               ($shift->status === 'absent' ? 'bg-red-100 text-red-800' : 
-                                               ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' :
+                                               ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' :
+                                               ($shift->status === 'absent' ? 'bg-red-100 text-red-800' :
+                                               ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                                ($shift->status === 'early_leave' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')))) }}">
-                                            {{ $shift->status === 'present' ? 'Có mặt' : 
-                                               ($shift->status === 'leave' ? 'Nghỉ phép' : 
-                                               ($shift->status === 'absent' ? 'Vắng mặt' : 
-                                               ($shift->status === 'late' ? 'Đi muộn' : 
+                                            {{ $shift->status === 'present' ? 'Có mặt' :
+                                               ($shift->status === 'leave' ? 'Nghỉ phép' :
+                                               ($shift->status === 'absent' ? 'Vắng mặt' :
+                                               ($shift->status === 'late' ? 'Đi muộn' :
                                                ($shift->status === 'early_leave' ? 'Về sớm' : 'Không xác định')))) }}
                                         </span>
                                         <button data-user='@json($shift)' class="openDetailModal p-1 text-gray-400 hover:text-blue-600 transition-colors">
@@ -215,16 +215,16 @@
                                         <p class="text-sm text-gray-600">{{ $shift->overtimeShift->name ?? 'N/A' }} • {{ $shift->start_time }}</p>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                            {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' : 
-                                               ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' : 
-                                               ($shift->status === 'absent' ? 'bg-red-100 text-red-800' : 
-                                               ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' :
+                                               ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' :
+                                               ($shift->status === 'absent' ? 'bg-red-100 text-red-800' :
+                                               ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                                ($shift->status === 'early_leave' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')))) }}">
-                                            {{ $shift->status === 'present' ? 'Có mặt' : 
-                                               ($shift->status === 'leave' ? 'Nghỉ phép' : 
-                                               ($shift->status === 'absent' ? 'Vắng mặt' : 
-                                               ($shift->status === 'late' ? 'Đi muộn' : 
+                                            {{ $shift->status === 'present' ? 'Có mặt' :
+                                               ($shift->status === 'leave' ? 'Nghỉ phép' :
+                                               ($shift->status === 'absent' ? 'Vắng mặt' :
+                                               ($shift->status === 'late' ? 'Đi muộn' :
                                                ($shift->status === 'early_leave' ? 'Về sớm' : 'Không xác định')))) }}
                                         </span>
                                         <button data-attendance='@json($shift)' class="openDetailOvertimeModal p-1 text-gray-400 hover:text-purple-600 transition-colors">
@@ -254,8 +254,8 @@
                 <!-- Tab Navigation -->
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                        <button 
-                            @click="activeTab = 'attendance'" 
+                        <button
+                            @click="activeTab = 'attendance'"
                             :class="activeTab === 'attendance' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center space-x-2"
                         >
@@ -265,8 +265,8 @@
                             <span>Chấm Công</span>
                             <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs font-medium">{{ $attendance_shifts->count() }}</span>
                         </button>
-                        <button 
-                            @click="activeTab = 'overtime'" 
+                        <button
+                            @click="activeTab = 'overtime'"
                             :class="activeTab === 'overtime' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                             class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex items-center space-x-2"
                         >
@@ -312,16 +312,16 @@
                                                 <div class="text-gray-400">{{ $shift->end_time }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                                    {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' : 
-                                                       ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' : 
-                                                       ($shift->status === 'absent' ? 'bg-red-100 text-red-800' : 
-                                                       ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                    {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' :
+                                                       ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' :
+                                                       ($shift->status === 'absent' ? 'bg-red-100 text-red-800' :
+                                                       ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                                        ($shift->status === 'early_leave' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')))) }}">
-                                                    {{ $shift->status === 'present' ? 'Có mặt' : 
-                                                       ($shift->status === 'leave' ? 'Nghỉ phép' : 
-                                                       ($shift->status === 'absent' ? 'Vắng mặt' : 
-                                                       ($shift->status === 'late' ? 'Đi muộn' : 
+                                                    {{ $shift->status === 'present' ? 'Có mặt' :
+                                                       ($shift->status === 'leave' ? 'Nghỉ phép' :
+                                                       ($shift->status === 'absent' ? 'Vắng mặt' :
+                                                       ($shift->status === 'late' ? 'Đi muộn' :
                                                        ($shift->status === 'early_leave' ? 'Về sớm' : 'Không xác định')))) }}
                                                 </span>
                                             </td>
@@ -381,16 +381,16 @@
                                                 <div class="text-gray-400">{{ $shift->end_time }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                                    {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' : 
-                                                       ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' : 
-                                                       ($shift->status === 'absent' ? 'bg-red-100 text-red-800' : 
-                                                       ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                    {{ $shift->status === 'present' ? 'bg-green-100 text-green-800' :
+                                                       ($shift->status === 'leave' ? 'bg-blue-100 text-blue-800' :
+                                                       ($shift->status === 'absent' ? 'bg-red-100 text-red-800' :
+                                                       ($shift->status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                                        ($shift->status === 'early_leave' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')))) }}">
-                                                    {{ $shift->status === 'present' ? 'Có mặt' : 
-                                                       ($shift->status === 'leave' ? 'Nghỉ phép' : 
-                                                       ($shift->status === 'absent' ? 'Vắng mặt' : 
-                                                       ($shift->status === 'late' ? 'Đi muộn' : 
+                                                    {{ $shift->status === 'present' ? 'Có mặt' :
+                                                       ($shift->status === 'leave' ? 'Nghỉ phép' :
+                                                       ($shift->status === 'absent' ? 'Vắng mặt' :
+                                                       ($shift->status === 'late' ? 'Đi muộn' :
                                                        ($shift->status === 'early_leave' ? 'Về sớm' : 'Không xác định')))) }}
                                                 </span>
                                             </td>
@@ -425,21 +425,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality for attendance
             const searchInput = document.getElementById('search');
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const searchText = this.value.toLowerCase().trim();
                     const rows = document.querySelectorAll('tbody tr');
-                    
+
                     rows.forEach(row => {
                         const name = row.querySelector('td:nth-child(1) .text-sm.font-medium')?.textContent.toLowerCase() || '';
                         const shift = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
                         const time = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
                         const status = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-                        
+
                         const allText = `${name} ${shift} ${time} ${status}`;
-                        
+
                         if (allText.includes(searchText)) {
                             row.style.display = '';
                         } else {
@@ -449,17 +448,13 @@
                 });
             }
 
-            // Test Alpine.js functionality
-            console.log('Testing Alpine.js...');
-            
-            // Check if Alpine.js is loaded
             if (typeof Alpine !== 'undefined') {
                 console.log('Alpine.js is loaded successfully!');
-                
+
                 // Test view mode toggle buttons
                 const overviewBtn = document.querySelector('[x-data] button[onclick*="viewMode"]');
                 const detailedBtn = document.querySelector('[x-data] button[onclick*="viewMode"]');
-                
+
                 if (overviewBtn && detailedBtn) {
                     console.log('Toggle buttons found!');
                 } else {
