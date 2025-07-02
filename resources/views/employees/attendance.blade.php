@@ -273,13 +273,33 @@
                             Ca làm việc chưa bắt đầu
                         </div>
                     @elseif($shiftStatus === 'ended')
-                        <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
-                            Ca làm việc đã kết thúc
-                        </div>
+                        @php
+                            $hasCheckedIn = isset($shiftInfo['check_in_time']) && $shiftInfo['check_in_time'];
+                            $hasCheckedOut = isset($shiftInfo['check_out_time']) && $shiftInfo['check_out_time'];
+                        @endphp
+                        @if($hasCheckedIn && $hasCheckedOut)
+                            <div class="w-full bg-green-100 text-green-700 font-semibold py-3 px-6 rounded-xl text-center">
+                                ✅ Bạn đã chấm công đầy đủ
+                            </div>
+                        @else
+                            <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
+                                Ca làm việc đã kết thúc
+                            </div>
+                        @endif
                     @else
-                        <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
-                            Chưa đến giờ chấm công
-                        </div>
+                        @php
+                            $hasCheckedIn = isset($shiftInfo['check_in_time']) && $shiftInfo['check_in_time'];
+                            $hasCheckedOut = isset($shiftInfo['check_out_time']) && $shiftInfo['check_out_time'];
+                        @endphp
+                        @if($hasCheckedIn && $hasCheckedOut)
+                            <div class="w-full bg-green-100 text-green-700 font-semibold py-3 px-6 rounded-xl text-center">
+                                ✅ Bạn đã chấm công đầy đủ
+                            </div>
+                        @else
+                            <div class="w-full bg-gray-100 text-gray-500 font-semibold py-3 px-6 rounded-xl text-center">
+                                Chưa đến giờ chấm công
+                            </div>
+                        @endif
                     @endif
                 </div>
 
