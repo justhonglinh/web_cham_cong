@@ -1,26 +1,109 @@
-/.phpunit.cache
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
-/database/migrations
-/database/seeders
-/public/js
-.env
+# ===========================================
+# Laravel & PHP
+# ===========================================
+
+/vendor/
+/.env
+.env.*
 .env.backup
-.env.production
-.phpactor.json
+.phpunit.cache
 .phpunit.result.cache
+.phpactor.json
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
-/auth.json
-/.fleet
-/.idea
-/.nova
-/.vscode
-/.zed
+auth.json
+composer.lock # chỉ ignore nếu bạn muốn lib luôn cập nhật mới nhất
+
+# ===========================================
+# Laravel: Storage & Logs
+# ===========================================
+
+/storage/*.key
+/storage/app/*
+!/storage/app/public
+/storage/framework/*
+/storage/logs/*
+/storage/pail
+
+# ===========================================
+# Laravel: Database
+# ===========================================
+
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+/database/database.sqlite
+# Giữ migrations & seeders, không ignore
+!database/migrations/
+!database/seeders/
+
+# ===========================================
+# Laravel: Public Build Output
+# ===========================================
+
+/public/storage
+/public/build/
+/public/hot
+/public/mix-manifest.json
+/public/js
+/public/css
+/public/*.map
+/public/*.zip
+
+# ===========================================
+# Node & Frontend
+# ===========================================
+
+/node_modules/
+/npm-debug.log*
+/yarn-error.log*
+/pnpm-lock.yaml
+/pnpm-debug.log
+
+# Vite / Webpack cache
+/.vite/
+/.vite-cache/
+/dist/
+/build/
+
+# ===========================================
+# IDE & Dev Tools
+# ===========================================
+
+/.idea/
+/.vscode/
+/.zed/
+/.fleet/
+/.nova/
+*.sublime-workspace
+*.sublime-project
+
+# ===========================================
+# OS / Editor Specific
+# ===========================================
+
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# ===========================================
+# Testing & Coverage
+# ===========================================
+
+/coverage/
+/tests/Browser/screenshots/
+/tests/Browser/console/
+/phpunit.xml.backup
+
+# ===========================================
+# Optional: Docker & Deployment
+# ===========================================
+
+.docker/
+docker-compose.override.yml
+.env.production
+.env.testing
