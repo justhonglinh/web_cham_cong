@@ -1,88 +1,116 @@
 <?php
 
-use App\Http\Controllers\Api\ApiAuthController;
-use App\Http\Controllers\Api\ApiDashboardController;
-use App\Http\Controllers\Api\ApiUserController;
-use App\Http\Controllers\Api\ApiAttendanceController;
-use App\Http\Controllers\Api\ApiShiftController;
-use App\Http\Controllers\Api\ApiOvertimeController;
-use App\Http\Controllers\Api\ApiLeaveRequestController;
-use App\Http\Controllers\Api\ApiWorkSummaryController;
-use App\Http\Controllers\Api\ApiLocationController;
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Attendance\AttendanceController;
+use App\Http\Controllers\Api\Dashboard\DashboardController;
+use App\Http\Controllers\Api\FaceCompare\FaceCompareController;
+use App\Http\Controllers\Api\Leave\LeaveRequestController;
+use App\Http\Controllers\Api\Location\LocationController;
+use App\Http\Controllers\Api\Overtime\OvertimeController;
+use App\Http\Controllers\Api\Shift\ShiftController;
+use App\Http\Controllers\Api\User\UserController;
+use App\Http\Controllers\Api\WorkSummary\WorkSummaryController;
 use Illuminate\Support\Facades\Route;
 
-// Auth routes (public)
-Route::post('/login', [ApiAuthController::class, 'login']);
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES
+|--------------------------------------------------------------------------
+*/
 
-// Authenticated routes
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/logout', [ApiAuthController::class, 'logout']);
-    Route::get('/user', [ApiAuthController::class, 'user']);
-    Route::patch('/profile', [ApiAuthController::class, 'updateProfile']);
-    Route::put('/password', [ApiAuthController::class, 'updatePassword']);
+Route::post('/login', [AuthController::class, 'login']);
 
-    // Dashboard
-    Route::get('/dashboard', [ApiDashboardController::class, 'index']);
-    Route::get('/employees/dashboard', [ApiDashboardController::class, 'employeeDashboard']);
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATED ROUTES
+|--------------------------------------------------------------------------
+*/
 
-    // Manager routes
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Face compare
+    Route::post('/face-compare', [FaceCompareController::class, 'compare']);
+
+    // Auth
+    Route::post('/logout',   [AuthController::class, 'logout']);
+    Route::get('/user',      [AuthController::class, 'user']);
+    Route::patch('/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/password',  [AuthController::class, 'updatePassword']);
+
+    // Dashboard (cả 2 role đều dùng)
+    Route::get('/dashboard',           [DashboardController::class, 'index']);
+    Route::get('/employees/dashboard', [DashboardController::class, 'employeeDashboard']);
+
+    /*
+    |----------------------------------------------------------------------
+    | MANAGER ROUTES
+    |----------------------------------------------------------------------
+    */
+
     Route::middleware('role:manager')->group(function () {
-        // Users
-        Route::get('/users', [ApiUserController::class, 'index']);
-        Route::post('/users', [ApiUserController::class, 'store']);
-        Route::put('/users/{id}', [ApiUserController::class, 'update']);
-        Route::delete('/users/{id}', [ApiUserController::class, 'destroy']);
 
-        // Attendance management
-        Route::get('/attendance/management', [ApiAttendanceController::class, 'management']);
-        Route::put('/attendance/management/{id}', [ApiAttendanceController::class, 'update']);
+        // Nhân viên
+        Route::get('/users',         [UserController::class, 'index']);
+        Route::post('/users',        [UserController::class, 'store']);
+        Route::put('/users/{id}',    [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-        // Shift management
-        Route::get('/shift/management', [ApiShiftController::class, 'index']);
-        Route::post('/shift/management', [ApiShiftController::class, 'store']);
-        Route::put('/shift/management/{id}', [ApiShiftController::class, 'update']);
-        Route::delete('/shift/management/{id}', [ApiShiftController::class, 'destroy']);
+        // Chấm công (quản lý)
+        Route::get('/attendance/management',      [AttendanceController::class, 'management']);
+        Route::put('/attendance/management/{id}', [AttendanceController::class, 'update']);
 
-        // Overtime management (manager)
-        Route::get('/overtime/management', [ApiOvertimeController::class, 'management']);
-        Route::post('/overtime/management', [ApiOvertimeController::class, 'store']);
-        Route::put('/overtime/management/{id}', [ApiOvertimeController::class, 'update']);
-        Route::delete('/overtime/management/{id}', [ApiOvertimeController::class, 'destroy']);
+        // Ca làm việc
+        Route::get('/shift/management',         [ShiftController::class, 'index']);
+        Route::post('/shift/management',        [ShiftController::class, 'store']);
+        Route::put('/shift/management/{id}',    [ShiftController::class, 'update']);
+        Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy']);
 
-        // Overtime requests (approve/reject)
-        Route::patch('/overtime-requests/{id}/status', [ApiOvertimeController::class, 'updateRequestStatus']);
+        // Ca tăng ca (quản lý)
+        Route::get('/overtime/management',         [OvertimeController::class, 'management']);
+        Route::post('/overtime/management',        [OvertimeController::class, 'store']);
+        Route::put('/overtime/management/{id}',    [OvertimeController::class, 'update']);
+        Route::delete('/overtime/management/{id}', [OvertimeController::class, 'destroy']);
 
-        // Leave requests management
-        Route::get('/leave-requests/management', [ApiLeaveRequestController::class, 'management']);
-        Route::patch('/leave-requests/{id}/status', [ApiLeaveRequestController::class, 'updateStatus']);
+        // Duyệt yêu cầu tăng ca
+        Route::patch('/overtime-requests/{id}/status', [OvertimeController::class, 'updateRequestStatus']);
 
-        // Work summary
-        Route::get('/work-summary/management', [ApiWorkSummaryController::class, 'index']);
-        Route::get('/work-summary/export', [ApiWorkSummaryController::class, 'export']);
+        // Đơn nghỉ phép (quản lý)
+        Route::get('/leave-requests/management',    [LeaveRequestController::class, 'management']);
+        Route::patch('/leave-requests/{id}/status', [LeaveRequestController::class, 'updateStatus']);
 
-        // Locations
-        Route::get('/locations', [ApiLocationController::class, 'index']);
-        Route::post('/locations', [ApiLocationController::class, 'store']);
-        Route::put('/locations/{id}', [ApiLocationController::class, 'update']);
-        Route::delete('/locations/{id}', [ApiLocationController::class, 'destroy']);
-        Route::patch('/locations/{id}/toggle', [ApiLocationController::class, 'toggle']);
+        // Tổng hợp công
+        Route::get('/work-summary/management', [WorkSummaryController::class, 'index']);
+        Route::get('/work-summary/export',     [WorkSummaryController::class, 'export']);
+
+        // Địa điểm
+        Route::get('/locations',               [LocationController::class, 'index']);
+        Route::post('/locations',              [LocationController::class, 'store']);
+        Route::put('/locations/{id}',          [LocationController::class, 'update']);
+        Route::delete('/locations/{id}',       [LocationController::class, 'destroy']);
+        Route::patch('/locations/{id}/toggle', [LocationController::class, 'toggle']);
     });
 
-    // Employee routes
+    /*
+    |----------------------------------------------------------------------
+    | EMPLOYEE ROUTES
+    |----------------------------------------------------------------------
+    */
+
     Route::middleware('role:employee')->group(function () {
-        // Attendance
-        Route::get('/employees/attendance/today', [ApiAttendanceController::class, 'today']);
-        Route::post('/employees/attendance', [ApiAttendanceController::class, 'processAttendance']);
-        Route::get('/employees/attendance/history', [ApiAttendanceController::class, 'history']);
 
-        // Overtime
-        Route::get('/overtime/employee', [ApiOvertimeController::class, 'employeeIndex']);
-        Route::post('/overtime/register/{shiftId}', [ApiOvertimeController::class, 'register']);
-        Route::delete('/overtime/unregister/{shiftId}', [ApiOvertimeController::class, 'unregister']);
+        // Chấm công (nhân viên)
+        Route::get('/employees/attendance/today',   [AttendanceController::class, 'today']);
+        Route::post('/employees/attendance',        [AttendanceController::class, 'processAttendance']);
+        Route::get('/employees/attendance/history', [AttendanceController::class, 'history']);
 
-        // Leave requests
-        Route::post('/employees/leave', [ApiLeaveRequestController::class, 'store']);
-        Route::get('/employees/leave/history', [ApiLeaveRequestController::class, 'history']);
-        Route::delete('/employees/leave/{id}', [ApiLeaveRequestController::class, 'destroy']);
+        // Tăng ca (nhân viên)
+        Route::get('/overtime/employee',                [OvertimeController::class, 'employeeIndex']);
+        Route::post('/overtime/register/{shiftId}',     [OvertimeController::class, 'register']);
+        Route::delete('/overtime/unregister/{shiftId}', [OvertimeController::class, 'unregister']);
+
+        // Đơn nghỉ phép (nhân viên)
+        Route::post('/employees/leave',        [LeaveRequestController::class, 'store']);
+        Route::get('/employees/leave/history', [LeaveRequestController::class, 'history']);
+        Route::delete('/employees/leave/{id}', [LeaveRequestController::class, 'destroy']);
     });
 });

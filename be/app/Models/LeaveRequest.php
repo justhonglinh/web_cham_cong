@@ -9,10 +9,9 @@ class LeaveRequest extends Model
 {
     protected $fillable = [
         'user_id',
-        'type',
-        'request_date',
-        'start_time',
-        'end_time',
+        'leave_type',
+        'start_date',
+        'end_date',
         'reason',
         'status',
         'manager_notes',
@@ -22,9 +21,8 @@ class LeaveRequest extends Model
     ];
 
     protected $casts = [
-        'request_date' => 'date',
-        'start_time' => 'string',
-        'end_time' => 'string',
+        'start_date'  => 'date:Y-m-d',
+        'end_date'    => 'date:Y-m-d',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
@@ -37,26 +35,5 @@ class LeaveRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_id');
-    }
-
-    // Helper methods
-    public function getTypeTextAttribute()
-    {
-        return match($this->type) {
-            'late' => 'Đi muộn',
-            'leave' => 'Nghỉ phép',
-            'early_leave' => 'Về sớm',
-            default => 'Không xác định'
-        };
-    }
-
-    public function getStatusTextAttribute()
-    {
-        return match($this->status) {
-            'pending' => 'Chờ duyệt',
-            'approved' => 'Đã phê duyệt',
-            'rejected' => 'Đã từ chối',
-            default => 'Không xác định'
-        };
     }
 }

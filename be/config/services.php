@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'facepp' => [
+        'key'    => env('FACEPP_API_KEY'),
+        'secret' => env('FACEPP_API_SECRET'),
+    ],
+
 ];

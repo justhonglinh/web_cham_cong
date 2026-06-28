@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
   srcDir: 'app/',
@@ -8,7 +8,14 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
     '@vueuse/nuxt',
+    '@nuxt/icon',
   ],
+
+  icon: {
+    serverBundle: {
+      collections: ['heroicons', 'lucide'],
+    },
+  },
 
   tailwindcss: {
     cssPath: '~/assets/css/main.css',

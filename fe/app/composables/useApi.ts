@@ -1,8 +1,5 @@
 export function useApi() {
-  const config = useRuntimeConfig()
   const authStore = useAuthStore()
-
-  const apiBase = config.public.apiBase
 
   function getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
@@ -16,7 +13,7 @@ export function useApi() {
   }
 
   async function get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
-    return $fetch<T>(`${apiBase}/api${path}`, {
+    return $fetch<T>(`/api${path}`, {
       method: 'GET',
       headers: getHeaders(),
       params,
@@ -24,7 +21,7 @@ export function useApi() {
   }
 
   async function post<T>(path: string, body?: unknown): Promise<T> {
-    return $fetch<T>(`${apiBase}/api${path}`, {
+    return $fetch<T>(`/api${path}`, {
       method: 'POST',
       headers: getHeaders(),
       body,
@@ -32,7 +29,7 @@ export function useApi() {
   }
 
   async function put<T>(path: string, body?: unknown): Promise<T> {
-    return $fetch<T>(`${apiBase}/api${path}`, {
+    return $fetch<T>(`/api${path}`, {
       method: 'PUT',
       headers: getHeaders(),
       body,
@@ -40,7 +37,7 @@ export function useApi() {
   }
 
   async function patch<T>(path: string, body?: unknown): Promise<T> {
-    return $fetch<T>(`${apiBase}/api${path}`, {
+    return $fetch<T>(`/api${path}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body,
@@ -48,7 +45,7 @@ export function useApi() {
   }
 
   async function del<T>(path: string): Promise<T> {
-    return $fetch<T>(`${apiBase}/api${path}`, {
+    return $fetch<T>(`/api${path}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })

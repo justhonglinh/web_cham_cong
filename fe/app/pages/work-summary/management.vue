@@ -2,7 +2,6 @@
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-const config = useRuntimeConfig()
 const authStore = useAuthStore()
 
 interface WorkSummary {
@@ -66,7 +65,7 @@ async function fetchSummaries() {
 async function exportExcel() {
   exportLoading.value = true
   try {
-    const url = `${config.public.apiBase}/api/work-summary/export?month=${filterMonth.value}&year=${filterYear.value}`
+    const url = `/api/work-summary/export?month=${filterMonth.value}&year=${filterYear.value}`
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${authStore.token}` },
     })
