@@ -101,7 +101,7 @@ class DemoDatabaseSeeder extends Seeder
         for ($i = 0; $i < 20; $i++) {
             $users[] = DB::table('users')->insertGetId([
                 'name' => $vietnameseNames[$i],
-                'email' => strtolower(str_replace(' ', '.', $vietnameseNames[$i])) . '@company.com',
+                'email' => $this->toEmailSlug($vietnameseNames[$i]) . '@company.com',
                 'email_verified_at' => now(),
                 'password' => bcrypt('password'),
                 'remember_token' => Str::random(10),
@@ -230,28 +230,24 @@ class DemoDatabaseSeeder extends Seeder
             // Mỗi nhân viên có 0-2 yêu cầu nghỉ phép
             $numLeaveRequests = rand(0, 2);
             for ($i = 0; $i < $numLeaveRequests; $i++) {
-                $requestTypes = ['late', 'leave', 'early_leave'];
-                $requestType = $requestTypes[array_rand($requestTypes)];
+                $leaveTypes = ['annual', 'sick', 'family', 'other'];
+                $leaveType = $leaveTypes[array_rand($leaveTypes)];
                 $statuses = ['pending', 'approved', 'rejected'];
                 $statusWeights = [30, 50, 20]; // 30% pending, 50% approved, 20% rejected
                 $status = $this->getRandomStatus($statuses, $statusWeights);
 
-                // Tạo ngày yêu cầu trong tương lai hoặc quá khứ gần
-                $requestDate = $faker->dateTimeBetween('-15 days', '+15 days');
-                $startTime = $faker->time('H:i:s');
-                $endTime = $faker->time('H:i:s');
-
-                // Đảm bảo end_time > start_time
-                if ($endTime <= $startTime) {
-                    $endTime = date('H:i:s', strtotime($startTime) + 3600); // Thêm 1 giờ
-                }
+                // Tạo khoảng ngày nghỉ trong tương lai hoặc quá khứ gần
+                $startDate = $faker->dateTimeBetween('-15 days', '+15 days');
+                $endDate   = (clone $startDate)->modify('+' . rand(0, 3) . ' days');
 
                 DB::table('leave_requests')->insert([
                     'user_id' => $userId,
-                    'type' => $requestType,
-                    'request_date' => $requestDate->format('Y-m-d'),
-                    'start_time' => $startTime,
-                    'end_time' => $endTime,
+                    'leave_type' => $leaveType,
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    // Cột legacy (NOT NULL) không còn được API dùng, giữ giá trị hợp lệ để thỏa ràng buộc DB
+                    'type' => 'leave',
+                    'request_date' => $startDate->format('Y-m-d'),
                     'reason' => $faker->sentence(),
                     'status' => $status,
                     'manager_notes' => $status !== 'pending' ? $faker->sentence() : null,
@@ -289,6 +285,24 @@ class DemoDatabaseSeeder extends Seeder
         echo "Demo data seeded successfully!\n";
         echo "Manager account: manager@gmail.com / manager@gmail.com\n";
         echo "Employee accounts: [name]@company.com / password\n";
+    }
+
+    private function toEmailSlug(string $name): string
+    {
+        $map = [
+            'à'=>'a','á'=>'a','ạ'=>'a','ả'=>'a','ã'=>'a','â'=>'a','ầ'=>'a','ấ'=>'a','ậ'=>'a','ẩ'=>'a','ẫ'=>'a','ă'=>'a','ằ'=>'a','ắ'=>'a','ặ'=>'a','ẳ'=>'a','ẵ'=>'a',
+            'è'=>'e','é'=>'e','ẹ'=>'e','ẻ'=>'e','ẽ'=>'e','ê'=>'e','ề'=>'e','ế'=>'e','ệ'=>'e','ể'=>'e','ễ'=>'e',
+            'ì'=>'i','í'=>'i','ị'=>'i','ỉ'=>'i','ĩ'=>'i',
+            'ò'=>'o','ó'=>'o','ọ'=>'o','ỏ'=>'o','õ'=>'o','ô'=>'o','ồ'=>'o','ố'=>'o','ộ'=>'o','ổ'=>'o','ỗ'=>'o','ơ'=>'o','ờ'=>'o','ớ'=>'o','ợ'=>'o','ở'=>'o','ỡ'=>'o',
+            'ù'=>'u','ú'=>'u','ụ'=>'u','ủ'=>'u','ũ'=>'u','ư'=>'u','ừ'=>'u','ứ'=>'u','ự'=>'u','ử'=>'u','ữ'=>'u',
+            'ỳ'=>'y','ý'=>'y','ỵ'=>'y','ỷ'=>'y','ỹ'=>'y',
+            'đ'=>'d',
+        ];
+
+        $lower = mb_strtolower($name, 'UTF-8');
+        $ascii = strtr($lower, $map);
+
+        return str_replace(' ', '.', $ascii);
     }
 
     private function getRandomStatus($statuses, $weights)

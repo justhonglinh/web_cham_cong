@@ -10,11 +10,11 @@ class OvertimeRequestResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'             => $this->id,
-            'status'         => $this->status,
-            'created_at'     => $this->created_at,
-            'user'           => new UserResource($this->whenLoaded('user')),
-            'overtime_shift' => new OvertimeShiftResource($this->whenLoaded('overtimeShift')),
+            'id'            => $this->id,
+            'employee_name' => $this->whenLoaded('user', fn() => $this->user?->name),
+            'shift_name'    => $this->whenLoaded('overtimeShift', fn() => $this->overtimeShift?->name),
+            'shift_date'    => $this->whenLoaded('overtimeShift', fn() => $this->overtimeShift?->date?->format('Y-m-d')),
+            'status'        => $this->status,
         ];
     }
 }

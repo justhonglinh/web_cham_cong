@@ -18,11 +18,19 @@ class OvertimeController extends Controller
 
     public function management(Request $request): JsonResponse
     {
-        $data = $this->overtimeService->getManagement($request->user()->id);
+        $shifts = $this->overtimeService->getShifts($request->user()->id);
 
         return response()->json([
-            'shifts'   => OvertimeShiftResource::collection($data['shifts']),
-            'requests' => OvertimeRequestResource::collection($data['requests']),
+            'data' => OvertimeShiftResource::collection($shifts),
+        ]);
+    }
+
+    public function managementRequests(Request $request): JsonResponse
+    {
+        $requests = $this->overtimeService->getRequests($request->user()->id);
+
+        return response()->json([
+            'data' => OvertimeRequestResource::collection($requests),
         ]);
     }
 
@@ -65,11 +73,10 @@ class OvertimeController extends Controller
 
     public function employeeIndex(Request $request): JsonResponse
     {
-        $data = $this->overtimeService->getEmployeeShifts($request->user());
+        $shifts = $this->overtimeService->getEmployeeShifts($request->user());
 
         return response()->json([
-            'shifts'        => OvertimeShiftResource::collection($data['shifts']),
-            'registeredIds' => $data['registeredIds'],
+            'data' => OvertimeShiftResource::collection($shifts),
         ]);
     }
 

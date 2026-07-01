@@ -5,7 +5,7 @@ import {
 } from '~/constants'
 import { dashboardService } from '~/services/dashboardService'
 import type { DashboardData, WeeklyStat, ShiftTimeStat } from '~/types/dashboard'
-import { formatTime } from '~/utils/format'
+import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
@@ -235,7 +235,7 @@ onMounted(fetchDashboard)
               <div>
                 <p class="text-sm font-medium text-gray-800">{{ att.employee_name }}</p>
                 <p class="text-xs text-gray-400">
-                  {{ att.date }} &bull; Vào: {{ formatTime(att.check_in) }} / Ra: {{ formatTime(att.check_out) }}
+                  {{ formatDate(att.date) }} &bull; Vào: {{ formatTime(att.check_in) }} / Ra: {{ formatTime(att.check_out) }}
                 </p>
               </div>
               <span :class="statusBadge(att.status)">{{ statusLabel(att.status) }}</span>

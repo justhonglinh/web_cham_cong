@@ -40,6 +40,8 @@ onMounted(() => fetchHistory(1))
 
 <template>
   <div class="max-w-5xl mx-auto space-y-6">
+    <BackButton to="/employees/dashboard" />
+
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>

@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/shift/management/{id}', [ShiftController::class, 'destroy']);
 
         // Ca tăng ca (quản lý)
+        Route::get('/overtime/management/requests', [OvertimeController::class, 'managementRequests']);
         Route::get('/overtime/management',         [OvertimeController::class, 'management']);
         Route::post('/overtime/management',        [OvertimeController::class, 'store']);
         Route::put('/overtime/management/{id}',    [OvertimeController::class, 'update']);

@@ -7,21 +7,24 @@ use App\Exceptions\Api\OvertimeAlreadyRegisteredException;
 use App\Models\OvertimeRequest;
 use App\Models\OvertimeShift;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class OvertimeService implements OvertimeServiceInterface
 {
-    public function getManagement(int $managerId): array
+    public function getShifts(int $managerId): Collection
     {
-        $shifts = OvertimeShift::where('user_id', $managerId)
-            ->withCount('overtimeRequests')
+        return OvertimeShift::where('user_id', $managerId)
+            ->withCount(['overtimeRequests as registration_count'])
             ->get();
+    }
 
-        $requests = OvertimeRequest::whereHas('user', fn($q) => $q->where('manager', $managerId))
+    public function getRequests(int $managerId): Collection
+    {
+        return OvertimeRequest::whereHas('user', fn($q) => $q->where('manager', $managerId))
             ->with(['user', 'overtimeShift'])
             ->orderByDesc('created_at')
-            ->paginate(20);
-
-        return ['shifts' => $shifts, 'requests' => $requests];
+            ->get();
     }
 
     public function createShift(array $data, int $managerId): OvertimeShift
@@ -65,18 +68,22 @@ class OvertimeService implements OvertimeServiceInterface
         return $request;
     }
 
-    public function getEmployeeShifts(User $user): array
+    public function getEmployeeShifts(User $user): Collection
     {
         $shifts = OvertimeShift::where('user_id', $user->manager)
             ->where('date', '>=', now()->toDateString())
-            ->withCount('overtimeRequests')
+            ->withCount(['overtimeRequests as registration_count'])
             ->get();
 
         $registeredIds = OvertimeRequest::where('user_id', $user->id)
             ->pluck('overtime_shift_id')
             ->toArray();
 
-        return ['shifts' => $shifts, 'registeredIds' => $registeredIds];
+        foreach ($shifts as $shift) {
+            $shift->is_registered = in_array($shift->id, $registeredIds);
+        }
+
+        return $shifts;
     }
 
     public function register(int $userId, int $shiftId): OvertimeRequest
