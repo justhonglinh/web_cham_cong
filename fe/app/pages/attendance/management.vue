@@ -1,18 +1,11 @@
 <script setup lang="ts">
+import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import type { AttendanceRecord } from '~/types/attendance'
+import { formatDate, formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface AttendanceRecord {
-  id: number
-  employee_name: string
-  employee_id: number
-  date: string
-  check_in: string | null
-  check_out: string | null
-  shift_name: string | null
-  status: 'present' | 'late' | 'absent'
-}
 
 const loading = ref(true)
 const saving = ref(false)
@@ -29,6 +22,11 @@ const showModal = ref(false)
 const editingRecord = ref<AttendanceRecord | null>(null)
 const editForm = ref({ check_in: '', check_out: '' })
 
+const { currentPage, lastPage, total, perPage, setTotal, paginateArray, goToPage, visiblePages, summaryFrom, summaryTo } = usePagination(20)
+
+const pagedRecords = computed(() => paginateArray(records.value))
+watch([filterMonth, filterYear], () => { currentPage.value = 1 })
+
 async function fetchAttendance() {
   loading.value = true
   error.value = null
@@ -38,6 +36,7 @@ async function fetchAttendance() {
       { month: filterMonth.value, year: filterYear.value }
     )
     records.value = Array.isArray(res) ? res : (res as any).data ?? []
+    setTotal(records.value.length)
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải dữ liệu chấm công.'
   } finally {
@@ -71,7 +70,8 @@ async function saveAttendance() {
       {
         check_in: editForm.value.check_in || null,
         check_out: editForm.value.check_out || null,
-      }
+      },
+      { success: 'Cập nhật chấm công thành công.' }
     )
     const idx = records.value.findIndex(r => r.id === editingRecord.value!.id)
     if (idx !== -1) records.value[idx] = updated
@@ -84,31 +84,13 @@ async function saveAttendance() {
 }
 
 function statusBadge(status: string) {
-  if (status === 'present') return 'badge-success'
-  if (status === 'late') return 'badge-warning'
-  return 'badge-danger'
+  return ATTENDANCE_STATUS_BADGE[status] ?? 'badge-danger'
 }
 
 function statusLabel(status: string) {
-  const map: Record<string, string> = {
-    present: 'Có mặt',
-    late: 'Đi trễ',
-    absent: 'Vắng mặt',
-  }
-  return map[status] ?? status
+  return ATTENDANCE_STATUS_LABEL[status] ?? status
 }
 
-function formatTime(t: string | null) {
-  if (!t) return '—'
-  return t.slice(0, 5)
-}
-
-function formatDate(d: string) {
-  if (!d) return '—'
-  const parts = d.split('-')
-  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`
-  return d
-}
 
 const years = computed(() => {
   const y = now.getFullYear()
@@ -203,7 +185,7 @@ onMounted(fetchAttendance)
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-50">
-            <tr v-for="record in records" :key="record.id" class="hover:bg-gray-50 transition-colors">
+            <tr v-for="record in pagedRecords" :key="record.id" class="hover:bg-gray-50 transition-colors">
               <td class="px-5 py-3">
                 <div class="flex items-center gap-2">
                   <div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs shrink-0">
@@ -242,6 +224,15 @@ onMounted(fetchAttendance)
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <PaginationBar
+        v-if="!loading"
+        :current-page="currentPage" :last-page="lastPage"
+        :total="total" :summary-from="summaryFrom" :summary-to="summaryTo"
+        :visible-pages="visiblePages"
+        @go-to-page="goToPage"
+      />
     </div>
 
     <!-- Edit Modal -->

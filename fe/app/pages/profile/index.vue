@@ -1,38 +1,36 @@
 <script setup lang="ts">
+import { authService } from '~/services/authService'
+import { toast } from 'vue-sonner'
+import type { User as AuthUser } from '~/types/auth'
+import { ROLE_LABEL } from '~/constants'
+
 definePageMeta({ layout: 'default' })
 
 const authStore = useAuthStore()
-const api = useApi()
 
 // ---- State ----
 const loadingUser = ref(false)
-const userInfo = ref<{ id: number; name: string; email: string; role: string } | null>(null)
+const userInfo = ref<AuthUser | null>(null)
 
 // Profile form
 const profileName = ref('')
 const profileLoading = ref(false)
-const profileSuccess = ref('')
-const profileError = ref('')
 
 // Password form
 const currentPassword = ref('')
 const newPassword = ref('')
 const passwordConfirmation = ref('')
 const passwordLoading = ref(false)
-const passwordSuccess = ref('')
-const passwordError = ref('')
 
 // ---- Fetch user info ----
 async function fetchUser() {
   loadingUser.value = true
   try {
-    const data = await api.get<{ user: { id: number; name: string; email: string; role: string } }>('/user')
+    const data = await authService.getUser()
     userInfo.value = data.user
     profileName.value = data.user.name
   } catch {
-    userInfo.value = authStore.user
-      ? { ...authStore.user }
-      : null
+    userInfo.value = authStore.user ? { ...authStore.user } : null
     profileName.value = authStore.user?.name ?? ''
   } finally {
     loadingUser.value = false
@@ -41,23 +39,15 @@ async function fetchUser() {
 
 // ---- Update profile ----
 async function updateProfile() {
-  if (!profileName.value.trim()) {
-    profileError.value = 'Vui lòng nhập họ tên.'
-    return
-  }
+  if (!profileName.value.trim()) return
   profileLoading.value = true
-  profileSuccess.value = ''
-  profileError.value = ''
   try {
-    const data = await api.patch<{ user: { id: number; name: string; email: string; role: string } }>('/profile', {
-      name: profileName.value.trim(),
-    })
+    const data = await authService.updateProfile({ name: profileName.value.trim() })
     userInfo.value = data.user
     if (authStore.user) authStore.user.name = data.user.name
-    profileSuccess.value = 'Cập nhật hồ sơ thành công.'
-  } catch (err: unknown) {
-    const error = err as { data?: { message?: string } }
-    profileError.value = error?.data?.message ?? 'Cập nhật thất bại. Vui lòng thử lại.'
+    toast.success('Cập nhật hồ sơ thành công.')
+  } catch {
+    // toast error hiển thị tự động
   } finally {
     profileLoading.value = false
   }
@@ -65,34 +55,22 @@ async function updateProfile() {
 
 // ---- Change password ----
 async function changePassword() {
-  if (!currentPassword.value || !newPassword.value || !passwordConfirmation.value) {
-    passwordError.value = 'Vui lòng điền đầy đủ thông tin.'
-    return
-  }
-  if (newPassword.value !== passwordConfirmation.value) {
-    passwordError.value = 'Mật khẩu xác nhận không khớp.'
-    return
-  }
-  if (newPassword.value.length < 8) {
-    passwordError.value = 'Mật khẩu mới phải có ít nhất 8 ký tự.'
-    return
-  }
+  if (!currentPassword.value || !newPassword.value || !passwordConfirmation.value) return
+  if (newPassword.value !== passwordConfirmation.value) return
+  if (newPassword.value.length < 8) return
   passwordLoading.value = true
-  passwordSuccess.value = ''
-  passwordError.value = ''
   try {
-    await api.put('/password', {
+    await authService.updatePassword({
       current_password: currentPassword.value,
       password: newPassword.value,
       password_confirmation: passwordConfirmation.value,
     })
-    passwordSuccess.value = 'Đổi mật khẩu thành công.'
     currentPassword.value = ''
     newPassword.value = ''
     passwordConfirmation.value = ''
-  } catch (err: unknown) {
-    const error = err as { data?: { message?: string } }
-    passwordError.value = error?.data?.message ?? 'Đổi mật khẩu thất bại. Vui lòng thử lại.'
+    toast.success('Đổi mật khẩu thành công.')
+  } catch {
+    // toast error hiển thị tự động
   } finally {
     passwordLoading.value = false
   }
@@ -100,7 +78,7 @@ async function changePassword() {
 
 const roleLabel = computed(() => {
   if (!userInfo.value) return ''
-  return userInfo.value.role === 'manager' ? 'Quản lý' : 'Nhân viên'
+  return ROLE_LABEL[userInfo.value.role] ?? userInfo.value.role
 })
 
 onMounted(fetchUser)
@@ -139,25 +117,6 @@ onMounted(fetchUser)
     <div class="card p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-5">Cập nhật thông tin</h3>
 
-      <div
-        v-if="profileSuccess"
-        class="mb-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm"
-      >
-        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        {{ profileSuccess }}
-      </div>
-      <div
-        v-if="profileError"
-        class="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm"
-      >
-        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        {{ profileError }}
-      </div>
-
       <form @submit.prevent="updateProfile" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
@@ -183,25 +142,6 @@ onMounted(fetchUser)
     <!-- Change Password Card -->
     <div class="card p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-5">Đổi mật khẩu</h3>
-
-      <div
-        v-if="passwordSuccess"
-        class="mb-4 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm"
-      >
-        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        {{ passwordSuccess }}
-      </div>
-      <div
-        v-if="passwordError"
-        class="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm"
-      >
-        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        {{ passwordError }}
-      </div>
 
       <form @submit.prevent="changePassword" class="space-y-4">
         <div>

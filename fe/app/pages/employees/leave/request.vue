@@ -36,7 +36,7 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await api.post('/employees/leave', { ...form })
+    await api.post('/employees/leave', { ...form }, { success: 'Gửi đơn nghỉ phép thành công.' })
     success.value = true
     setTimeout(() => {
       router.push('/employees/leave/history')

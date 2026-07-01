@@ -1,22 +1,21 @@
 <script setup lang="ts">
+import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL, LEAVE_TYPE_LABEL } from '~/constants'
+import type { LeaveRequest } from '~/types/leave'
+import { formatDate } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface LeaveRequest {
-  id: number
-  employee_name: string
-  leave_type: string
-  start_date: string
-  end_date: string
-  reason: string
-  status: 'pending' | 'approved' | 'rejected'
-}
 
 const requests = ref<LeaveRequest[]>([])
 const loading = ref(false)
 const error = ref('')
 const actionLoading = ref<Record<number, boolean>>({})
+
+const { currentPage, lastPage, total, perPage, setTotal, paginateArray, goToPage, visiblePages, summaryFrom, summaryTo } = usePagination(15)
+
+const pagedRequests = computed(() => paginateArray(requests.value))
+watch(requests, (val) => setTotal(val.length))
 
 async function fetchRequests() {
   loading.value = true
@@ -24,6 +23,7 @@ async function fetchRequests() {
   try {
     const data = await api.get<{ data: LeaveRequest[] }>('/leave-requests/management')
     requests.value = data.data ?? []
+    setTotal(requests.value.length)
   } catch {
     error.value = 'Không thể tải danh sách yêu cầu nghỉ phép.'
   } finally {
@@ -34,41 +34,26 @@ async function fetchRequests() {
 async function updateStatus(request: LeaveRequest, status: 'approved' | 'rejected') {
   actionLoading.value[request.id] = true
   try {
-    await api.patch(`/leave-requests/${request.id}/status`, { status })
+    const label = status === 'approved' ? 'Đã duyệt đơn nghỉ phép.' : 'Đã từ chối đơn nghỉ phép.'
+    await api.patch(`/leave-requests/${request.id}/status`, { status }, { success: label })
     await fetchRequests()
   } catch {
-    alert('Cập nhật trạng thái thất bại. Vui lòng thử lại.')
   } finally {
     delete actionLoading.value[request.id]
   }
 }
 
-function formatDate(d: string) {
-  if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day}/${m}/${y}`
-}
 
 function leaveTypeLabel(type: string) {
-  const map: Record<string, string> = {
-    annual: 'Nghỉ phép năm',
-    sick: 'Nghỉ bệnh',
-    family: 'Nghỉ gia đình',
-    other: 'Khác',
-  }
-  return map[type] ?? type
+  return LEAVE_TYPE_LABEL[type] ?? type
 }
 
 function statusBadgeClass(status: string) {
-  if (status === 'approved') return 'badge-success'
-  if (status === 'rejected') return 'badge-danger'
-  return 'badge-warning'
+  return REQUEST_STATUS_BADGE[status] ?? 'badge-warning'
 }
 
 function statusLabel(status: string) {
-  if (status === 'approved') return 'Đã duyệt'
-  if (status === 'rejected') return 'Đã từ chối'
-  return 'Chờ duyệt'
+  return REQUEST_STATUS_LABEL[status] ?? status
 }
 
 const pendingCount = computed(() => requests.value.filter(r => r.status === 'pending').length)
@@ -126,7 +111,7 @@ onMounted(fetchRequests)
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
             <tr
-              v-for="req in requests"
+              v-for="req in pagedRequests"
               :key="req.id"
               class="hover:bg-gray-50 transition-colors"
               :class="req.status === 'pending' ? 'bg-amber-50/30' : ''"
@@ -163,6 +148,14 @@ onMounted(fetchRequests)
             </tr>
           </tbody>
         </table>
+      <!-- Pagination -->
+      <PaginationBar
+        v-if="!loading && requests.length > 0"
+        :current-page="currentPage" :last-page="lastPage"
+        :total="total" :summary-from="summaryFrom" :summary-to="summaryTo"
+        :visible-pages="visiblePages"
+        @go-to-page="goToPage"
+      />
       </div>
 
       <!-- Empty -->

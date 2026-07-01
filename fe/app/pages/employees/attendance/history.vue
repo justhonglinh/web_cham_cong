@@ -1,82 +1,33 @@
 <script setup lang="ts">
+import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import type { AttendanceRecord } from '~/types/attendance'
+import { formatDate, formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
 
-interface AttendanceRecord {
-  id: number
-  date: string
-  check_in: string | null
-  check_out: string | null
-  shift_name: string | null
-  status: 'present' | 'late' | 'absent' | string
-}
-
-interface PaginatedResponse {
-  data: AttendanceRecord[]
-  current_page: number
-  last_page: number
-  per_page: number
-  total: number
-}
-
 const records = ref<AttendanceRecord[]>([])
 const loading = ref(false)
-const currentPage = ref(1)
-const lastPage = ref(1)
-const total = ref(0)
-const perPage = ref(10)
+const { currentPage, lastPage, total, perPage, setFromResponse, goToPage: goToPageFn, visiblePages, summaryFrom, summaryTo } = usePagination(10)
 
-function formatDate(dateStr: string) {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return dateStr
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
-}
-
-function formatTime(timeStr: string | null) {
-  if (!timeStr) return '--:--'
-  const parts = timeStr.split(':')
-  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`
-  const d = new Date(timeStr)
-  return isNaN(d.getTime()) ? '--:--' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-}
 
 function statusLabel(status: string) {
-  const map: Record<string, string> = { present: 'Có mặt', late: 'Muộn', absent: 'Vắng' }
-  return map[status] ?? status
+  return ATTENDANCE_STATUS_LABEL[status] ?? status
 }
 
 function statusClass(status: string) {
-  if (status === 'present') return 'badge-success'
-  if (status === 'late') return 'badge-warning'
-  if (status === 'absent') return 'badge-danger'
-  return 'badge-info'
+  return ATTENDANCE_STATUS_BADGE[status] ?? 'badge-info'
 }
 
 async function fetchHistory(page = 1) {
   loading.value = true
   try {
-    const data = await api.get<PaginatedResponse | AttendanceRecord[]>(
+    const data = await api.get<AttendanceRecord[]>(
       '/employees/attendance/history',
       { page, per_page: perPage.value },
     )
-    if (Array.isArray(data)) {
-      records.value = data
-      currentPage.value = 1
-      lastPage.value = 1
-      total.value = data.length
-    } else {
-      const paginated = data as PaginatedResponse
-      records.value = paginated.data ?? []
-      currentPage.value = paginated.current_page ?? 1
-      lastPage.value = paginated.last_page ?? 1
-      total.value = paginated.total ?? 0
-      perPage.value = paginated.per_page ?? perPage.value
-    }
+    records.value = setFromResponse(data)
   } catch {
     records.value = []
   } finally {
@@ -85,31 +36,8 @@ async function fetchHistory(page = 1) {
 }
 
 function goToPage(page: number) {
-  if (page < 1 || page > lastPage.value) return
-  currentPage.value = page
-  fetchHistory(page)
+  goToPageFn(page, fetchHistory)
 }
-
-// Visible page numbers (max 5 pages around current)
-const visiblePages = computed(() => {
-  const total = lastPage.value
-  const cur = currentPage.value
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-
-  const pages: (number | '...')[] = []
-  const start = Math.max(2, cur - 2)
-  const end = Math.min(total - 1, cur + 2)
-
-  pages.push(1)
-  if (start > 2) pages.push('...')
-  for (let p = start; p <= end; p++) pages.push(p)
-  if (end < total - 1) pages.push('...')
-  pages.push(total)
-  return pages
-})
-
-const summaryFrom = computed(() => (currentPage.value - 1) * perPage.value + 1)
-const summaryTo = computed(() => Math.min(currentPage.value * perPage.value, total.value))
 
 onMounted(() => fetchHistory(1))
 </script>
@@ -208,58 +136,14 @@ onMounted(() => fetchHistory(1))
         </table>
       </div>
 
-      <!-- Pagination Footer -->
-      <div v-if="!loading && records.length > 0" class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-sm text-gray-500">
-          Hiển thị <span class="font-medium text-gray-700">{{ summaryFrom }}–{{ summaryTo }}</span>
-          trong tổng số <span class="font-medium text-gray-700">{{ total }}</span> bản ghi
-        </p>
-
-        <nav class="flex items-center gap-1">
-          <!-- Prev -->
-          <button
-            class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-colors"
-            :class="currentPage === 1
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'"
-            :disabled="currentPage === 1"
-            @click="goToPage(currentPage - 1)"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <!-- Page numbers -->
-          <template v-for="(page, i) in visiblePages" :key="i">
-            <span v-if="page === '...'" class="w-9 h-9 flex items-center justify-center text-gray-400 text-sm">…</span>
-            <button
-              v-else
-              class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-colors"
-              :class="page === currentPage
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'"
-              @click="goToPage(page as number)"
-            >
-              {{ page }}
-            </button>
-          </template>
-
-          <!-- Next -->
-          <button
-            class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-colors"
-            :class="currentPage === lastPage
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-600 hover:bg-gray-100'"
-            :disabled="currentPage === lastPage"
-            @click="goToPage(currentPage + 1)"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </nav>
-      </div>
+      <!-- Pagination -->
+      <PaginationBar
+        v-if="!loading"
+        :current-page="currentPage" :last-page="lastPage"
+        :total="total" :summary-from="summaryFrom" :summary-to="summaryTo"
+        :visible-pages="visiblePages"
+        @go-to-page="goToPage"
+      />
     </div>
   </div>
 </template>

@@ -2,23 +2,28 @@
 definePageMeta({ layout: 'auth' })
 
 const authStore = useAuthStore()
-const router = useRouter()
 
-const email = ref('')
-const password = ref('')
-const rememberMe = ref(false)
-const loading = ref(false)
-const errorMessage = ref('')
-const showPassword = ref(false)
-
-// Redirect if already authenticated
 if (authStore.isAuthenticated) {
   navigateTo(authStore.isManager ? '/dashboard' : '/employees/dashboard')
 }
 
-async function handleLogin() {
-  if (!email.value || !password.value) {
-    errorMessage.value = 'Vui lòng nhập đầy đủ email và mật khẩu.'
+const name = ref('')
+const email = ref('')
+const password = ref('')
+const passwordConfirmation = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
+const showPassword = ref(false)
+const showPasswordConfirmation = ref(false)
+
+async function handleRegister() {
+  if (!name.value || !email.value || !password.value || !passwordConfirmation.value) {
+    errorMessage.value = 'Vui lòng nhập đầy đủ thông tin.'
+    return
+  }
+
+  if (password.value !== passwordConfirmation.value) {
+    errorMessage.value = 'Xác nhận mật khẩu không khớp.'
     return
   }
 
@@ -26,20 +31,17 @@ async function handleLogin() {
   errorMessage.value = ''
 
   try {
-    const user = await authStore.login(email.value, password.value)
-    if (user.role === 'manager') {
-      await navigateTo('/dashboard')
-    } else {
-      await navigateTo('/employees/dashboard')
-    }
+    await authStore.register(name.value, email.value, password.value, passwordConfirmation.value)
+    await navigateTo('/dashboard')
   } catch (err: unknown) {
-    const error = err as { data?: { message?: string }; statusCode?: number }
-    if (error?.data?.message) {
+    const error = err as { data?: { message?: string; errors?: Record<string, string[]> }; statusCode?: number }
+    if (error?.data?.errors) {
+      const firstError = Object.values(error.data.errors)[0]
+      errorMessage.value = Array.isArray(firstError) ? firstError[0] : String(firstError)
+    } else if (error?.data?.message) {
       errorMessage.value = error.data.message
-    } else if (error?.statusCode === 401) {
-      errorMessage.value = 'Email hoặc mật khẩu không đúng.'
     } else {
-      errorMessage.value = 'Đăng nhập thất bại. Vui lòng thử lại.'
+      errorMessage.value = 'Đăng ký thất bại. Vui lòng thử lại.'
     }
   } finally {
     loading.value = false
@@ -64,7 +66,7 @@ async function handleLogin() {
 
       <!-- Card -->
       <div class="card p-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Đăng nhập</h2>
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Tạo tài khoản</h2>
 
         <!-- Error Alert -->
         <div v-if="errorMessage" class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
@@ -75,12 +77,25 @@ async function handleLogin() {
           <span>{{ errorMessage }}</span>
         </div>
 
-        <form @submit.prevent="handleLogin" class="space-y-5">
+        <form @submit.prevent="handleRegister" class="space-y-5">
+          <!-- Name -->
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+            <input
+              id="name"
+              v-model="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Nguyễn Văn A"
+              class="input-field"
+              :disabled="loading"
+              required
+            />
+          </div>
+
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               id="email"
               v-model="email"
@@ -95,16 +110,14 @@ async function handleLogin() {
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-              Mật khẩu
-            </label>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
             <div class="relative">
               <input
                 id="password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
-                autocomplete="current-password"
-                placeholder="••••••••"
+                autocomplete="new-password"
+                placeholder="Tối thiểu 8 ký tự"
                 class="input-field pr-10"
                 :disabled="loading"
                 required
@@ -126,32 +139,38 @@ async function handleLogin() {
             </div>
           </div>
 
-          <!-- Remember Me + Register link -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
+          <!-- Password Confirmation -->
+          <div>
+            <label for="password-confirmation" class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu</label>
+            <div class="relative">
               <input
-                id="remember-me"
-                v-model="rememberMe"
-                type="checkbox"
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                id="password-confirmation"
+                v-model="passwordConfirmation"
+                :type="showPasswordConfirmation ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="Nhập lại mật khẩu"
+                class="input-field pr-10"
+                :disabled="loading"
+                required
               />
-              <label for="remember-me" class="ml-2 block text-sm text-gray-700 cursor-pointer">
-                Nhớ mật khẩu
-              </label>
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600"
+                @click="showPasswordConfirmation = !showPasswordConfirmation"
+              >
+                <svg v-if="!showPasswordConfirmation" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9C7.477 3 3 8.477 3 12s4.477 9 9 9 9-4.477 9-9S16.523 3 12 3z" />
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              </button>
             </div>
-            <NuxtLink
-              to="/register"
-              class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-500"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Tạo tài khoản
-            </NuxtLink>
           </div>
 
-          <!-- Submit Button -->
+          <!-- Submit -->
           <button
             type="submit"
             class="btn-primary w-full justify-center py-2.5 text-base"
@@ -161,9 +180,19 @@ async function handleLogin() {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            {{ loading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+            {{ loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản' }}
           </button>
         </form>
+
+        <!-- Link to Login -->
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Đã có tài khoản?
+            <NuxtLink to="/login" class="font-medium text-blue-600 hover:text-blue-500 ml-1">
+              Đăng nhập ngay
+            </NuxtLink>
+          </p>
+        </div>
       </div>
 
       <p class="text-center text-xs text-gray-400 mt-6">

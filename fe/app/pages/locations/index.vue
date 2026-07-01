@@ -1,18 +1,9 @@
 <script setup lang="ts">
+import type { Location } from '~/types/location'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface Location {
-  id: number
-  name: string
-  address: string
-  latitude: number
-  longitude: number
-  radius: number
-  description: string
-  is_active: boolean
-}
 
 const locations = ref<Location[]>([])
 const loading = ref(false)
@@ -98,9 +89,9 @@ async function submitModal() {
 
   try {
     if (editingLocation.value) {
-      await api.put(`/locations/${editingLocation.value.id}`, payload)
+      await api.put(`/locations/${editingLocation.value.id}`, payload, { success: 'Cập nhật vị trí thành công.' })
     } else {
-      await api.post('/locations', payload)
+      await api.post('/locations', payload, { success: 'Thêm vị trí thành công.' })
     }
     showModal.value = false
     await fetchLocations()
@@ -116,10 +107,9 @@ async function deleteLocation(loc: Location) {
   if (!confirm(`Bạn có chắc muốn xoá vị trí "${loc.name}"?`)) return
   actionLoading.value[loc.id] = true
   try {
-    await api.del(`/locations/${loc.id}`)
+    await api.del(`/locations/${loc.id}`, { success: 'Xóa vị trí thành công.' })
     await fetchLocations()
   } catch {
-    alert('Xoá thất bại. Vui lòng thử lại.')
   } finally {
     delete actionLoading.value[loc.id]
   }
@@ -128,10 +118,9 @@ async function deleteLocation(loc: Location) {
 async function toggleActive(loc: Location) {
   actionLoading.value[loc.id] = true
   try {
-    await api.patch(`/locations/${loc.id}/toggle`, {})
+    await api.patch(`/locations/${loc.id}/toggle`, {}, { success: 'Cập nhật trạng thái thành công.' })
     await fetchLocations()
   } catch {
-    alert('Cập nhật trạng thái thất bại. Vui lòng thử lại.')
   } finally {
     delete actionLoading.value[loc.id]
   }

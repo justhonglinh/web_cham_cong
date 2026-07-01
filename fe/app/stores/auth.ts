@@ -1,12 +1,7 @@
 import { defineStore } from 'pinia'
+import type { User } from '~/types/auth'
 
-export interface User {
-  id: number
-  name: string
-  email: string
-  role: 'manager' | 'employee'
-  avatar?: string
-}
+export type { User }
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -35,6 +30,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function register(name: string, email: string, password: string, passwordConfirmation: string) {
+    const data = await $fetch<{ token: string; user: User }>('/api/register', {
+      method: 'POST',
+      body: { name, email, password, password_confirmation: passwordConfirmation },
+    })
+    token.value = data.token
+    user.value = data.user
+    return data.user
+  }
+
   async function login(email: string, password: string) {
     const data = await $fetch<{ token: string; user: User }>('/api/login', {
       method: 'POST',
@@ -58,5 +63,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isAuthenticated, isManager, isEmployee, fetchUser, login, logout }
+  return { user, token, isAuthenticated, isManager, isEmployee, fetchUser, register, login, logout }
 })

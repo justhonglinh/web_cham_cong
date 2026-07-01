@@ -1,20 +1,11 @@
 <script setup lang="ts">
+import { WORK_SUMMARY_STATUS_BADGE, WORK_SUMMARY_STATUS_LABEL } from '~/constants'
+import type { WorkSummary } from '~/types/workSummary'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
 const authStore = useAuthStore()
-
-interface WorkSummary {
-  id: number
-  employee_name: string
-  month: number
-  year: number
-  total_work_days: number
-  total_work_hours: number
-  leave_days: number
-  overtime_hours: number
-  status: string
-}
 
 const summaries = ref<WorkSummary[]>([])
 const loading = ref(false)
@@ -84,19 +75,11 @@ async function exportExcel() {
 }
 
 function statusBadgeClass(status: string) {
-  if (status === 'complete' || status === 'completed') return 'badge-success'
-  if (status === 'pending') return 'badge-warning'
-  return 'badge-info'
+  return WORK_SUMMARY_STATUS_BADGE[status] ?? 'badge-info'
 }
 
 function statusLabel(status: string) {
-  const map: Record<string, string> = {
-    complete: 'Hoàn thành',
-    completed: 'Hoàn thành',
-    pending: 'Chờ xác nhận',
-    processing: 'Đang xử lý',
-  }
-  return map[status] ?? status
+  return WORK_SUMMARY_STATUS_LABEL[status] ?? status
 }
 
 watch([filterMonth, filterYear], fetchSummaries)

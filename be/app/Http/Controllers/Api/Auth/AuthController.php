@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Contracts\Services\AuthServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\LoginRequest;
+use App\Http\Requests\Api\Auth\RegisterRequest;
 use App\Http\Requests\Api\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Api\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
@@ -23,6 +24,16 @@ class AuthController extends Controller
             'token' => $result['token'],
             'user'  => new UserResource($result['user']),
         ]);
+    }
+
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $result = $this->authService->register($request->validated());
+
+        return response()->json([
+            'token' => $result['token'],
+            'user'  => new UserResource($result['user']),
+        ], 201);
     }
 
     public function logout(Request $request): JsonResponse

@@ -32,12 +32,10 @@ export default defineNuxtConfig({
       '/api': {
         target: 'http://localhost:8000/api',
         changeOrigin: true,
-        prependPath: false,
       },
       '/sanctum': {
         target: 'http://localhost:8000/sanctum',
         changeOrigin: true,
-        prependPath: false,
       },
     },
   },

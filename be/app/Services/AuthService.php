@@ -22,6 +22,20 @@ class AuthService implements AuthServiceInterface
         return ['token' => $token, 'user' => $user->load('details')];
     }
 
+    public function register(array $data): array
+    {
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role'     => 'manager',
+        ]);
+
+        $token = $user->createToken('nuxt-app')->plainTextToken;
+
+        return ['token' => $token, 'user' => $user];
+    }
+
     public function logout(User $user): void
     {
         $user->currentAccessToken()->delete();

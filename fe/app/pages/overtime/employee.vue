@@ -1,18 +1,10 @@
 <script setup lang="ts">
+import type { OvertimeShift } from '~/types/overtime'
+import { formatDate, formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface OvertimeShift {
-  id: number
-  name: string
-  start_time: string
-  end_time: string
-  date: string
-  max_registrations: number
-  registration_count: number
-  is_registered: boolean
-}
 
 const shifts = ref<OvertimeShift[]>([])
 const loading = ref(false)
@@ -62,15 +54,6 @@ async function unregisterShift(shift: OvertimeShift) {
   }
 }
 
-function formatTime(t: string) {
-  return t?.slice(0, 5) ?? t
-}
-
-function formatDate(d: string) {
-  if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day}/${m}/${y}`
-}
 
 function remainingSlots(shift: OvertimeShift) {
   return Math.max(0, shift.max_registrations - (shift.registration_count ?? 0))

@@ -1,17 +1,11 @@
 <script setup lang="ts">
+import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL, LEAVE_TYPE_LABEL } from '~/constants'
+import type { LeaveRequest as LeaveRecord } from '~/types/leave'
+import { formatDate } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface LeaveRecord {
-  id: number
-  leave_type: string
-  start_date: string
-  end_date: string
-  days: number
-  reason: string
-  status: 'pending' | 'approved' | 'rejected'
-}
 
 const records = ref<LeaveRecord[]>([])
 const loading = ref(false)
@@ -44,32 +38,17 @@ async function cancelRequest(record: LeaveRecord) {
   }
 }
 
-function formatDate(d: string) {
-  if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day}/${m}/${y}`
-}
 
 function leaveTypeLabel(type: string) {
-  const map: Record<string, string> = {
-    annual: 'Nghỉ phép năm',
-    sick: 'Nghỉ bệnh',
-    family: 'Nghỉ gia đình',
-    other: 'Khác',
-  }
-  return map[type] ?? type
+  return LEAVE_TYPE_LABEL[type] ?? type
 }
 
 function statusBadgeClass(status: string) {
-  if (status === 'approved') return 'badge-success'
-  if (status === 'rejected') return 'badge-danger'
-  return 'badge-warning'
+  return REQUEST_STATUS_BADGE[status] ?? 'badge-warning'
 }
 
 function statusLabel(status: string) {
-  if (status === 'approved') return 'Đã duyệt'
-  if (status === 'rejected') return 'Đã từ chối'
-  return 'Chờ duyệt'
+  return REQUEST_STATUS_LABEL[status] ?? status
 }
 
 onMounted(fetchHistory)

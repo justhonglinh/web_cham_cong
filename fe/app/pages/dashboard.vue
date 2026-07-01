@@ -1,65 +1,14 @@
 <script setup lang="ts">
+import {
+  ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL,
+  REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL,
+} from '~/constants'
+import type { DashboardData, WeeklyStat, ShiftTimeStat } from '~/types/dashboard'
+import { formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface WeeklyStat {
-  day: string
-  count: number
-}
-
-interface ShiftTimeStat {
-  name: string
-  count: number
-}
-
-interface OvertimeRequest {
-  id: number
-  employee_name: string
-  date: string
-  hours: number
-  reason: string
-  status: 'pending' | 'approved' | 'rejected'
-}
-
-interface Attendance {
-  id: number
-  employee_name: string
-  date: string
-  check_in: string | null
-  check_out: string | null
-  status: 'present' | 'late' | 'absent'
-}
-
-interface LeaveRequest {
-  id: number
-  employee_name: string
-  start_date: string
-  end_date: string
-  reason: string
-  status: 'pending' | 'approved' | 'rejected'
-}
-
-interface DashboardData {
-  employeesCount: number
-  shiftsCount: number
-  activeShifts: number
-  oldShifts: number
-  unusedShifts: number
-  overtimesCount: number
-  approvedOvertimeRequests: number
-  pendingOvertimeRequests: number
-  attendancesCount: number
-  lateAttendances: number
-  pendingLeaveRequests: number
-  approvedLeaveRequests: number
-  overtimeRequestsCount: number
-  weeklyStats: WeeklyStat[]
-  shiftTimeStats: ShiftTimeStat[]
-  recentOvertimeRequests: OvertimeRequest[]
-  recentAttendances: Attendance[]
-  recentLeaveRequests: LeaveRequest[]
-}
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -84,31 +33,13 @@ const maxWeeklyCount = computed(() => {
 })
 
 function statusBadge(status: string) {
-  if (status === 'present') return 'badge-success'
-  if (status === 'late') return 'badge-warning'
-  if (status === 'absent') return 'badge-danger'
-  if (status === 'approved') return 'badge-success'
-  if (status === 'pending') return 'badge-warning'
-  if (status === 'rejected') return 'badge-danger'
-  return 'badge-info'
+  return ATTENDANCE_STATUS_BADGE[status] ?? REQUEST_STATUS_BADGE[status] ?? 'badge-info'
 }
 
 function statusLabel(status: string) {
-  const map: Record<string, string> = {
-    present: 'Có mặt',
-    late: 'Đi trễ',
-    absent: 'Vắng mặt',
-    approved: 'Đã duyệt',
-    pending: 'Chờ duyệt',
-    rejected: 'Từ chối',
-  }
-  return map[status] ?? status
+  return ATTENDANCE_STATUS_LABEL[status] ?? REQUEST_STATUS_LABEL[status] ?? status
 }
 
-function formatTime(t: string | null) {
-  if (!t) return '--:--'
-  return t.slice(0, 5)
-}
 
 onMounted(fetchDashboard)
 </script>

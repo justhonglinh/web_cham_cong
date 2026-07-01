@@ -1,26 +1,11 @@
 <script setup lang="ts">
+import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL } from '~/constants'
+import type { OvertimeShift, OvertimeRequest } from '~/types/overtime'
+import { formatDate, formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-// --- Types ---
-interface OvertimeShift {
-  id: number
-  name: string
-  start_time: string
-  end_time: string
-  date: string
-  max_registrations: number
-  registration_count: number
-}
-
-interface OvertimeRequest {
-  id: number
-  employee_name: string
-  shift_name: string
-  shift_date: string
-  status: 'pending' | 'approved' | 'rejected'
-}
 
 // --- Shifts state ---
 const shifts = ref<OvertimeShift[]>([])
@@ -111,9 +96,9 @@ async function submitModal() {
   modalError.value = ''
   try {
     if (editingShift.value) {
-      await api.put(`/overtime/management/${editingShift.value.id}`, { ...form })
+      await api.put(`/overtime/management/${editingShift.value.id}`, { ...form }, { success: 'Cập nhật ca tăng ca thành công.' })
     } else {
-      await api.post('/overtime/management', { ...form })
+      await api.post('/overtime/management', { ...form }, { success: 'Thêm ca tăng ca thành công.' })
     }
     showModal.value = false
     await fetchShifts()
@@ -129,10 +114,9 @@ async function deleteShift(shift: OvertimeShift) {
   if (!confirm(`Bạn có chắc muốn xoá ca "${shift.name}"?`)) return
   actionLoading.value[shift.id] = true
   try {
-    await api.del(`/overtime/management/${shift.id}`)
+    await api.del(`/overtime/management/${shift.id}`, { success: 'Xóa ca tăng ca thành công.' })
     await fetchShifts()
   } catch {
-    alert('Xoá thất bại. Vui lòng thử lại.')
   } finally {
     delete actionLoading.value[shift.id]
   }
@@ -142,35 +126,22 @@ async function deleteShift(shift: OvertimeShift) {
 async function updateRequestStatus(request: OvertimeRequest, status: 'approved' | 'rejected') {
   actionLoading.value[request.id] = true
   try {
-    await api.patch(`/overtime-requests/${request.id}/status`, { status })
+    const label = status === 'approved' ? 'Đã duyệt yêu cầu tăng ca.' : 'Đã từ chối yêu cầu tăng ca.'
+    await api.patch(`/overtime-requests/${request.id}/status`, { status }, { success: label })
     await fetchRequests()
   } catch {
-    alert('Cập nhật trạng thái thất bại. Vui lòng thử lại.')
   } finally {
     delete actionLoading.value[request.id]
   }
 }
 
-function formatTime(t: string) {
-  return t?.slice(0, 5) ?? t
-}
-
-function formatDate(d: string) {
-  if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${day}/${m}/${y}`
-}
 
 function statusBadgeClass(status: string) {
-  if (status === 'approved') return 'badge-success'
-  if (status === 'rejected') return 'badge-danger'
-  return 'badge-warning'
+  return REQUEST_STATUS_BADGE[status] ?? 'badge-warning'
 }
 
 function statusLabel(status: string) {
-  if (status === 'approved') return 'Đã duyệt'
-  if (status === 'rejected') return 'Đã từ chối'
-  return 'Chờ duyệt'
+  return REQUEST_STATUS_LABEL[status] ?? status
 }
 
 onMounted(() => {

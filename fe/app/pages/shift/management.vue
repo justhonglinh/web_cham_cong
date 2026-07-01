@@ -1,22 +1,11 @@
 <script setup lang="ts">
+import { SHIFT_STATUS_BADGE, SHIFT_STATUS_LABEL } from '~/constants'
+import type { Shift, ShiftInput as ShiftForm } from '~/types/shift'
+import { formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface Shift {
-  id: number
-  name: string
-  start_time: string
-  end_time: string
-  status: 'active' | 'inactive'
-  usage_count: number
-}
-
-interface ShiftForm {
-  name: string
-  start_time: string
-  end_time: string
-}
 
 const loading = ref(true)
 const saving = ref(false)
@@ -88,11 +77,11 @@ async function saveShift() {
       end_time: form.value.end_time,
     }
     if (editingId.value) {
-      const updated = await api.put<Shift>(`/shift/management/${editingId.value}`, payload)
+      const updated = await api.put<Shift>(`/shift/management/${editingId.value}`, payload, { success: 'Cập nhật ca làm việc thành công.' })
       const idx = shifts.value.findIndex(s => s.id === editingId.value)
       if (idx !== -1) shifts.value[idx] = updated
     } else {
-      const created = await api.post<Shift>('/shift/management', payload)
+      const created = await api.post<Shift>('/shift/management', payload, { success: 'Thêm ca làm việc thành công.' })
       shifts.value.unshift(created)
     }
     closeModal()
@@ -113,7 +102,7 @@ async function deleteShift() {
   if (!deletingId.value) return
   deleting.value = true
   try {
-    await api.del(`/shift/management/${deletingId.value}`)
+    await api.del(`/shift/management/${deletingId.value}`, { success: 'Xóa ca làm việc thành công.' })
     shifts.value = shifts.value.filter(s => s.id !== deletingId.value)
     showDeleteConfirm.value = false
   } catch (e: any) {
@@ -124,17 +113,13 @@ async function deleteShift() {
   }
 }
 
-function formatTime(t: string) {
-  if (!t) return '—'
-  return t.slice(0, 5)
-}
 
 function statusBadge(status: string) {
-  return status === 'active' ? 'badge-success' : 'badge-danger'
+  return SHIFT_STATUS_BADGE[status] ?? 'badge-danger'
 }
 
 function statusLabel(status: string) {
-  return status === 'active' ? 'Đang dùng' : 'Ngừng dùng'
+  return SHIFT_STATUS_LABEL[status] ?? status
 }
 
 function calcDuration(start: string, end: string) {

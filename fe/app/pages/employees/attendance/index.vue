@@ -1,16 +1,11 @@
 <script setup lang="ts">
+import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import type { AttendanceRecord as TodayAttendance } from '~/types/attendance'
+import { formatTime } from '~/utils/format'
+
 definePageMeta({ layout: 'default' })
 
 const api = useApi()
-
-interface TodayAttendance {
-  id: number
-  date: string
-  check_in: string | null
-  check_out: string | null
-  shift_name: string | null
-  status: string
-}
 
 const todayRecord = ref<TodayAttendance | null>(null)
 const loadingToday = ref(false)
@@ -35,23 +30,13 @@ const currentDate = computed(() => {
   return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 })
 
-function formatTime(timeStr: string | null) {
-  if (!timeStr) return '--:--'
-  const parts = timeStr.split(':')
-  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`
-  const d = new Date(timeStr)
-  return isNaN(d.getTime()) ? '--:--' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-}
 
 function statusLabel(status: string) {
-  const map: Record<string, string> = { present: 'Có mặt', late: 'Muộn', absent: 'Vắng' }
-  return map[status] ?? status
+  return ATTENDANCE_STATUS_LABEL[status] ?? status
 }
+
 function statusClass(status: string) {
-  if (status === 'present') return 'badge-success'
-  if (status === 'late') return 'badge-warning'
-  if (status === 'absent') return 'badge-danger'
-  return 'badge-info'
+  return ATTENDANCE_STATUS_BADGE[status] ?? 'badge-info'
 }
 
 async function fetchTodayAttendance() {

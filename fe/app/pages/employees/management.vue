@@ -1,24 +1,11 @@
 <script setup lang="ts">
+import { userService } from '~/services/userService'
+import type { User, CreateUserInput as UserForm } from '~/types/user'
+import { ROLE_BADGE, ROLE_LABEL } from '~/constants'
+
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
-
-interface User {
-  id: number
-  name: string
-  email: string
-  phone: string
-  role: 'manager' | 'employee'
-  status?: 'active' | 'inactive'
-}
-
-interface UserForm {
-  name: string
-  email: string
-  phone: string
-  role: 'manager' | 'employee'
-  password: string
-}
+const toast = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -43,6 +30,8 @@ const showDeleteConfirm = ref(false)
 const deletingId = ref<number | null>(null)
 const deletingName = ref('')
 
+const { currentPage, lastPage, total, perPage, setTotal, paginateArray, goToPage, visiblePages, summaryFrom, summaryTo } = usePagination(20)
+
 const filteredUsers = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return users.value
@@ -53,12 +42,18 @@ const filteredUsers = computed(() => {
   )
 })
 
+const pagedUsers = computed(() => paginateArray(filteredUsers.value))
+
+watch(search, () => { currentPage.value = 1 })
+watch(filteredUsers, (val) => setTotal(val.length))
+
 async function fetchUsers() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get<{ data: User[] } | User[]>('/users')
+    const res = await userService.getAll()
     users.value = Array.isArray(res) ? res : (res as any).data ?? []
+    setTotal(users.value.length)
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải danh sách nhân viên.'
   } finally {
@@ -114,15 +109,18 @@ async function saveUser() {
     }
 
     if (editingId.value) {
-      const updated = await api.put<User>(`/users/${editingId.value}`, payload)
+      const updated = await userService.update(editingId.value, payload)
       const idx = users.value.findIndex(u => u.id === editingId.value)
       if (idx !== -1) users.value[idx] = updated
+      toast.success('Cập nhật nhân viên thành công.')
     } else {
-      const created = await api.post<User>('/users', payload)
+      const created = await userService.create(payload as any)
       users.value.unshift(created)
+      toast.success('Thêm nhân viên thành công.')
     }
     closeModal()
   } catch (e: any) {
+    toast.error(e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.')
     saveError.value = e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.'
   } finally {
     saving.value = false
@@ -139,11 +137,12 @@ async function deleteUser() {
   if (!deletingId.value) return
   deleting.value = true
   try {
-    await api.del(`/users/${deletingId.value}`)
+    await userService.delete(deletingId.value)
     users.value = users.value.filter(u => u.id !== deletingId.value)
     showDeleteConfirm.value = false
+    toast.success('Xóa nhân viên thành công.')
   } catch (e: any) {
-    error.value = e?.data?.message || 'Xóa thất bại. Vui lòng thử lại.'
+    toast.error(e?.data?.message || 'Xóa thất bại. Vui lòng thử lại.')
     showDeleteConfirm.value = false
   } finally {
     deleting.value = false
@@ -151,11 +150,11 @@ async function deleteUser() {
 }
 
 function roleBadge(role: string) {
-  return role === 'manager' ? 'badge-info' : 'badge-success'
+  return ROLE_BADGE[role] ?? 'badge-success'
 }
 
 function roleLabel(role: string) {
-  return role === 'manager' ? 'Quản lý' : 'Nhân viên'
+  return ROLE_LABEL[role] ?? role
 }
 
 onMounted(fetchUsers)
@@ -229,7 +228,7 @@ onMounted(fetchUsers)
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-50">
-            <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50 transition-colors">
+            <tr v-for="user in pagedUsers" :key="user.id" class="hover:bg-gray-50 transition-colors">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm shrink-0">
@@ -274,6 +273,15 @@ onMounted(fetchUsers)
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <PaginationBar
+        v-if="!loading"
+        :current-page="currentPage" :last-page="lastPage"
+        :total="total" :summary-from="summaryFrom" :summary-to="summaryTo"
+        :visible-pages="visiblePages"
+        @go-to-page="goToPage"
+      />
     </div>
 
     <!-- Add/Edit Modal -->
