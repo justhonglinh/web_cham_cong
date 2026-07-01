@@ -15,7 +15,8 @@ export const leaveService = {
 
   // Employee
   create: async (data: CreateLeaveInput) => {
-    return await getAuthInstance().post<LeaveRequest>('/employees/leave', { ...data })
+    const res = await getAuthInstance().post<{ data: LeaveRequest }>('/employees/leave', { ...data })
+    return res.data
   },
 
   getHistory: async () => {

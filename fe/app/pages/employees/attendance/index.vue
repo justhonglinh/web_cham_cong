@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord as TodayAttendance } from '~/types/attendance'
 import { formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
-
-const api = useApi()
 
 const todayRecord = ref<TodayAttendance | null>(null)
 const loadingToday = ref(false)
@@ -42,12 +41,7 @@ function statusClass(status: string) {
 async function fetchTodayAttendance() {
   loadingToday.value = true
   try {
-    const data = await api.get<{ data: TodayAttendance } | TodayAttendance>('/employees/attendance/today')
-    if ('data' in data && data.data !== undefined) {
-      todayRecord.value = (data as { data: TodayAttendance }).data
-    } else {
-      todayRecord.value = data as TodayAttendance
-    }
+    todayRecord.value = await attendanceService.getToday()
   } catch {
     todayRecord.value = null
   } finally {
@@ -60,9 +54,8 @@ async function checkIn() {
   successMessage.value = ''
   errorMessage.value = ''
   try {
-    const data = await api.post<{ message?: string; data?: TodayAttendance }>('/employees/attendance')
-    successMessage.value = data?.message ?? 'Chấm công thành công!'
-    if (data?.data) todayRecord.value = data.data
+    todayRecord.value = await attendanceService.checkIn()
+    successMessage.value = 'Chấm công thành công!'
     await fetchTodayAttendance()
   } catch (err: unknown) {
     const error = err as { data?: { message?: string } }

@@ -9,6 +9,6 @@ export const workSummaryService = {
   },
 
   export: async (params?: { month?: number; year?: number }) => {
-    return await getAuthInstance().get<Blob>('/work-summary/export', params)
+    return await getAuthInstance().getBlob('/work-summary/export', params)
   },
 }

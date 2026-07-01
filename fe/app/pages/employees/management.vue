@@ -285,101 +285,66 @@ onMounted(fetchUsers)
     </div>
 
     <!-- Add/Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-900">
-              {{ editingId ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới' }}
-            </h2>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="closeModal">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div class="px-6 py-4 space-y-4">
-            <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
-              {{ saveError }}
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
-              <input v-model="form.name" type="text" class="input-field" placeholder="Nguyễn Văn A" />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
-              <input v-model="form.email" type="email" class="input-field" placeholder="nhanvien@example.com" />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-              <input v-model="form.phone" type="tel" class="input-field" placeholder="0901234567" />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Vai trò <span class="text-red-500">*</span></label>
-              <select v-model="form.role" class="input-field">
-                <option value="employee">Nhân viên</option>
-                <option value="manager">Quản lý</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Mật khẩu <span v-if="!editingId" class="text-red-500">*</span>
-                <span v-else class="text-gray-400 font-normal">(để trống nếu không đổi)</span>
-              </label>
-              <input v-model="form.password" type="password" class="input-field" placeholder="••••••••" />
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-            <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
-            <button class="btn-primary" :disabled="saving" @click="saveUser">
-              <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              {{ editingId ? 'Lưu thay đổi' : 'Thêm nhân viên' }}
-            </button>
-          </div>
-        </div>
+    <BaseModal
+      :model-value="showModal"
+      :title="editingId ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'"
+      @update:model-value="closeModal"
+    >
+      <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+        {{ saveError }}
       </div>
-    </Teleport>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
+        <input v-model="form.name" type="text" class="input-field" placeholder="Nguyễn Văn A" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+        <input v-model="form.email" type="email" class="input-field" placeholder="nhanvien@example.com" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+        <input v-model="form.phone" type="tel" class="input-field" placeholder="0901234567" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Vai trò <span class="text-red-500">*</span></label>
+        <select v-model="form.role" class="input-field">
+          <option value="employee">Nhân viên</option>
+          <option value="manager">Quản lý</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Mật khẩu <span v-if="!editingId" class="text-red-500">*</span>
+          <span v-else class="text-gray-400 font-normal">(để trống nếu không đổi)</span>
+        </label>
+        <input v-model="form.password" type="password" class="input-field" placeholder="••••••••" />
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
+        <button class="btn-primary" :disabled="saving" @click="saveUser">
+          <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          {{ editingId ? 'Lưu thay đổi' : 'Thêm nhân viên' }}
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Delete Confirm Modal -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-900">Xác nhận xóa</h3>
-              <p class="text-sm text-gray-500">Hành động này không thể hoàn tác.</p>
-            </div>
-          </div>
-          <p class="text-sm text-gray-700 mb-6">
-            Bạn có chắc muốn xóa nhân viên <strong>{{ deletingName }}</strong>?
-          </p>
-          <div class="flex gap-3 justify-end">
-            <button class="btn-secondary" :disabled="deleting" @click="showDeleteConfirm = false">Hủy</button>
-            <button class="btn-danger" :disabled="deleting" @click="deleteUser">
-              <svg v-if="deleting" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              Xóa nhân viên
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <ConfirmModal
+      v-model="showDeleteConfirm"
+      confirm-text="Xóa nhân viên"
+      :loading="deleting"
+      @confirm="deleteUser"
+    >
+      Bạn có chắc muốn xóa nhân viên <strong>{{ deletingName }}</strong>?
+    </ConfirmModal>
   </div>
 </template>

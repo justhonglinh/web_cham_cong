@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL, LEAVE_TYPE_LABEL } from '~/constants'
+import { leaveService } from '~/services/leaveService'
 import type { LeaveRequest as LeaveRecord } from '~/types/leave'
 import { formatDate } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
-
-const api = useApi()
 
 const records = ref<LeaveRecord[]>([])
 const loading = ref(false)
@@ -16,8 +15,8 @@ async function fetchHistory() {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get<{ data: LeaveRecord[] }>('/employees/leave/history')
-    records.value = data.data ?? []
+    const res = await leaveService.getHistory()
+    records.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     error.value = 'Không thể tải lịch sử nghỉ phép. Vui lòng thử lại.'
   } finally {
@@ -29,7 +28,7 @@ async function cancelRequest(record: LeaveRecord) {
   if (!confirm('Bạn có chắc muốn huỷ yêu cầu nghỉ phép này?')) return
   cancelLoading.value[record.id] = true
   try {
-    await api.del(`/employees/leave/${record.id}`)
+    await leaveService.cancel(record.id)
     await fetchHistory()
   } catch {
     alert('Huỷ yêu cầu thất bại. Vui lòng thử lại.')

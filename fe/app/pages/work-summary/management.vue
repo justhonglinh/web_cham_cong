@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { WORK_SUMMARY_STATUS_BADGE, WORK_SUMMARY_STATUS_LABEL } from '~/constants'
+import { workSummaryService } from '~/services/workSummaryService'
 import type { WorkSummary } from '~/types/workSummary'
 
 definePageMeta({ layout: 'default' })
-
-const api = useApi()
-const authStore = useAuthStore()
 
 const summaries = ref<WorkSummary[]>([])
 const loading = ref(false)
@@ -41,11 +39,8 @@ async function fetchSummaries() {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get<{ data: WorkSummary[] }>('/work-summary/management', {
-      month: filterMonth.value,
-      year: filterYear.value,
-    })
-    summaries.value = data.data ?? []
+    const res = await workSummaryService.getAll({ month: filterMonth.value, year: filterYear.value })
+    summaries.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     error.value = 'Không thể tải báo cáo tổng hợp. Vui lòng thử lại.'
   } finally {
@@ -56,12 +51,7 @@ async function fetchSummaries() {
 async function exportExcel() {
   exportLoading.value = true
   try {
-    const url = `/api/work-summary/export?month=${filterMonth.value}&year=${filterYear.value}`
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    })
-    if (!response.ok) throw new Error('Export failed')
-    const blob = await response.blob()
+    const blob = await workSummaryService.export({ month: filterMonth.value, year: filterYear.value })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
     link.download = `bao-cao-cong-${filterMonth.value}-${filterYear.value}.xlsx`

@@ -9,11 +9,13 @@ export const userService = {
   },
 
   create: async (data: CreateUserInput) => {
-    return await getAuthInstance().post<User>('/users', { ...data })
+    const res = await getAuthInstance().post<{ data: User }>('/users', { ...data })
+    return res.data
   },
 
   update: async (id: number, data: UpdateUserInput) => {
-    return await getAuthInstance().put<User>(`/users/${id}`, { ...data })
+    const res = await getAuthInstance().put<{ data: User }>(`/users/${id}`, { ...data })
+    return res.data
   },
 
   delete: async (id: number) => {

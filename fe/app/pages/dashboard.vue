@@ -3,12 +3,11 @@ import {
   ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL,
   REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL,
 } from '~/constants'
+import { dashboardService } from '~/services/dashboardService'
 import type { DashboardData, WeeklyStat, ShiftTimeStat } from '~/types/dashboard'
 import { formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
-
-const api = useApi()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -18,7 +17,7 @@ async function fetchDashboard() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get<DashboardData>('/dashboard')
+    const res = await dashboardService.getManagerDashboard()
     data.value = res
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải dữ liệu dashboard.'

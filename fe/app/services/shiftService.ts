@@ -9,11 +9,13 @@ export const shiftService = {
   },
 
   create: async (data: ShiftInput) => {
-    return await getAuthInstance().post<Shift>('/shift/management', { ...data })
+    const res = await getAuthInstance().post<{ data: Shift }>('/shift/management', { ...data })
+    return res.data
   },
 
   update: async (id: number, data: ShiftInput) => {
-    return await getAuthInstance().put<Shift>(`/shift/management/${id}`, { ...data })
+    const res = await getAuthInstance().put<{ data: Shift }>(`/shift/management/${id}`, { ...data })
+    return res.data
   },
 
   delete: async (id: number) => {

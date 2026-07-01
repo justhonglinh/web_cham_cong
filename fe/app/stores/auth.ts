@@ -15,10 +15,12 @@ export const useAuthStore = defineStore('auth', () => {
   const isManager = computed(() => user.value?.role === 'manager')
   const isEmployee = computed(() => user.value?.role === 'employee')
 
+  const config = useRuntimeConfig()
+
   async function fetchUser() {
     if (!token.value) return null
     try {
-      const data = await $fetch<{ user: User }>('/api/user', {
+      const data = await $fetch<{ user: User }>(`${config.public.apiBase}/api/user`, {
         headers: { Authorization: `Bearer ${token.value}` },
       })
       user.value = data.user
@@ -31,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(name: string, email: string, password: string, passwordConfirmation: string) {
-    const data = await $fetch<{ token: string; user: User }>('/api/register', {
+    const data = await $fetch<{ token: string; user: User }>(`${config.public.apiBase}/api/register`, {
       method: 'POST',
       body: { name, email, password, password_confirmation: passwordConfirmation },
     })
@@ -41,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(email: string, password: string) {
-    const data = await $fetch<{ token: string; user: User }>('/api/login', {
+    const data = await $fetch<{ token: string; user: User }>(`${config.public.apiBase}/api/login`, {
       method: 'POST',
       body: { email, password },
     })
@@ -53,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     if (!token.value) return
     try {
-      await $fetch('/api/logout', {
+      await $fetch(`${config.public.apiBase}/api/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token.value}` },
       })

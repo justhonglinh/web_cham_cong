@@ -18,12 +18,14 @@ function buildHeaders(extra?: Record<string, string>): Record<string, string> {
   }
 }
 
-function req<T>(method: string, url: string, body?: unknown, params?: Record<string, unknown>): Promise<T> {
-  return $fetch<T>(`/api${url}`, {
+function req<T>(method: string, url: string, body?: unknown, params?: Record<string, unknown>, responseType?: 'json' | 'blob'): Promise<T> {
+  const config = useRuntimeConfig()
+  return $fetch<T>(`${config.public.apiBase}/api${url}`, {
     method,
     headers: buildHeaders(),
     body,
     params,
+    responseType,
   })
 }
 
@@ -34,5 +36,6 @@ export function getAuthInstance() {
     put:    <T>(url: string, data?: unknown)                   => req<T>('PUT', url, data),
     patch:  <T>(url: string, data?: unknown)                   => req<T>('PATCH', url, data),
     delete: <T>(url: string)                                   => req<T>('DELETE', url),
+    getBlob: (url: string, params?: Record<string, unknown>)   => req<Blob>('GET', url, undefined, params, 'blob'),
   }
 }

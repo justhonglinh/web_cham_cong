@@ -14,11 +14,13 @@ export const overtimeService = {
   },
 
   createShift: async (data: OvertimeShiftInput) => {
-    return await getAuthInstance().post<OvertimeShift>('/overtime/management', { ...data })
+    const res = await getAuthInstance().post<{ data: OvertimeShift }>('/overtime/management', { ...data })
+    return res.data
   },
 
   updateShift: async (id: number, data: OvertimeShiftInput) => {
-    return await getAuthInstance().put<OvertimeShift>(`/overtime/management/${id}`, { ...data })
+    const res = await getAuthInstance().put<{ data: OvertimeShift }>(`/overtime/management/${id}`, { ...data })
+    return res.data
   },
 
   deleteShift: async (id: number) => {
@@ -26,7 +28,8 @@ export const overtimeService = {
   },
 
   updateRequestStatus: async (id: number, status: 'approved' | 'rejected') => {
-    return await getAuthInstance().patch(`/overtime-requests/${id}/status`, { status })
+    const res = await getAuthInstance().patch<{ data: OvertimeRequest }>(`/overtime-requests/${id}/status`, { status })
+    return res.data
   },
 
   // Employee

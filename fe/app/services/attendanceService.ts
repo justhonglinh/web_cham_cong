@@ -10,16 +10,19 @@ export const attendanceService = {
   },
 
   updateManagement: async (id: number, data: UpdateAttendanceInput) => {
-    return await getAuthInstance().put<AttendanceRecord>(`/attendance/management/${id}`, { ...data })
+    const res = await getAuthInstance().put<{ data: AttendanceRecord }>(`/attendance/management/${id}`, { ...data })
+    return res.data
   },
 
   // Employee
   getToday: async () => {
-    return await getAuthInstance().get<{ attendance: AttendanceRecord | null }>('/employees/attendance/today')
+    const res = await getAuthInstance().get<{ data: AttendanceRecord | null }>('/employees/attendance/today')
+    return res.data
   },
 
   checkIn: async (data?: Record<string, unknown>) => {
-    return await getAuthInstance().post<AttendanceRecord>('/employees/attendance', { ...data })
+    const res = await getAuthInstance().post<{ data: AttendanceRecord }>('/employees/attendance', { ...data })
+    return res.data
   },
 
   getHistory: async (params?: { page?: number; per_page?: number; limit?: number }) => {

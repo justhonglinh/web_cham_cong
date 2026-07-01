@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL } from '~/constants'
+import { overtimeService } from '~/services/overtimeService'
 import type { OvertimeShift, OvertimeRequest } from '~/types/overtime'
 import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 
 // --- Shifts state ---
 const shifts = ref<OvertimeShift[]>([])
@@ -39,8 +40,8 @@ async function fetchShifts() {
   shiftsLoading.value = true
   shiftsError.value = ''
   try {
-    const data = await api.get<{ data: OvertimeShift[] }>('/overtime/management')
-    shifts.value = data.data ?? []
+    const res = await overtimeService.getShifts()
+    shifts.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     shiftsError.value = 'Không thể tải danh sách ca tăng ca.'
   } finally {
@@ -53,8 +54,8 @@ async function fetchRequests() {
   requestsLoading.value = true
   requestsError.value = ''
   try {
-    const data = await api.get<{ data: OvertimeRequest[] }>('/overtime/management/requests')
-    requests.value = data.data ?? []
+    const res = await overtimeService.getRequests()
+    requests.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     requestsError.value = 'Không thể tải danh sách yêu cầu tăng ca.'
   } finally {
@@ -96,9 +97,11 @@ async function submitModal() {
   modalError.value = ''
   try {
     if (editingShift.value) {
-      await api.put(`/overtime/management/${editingShift.value.id}`, { ...form }, { success: 'Cập nhật ca tăng ca thành công.' })
+      await overtimeService.updateShift(editingShift.value.id, { ...form })
+      toast.success('Cập nhật ca tăng ca thành công.')
     } else {
-      await api.post('/overtime/management', { ...form }, { success: 'Thêm ca tăng ca thành công.' })
+      await overtimeService.createShift({ ...form })
+      toast.success('Thêm ca tăng ca thành công.')
     }
     showModal.value = false
     await fetchShifts()
@@ -114,7 +117,8 @@ async function deleteShift(shift: OvertimeShift) {
   if (!confirm(`Bạn có chắc muốn xoá ca "${shift.name}"?`)) return
   actionLoading.value[shift.id] = true
   try {
-    await api.del(`/overtime/management/${shift.id}`, { success: 'Xóa ca tăng ca thành công.' })
+    await overtimeService.deleteShift(shift.id)
+    toast.success('Xóa ca tăng ca thành công.')
     await fetchShifts()
   } catch {
   } finally {
@@ -127,7 +131,8 @@ async function updateRequestStatus(request: OvertimeRequest, status: 'approved' 
   actionLoading.value[request.id] = true
   try {
     const label = status === 'approved' ? 'Đã duyệt yêu cầu tăng ca.' : 'Đã từ chối yêu cầu tăng ca.'
-    await api.patch(`/overtime-requests/${request.id}/status`, { status }, { success: label })
+    await overtimeService.updateRequestStatus(request.id, status)
+    toast.success(label)
     await fetchRequests()
   } catch {
   } finally {
@@ -310,64 +315,50 @@ onMounted(() => {
     </div>
 
     <!-- Add/Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ editingShift ? 'Chỉnh sửa ca tăng ca' : 'Thêm ca tăng ca mới' }}
-            </h3>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="showModal = false">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <BaseModal
+      v-model="showModal"
+      :title="editingShift ? 'Chỉnh sửa ca tăng ca' : 'Thêm ca tăng ca mới'"
+    >
+      <div v-if="modalError" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        {{ modalError }}
+      </div>
 
-          <div class="p-6 space-y-4">
-            <div v-if="modalError" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-              {{ modalError }}
-            </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tên ca <span class="text-red-500">*</span></label>
+        <input v-model="form.name" type="text" class="input-field" placeholder="VD: Ca tăng ca chiều" />
+      </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Tên ca <span class="text-red-500">*</span></label>
-              <input v-model="form.name" type="text" class="input-field" placeholder="VD: Ca tăng ca chiều" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                <input v-model="form.start_time" type="time" class="input-field" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
-                <input v-model="form.end_time" type="time" class="input-field" />
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Ngày <span class="text-red-500">*</span></label>
-              <input v-model="form.date" type="date" class="input-field" />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Số đăng ký tối đa</label>
-              <input v-model.number="form.max_registrations" type="number" min="1" class="input-field" />
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-xl">
-            <button class="btn-secondary" :disabled="modalLoading" @click="showModal = false">Huỷ</button>
-            <button class="btn-primary" :disabled="modalLoading" @click="submitModal">
-              <svg v-if="modalLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {{ modalLoading ? 'Đang lưu...' : 'Lưu' }}
-            </button>
-          </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
+          <input v-model="form.start_time" type="time" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
+          <input v-model="form.end_time" type="time" class="input-field" />
         </div>
       </div>
-    </Teleport>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày <span class="text-red-500">*</span></label>
+        <input v-model="form.date" type="date" class="input-field" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Số đăng ký tối đa</label>
+        <input v-model.number="form.max_registrations" type="number" min="1" class="input-field" />
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" :disabled="modalLoading" @click="showModal = false">Huỷ</button>
+        <button class="btn-primary" :disabled="modalLoading" @click="submitModal">
+          <svg v-if="modalLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          {{ modalLoading ? 'Đang lưu...' : 'Lưu' }}
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>

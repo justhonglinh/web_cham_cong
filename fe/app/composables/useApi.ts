@@ -22,6 +22,7 @@ function extractErrorMessage(err: unknown): string {
 export function useApi() {
   const authStore = useAuthStore()
   const toast = useToast()
+  const config = useRuntimeConfig()
 
   function getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
@@ -41,7 +42,7 @@ export function useApi() {
   ): Promise<T> {
     const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())
     try {
-      const result = await $fetch<T>(`/api${path}`, {
+      const result = await $fetch<T>(`${config.public.apiBase}/api${path}`, {
         method,
         headers: getHeaders(),
         body: options?.body,

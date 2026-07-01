@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord } from '~/types/attendance'
 import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -31,10 +32,7 @@ async function fetchAttendance() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get<{ data: AttendanceRecord[] } | AttendanceRecord[]>(
-      '/attendance/management',
-      { month: filterMonth.value, year: filterYear.value }
-    )
+    const res = await attendanceService.getManagement({ month: Number(filterMonth.value), year: Number(filterYear.value) })
     records.value = Array.isArray(res) ? res : (res as any).data ?? []
     setTotal(records.value.length)
   } catch (e: any) {
@@ -65,16 +63,13 @@ async function saveAttendance() {
   saving.value = true
   saveError.value = null
   try {
-    const updated = await api.put<AttendanceRecord>(
-      `/attendance/management/${editingRecord.value.id}`,
-      {
-        check_in: editForm.value.check_in || null,
-        check_out: editForm.value.check_out || null,
-      },
-      { success: 'Cập nhật chấm công thành công.' }
-    )
+    const updated = await attendanceService.updateManagement(editingRecord.value.id, {
+      check_in: editForm.value.check_in || null,
+      check_out: editForm.value.check_out || null,
+    })
     const idx = records.value.findIndex(r => r.id === editingRecord.value!.id)
     if (idx !== -1) records.value[idx] = updated
+    toast.success('Cập nhật chấm công thành công.')
     closeModal()
   } catch (e: any) {
     saveError.value = e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.'
@@ -236,53 +231,38 @@ onMounted(fetchAttendance)
     </div>
 
     <!-- Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <div>
-              <h2 class="text-lg font-semibold text-gray-900">Chỉnh sửa chấm công</h2>
-              <p v-if="editingRecord" class="text-xs text-gray-500 mt-0.5">
-                {{ editingRecord.employee_name }} &bull; {{ formatDate(editingRecord.date) }}
-              </p>
-            </div>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="closeModal">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div class="px-6 py-4 space-y-4">
-            <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
-              {{ saveError }}
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Giờ vào</label>
-              <input v-model="editForm.check_in" type="time" class="input-field" />
-              <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ vào</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Giờ ra</label>
-              <input v-model="editForm.check_out" type="time" class="input-field" />
-              <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ ra</p>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-            <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
-            <button class="btn-primary" :disabled="saving" @click="saveAttendance">
-              <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              Lưu thay đổi
-            </button>
-          </div>
-        </div>
+    <BaseModal
+      :model-value="showModal"
+      title="Chỉnh sửa chấm công"
+      :subtitle="editingRecord ? `${editingRecord.employee_name} • ${formatDate(editingRecord.date)}` : undefined"
+      @update:model-value="closeModal"
+    >
+      <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+        {{ saveError }}
       </div>
-    </Teleport>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Giờ vào</label>
+        <input v-model="editForm.check_in" type="time" class="input-field" />
+        <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ vào</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Giờ ra</label>
+        <input v-model="editForm.check_out" type="time" class="input-field" />
+        <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ ra</p>
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
+        <button class="btn-primary" :disabled="saving" @click="saveAttendance">
+          <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          Lưu thay đổi
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>

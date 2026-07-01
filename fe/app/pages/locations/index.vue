@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { locationService } from '~/services/locationService'
 import type { Location } from '~/types/location'
 
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 
 const locations = ref<Location[]>([])
 const loading = ref(false)
@@ -29,8 +30,8 @@ async function fetchLocations() {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get<{ data: Location[] }>('/locations')
-    locations.value = data.data ?? []
+    const res = await locationService.getAll()
+    locations.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     error.value = 'Không thể tải danh sách vị trí. Vui lòng thử lại.'
   } finally {
@@ -89,9 +90,11 @@ async function submitModal() {
 
   try {
     if (editingLocation.value) {
-      await api.put(`/locations/${editingLocation.value.id}`, payload, { success: 'Cập nhật vị trí thành công.' })
+      await locationService.update(editingLocation.value.id, payload)
+      toast.success('Cập nhật vị trí thành công.')
     } else {
-      await api.post('/locations', payload, { success: 'Thêm vị trí thành công.' })
+      await locationService.create(payload)
+      toast.success('Thêm vị trí thành công.')
     }
     showModal.value = false
     await fetchLocations()
@@ -107,7 +110,8 @@ async function deleteLocation(loc: Location) {
   if (!confirm(`Bạn có chắc muốn xoá vị trí "${loc.name}"?`)) return
   actionLoading.value[loc.id] = true
   try {
-    await api.del(`/locations/${loc.id}`, { success: 'Xóa vị trí thành công.' })
+    await locationService.delete(loc.id)
+    toast.success('Xóa vị trí thành công.')
     await fetchLocations()
   } catch {
   } finally {
@@ -118,7 +122,8 @@ async function deleteLocation(loc: Location) {
 async function toggleActive(loc: Location) {
   actionLoading.value[loc.id] = true
   try {
-    await api.patch(`/locations/${loc.id}/toggle`, {}, { success: 'Cập nhật trạng thái thành công.' })
+    await locationService.toggle(loc.id)
+    toast.success('Cập nhật trạng thái thành công.')
     await fetchLocations()
   } catch {
   } finally {
@@ -227,111 +232,96 @@ onMounted(fetchLocations)
     </div>
 
     <!-- Add/Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-          <!-- Modal Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b shrink-0">
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ editingLocation ? 'Chỉnh sửa vị trí' : 'Thêm vị trí mới' }}
-            </h3>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="showModal = false">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <BaseModal
+      v-model="showModal"
+      :title="editingLocation ? 'Chỉnh sửa vị trí' : 'Thêm vị trí mới'"
+      max-width="max-w-lg"
+      scrollable
+    >
+      <div v-if="modalError" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        {{ modalError }}
+      </div>
 
-          <!-- Modal Body -->
-          <div class="p-6 space-y-4 overflow-y-auto">
-            <div v-if="modalError" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-              {{ modalError }}
-            </div>
+      <!-- Name -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Tên vị trí <span class="text-red-500">*</span>
+        </label>
+        <input v-model="form.name" type="text" class="input-field" placeholder="VD: Văn phòng chính" />
+      </div>
 
-            <!-- Name -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Tên vị trí <span class="text-red-500">*</span>
-              </label>
-              <input v-model="form.name" type="text" class="input-field" placeholder="VD: Văn phòng chính" />
-            </div>
+      <!-- Address -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Địa chỉ <span class="text-red-500">*</span>
+        </label>
+        <input v-model="form.address" type="text" class="input-field" placeholder="Số nhà, đường, quận, thành phố..." />
+      </div>
 
-            <!-- Address -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Địa chỉ <span class="text-red-500">*</span>
-              </label>
-              <input v-model="form.address" type="text" class="input-field" placeholder="Số nhà, đường, quận, thành phố..." />
-            </div>
-
-            <!-- Lat / Lng -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Vĩ độ (Latitude) <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="form.latitude"
-                  type="number"
-                  step="0.000001"
-                  class="input-field"
-                  placeholder="VD: 10.762622"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Kinh độ (Longitude) <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="form.longitude"
-                  type="number"
-                  step="0.000001"
-                  class="input-field"
-                  placeholder="VD: 106.660172"
-                />
-              </div>
-            </div>
-
-            <!-- Radius -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Bán kính cho phép (mét) <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model.number="form.radius"
-                type="number"
-                min="1"
-                class="input-field"
-                placeholder="VD: 100"
-              />
-              <p class="text-xs text-gray-400 mt-1">Nhân viên phải ở trong bán kính này mới được chấm công</p>
-            </div>
-
-            <!-- Description -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-              <textarea
-                v-model="form.description"
-                class="input-field resize-none"
-                rows="3"
-                placeholder="Mô tả thêm về vị trí (không bắt buộc)..."
-              />
-            </div>
-          </div>
-
-          <!-- Modal Footer -->
-          <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-xl shrink-0">
-            <button class="btn-secondary" :disabled="modalLoading" @click="showModal = false">Huỷ</button>
-            <button class="btn-primary" :disabled="modalLoading" @click="submitModal">
-              <svg v-if="modalLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              {{ modalLoading ? 'Đang lưu...' : 'Lưu vị trí' }}
-            </button>
-          </div>
+      <!-- Lat / Lng -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Vĩ độ (Latitude) <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="form.latitude"
+            type="number"
+            step="0.000001"
+            class="input-field"
+            placeholder="VD: 10.762622"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Kinh độ (Longitude) <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="form.longitude"
+            type="number"
+            step="0.000001"
+            class="input-field"
+            placeholder="VD: 106.660172"
+          />
         </div>
       </div>
-    </Teleport>
+
+      <!-- Radius -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Bán kính cho phép (mét) <span class="text-red-500">*</span>
+        </label>
+        <input
+          v-model.number="form.radius"
+          type="number"
+          min="1"
+          class="input-field"
+          placeholder="VD: 100"
+        />
+        <p class="text-xs text-gray-400 mt-1">Nhân viên phải ở trong bán kính này mới được chấm công</p>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+        <textarea
+          v-model="form.description"
+          class="input-field resize-none"
+          rows="3"
+          placeholder="Mô tả thêm về vị trí (không bắt buộc)..."
+        />
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" :disabled="modalLoading" @click="showModal = false">Huỷ</button>
+        <button class="btn-primary" :disabled="modalLoading" @click="submitModal">
+          <svg v-if="modalLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          {{ modalLoading ? 'Đang lưu...' : 'Lưu vị trí' }}
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>

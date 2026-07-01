@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import { overtimeService } from '~/services/overtimeService'
 import type { OvertimeShift } from '~/types/overtime'
 import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
-
-const api = useApi()
 
 const shifts = ref<OvertimeShift[]>([])
 const loading = ref(false)
@@ -16,8 +15,8 @@ async function fetchShifts() {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get<{ data: OvertimeShift[] }>('/overtime/employee')
-    shifts.value = data.data ?? []
+    const res = await overtimeService.getAvailableShifts()
+    shifts.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch {
     error.value = 'Không thể tải danh sách ca tăng ca. Vui lòng thử lại.'
   } finally {
@@ -29,7 +28,7 @@ async function registerShift(shift: OvertimeShift) {
   actionLoading.value[shift.id] = true
   successMessage.value = ''
   try {
-    await api.post(`/overtime/register/${shift.id}`, {})
+    await overtimeService.register(shift.id)
     successMessage.value = `Đăng ký ca "${shift.name}" thành công!`
     await fetchShifts()
   } catch {
@@ -44,7 +43,7 @@ async function unregisterShift(shift: OvertimeShift) {
   actionLoading.value[shift.id] = true
   successMessage.value = ''
   try {
-    await api.del(`/overtime/unregister/${shift.id}`)
+    await overtimeService.unregister(shift.id)
     successMessage.value = `Đã huỷ đăng ký ca "${shift.name}".`
     await fetchShifts()
   } catch {

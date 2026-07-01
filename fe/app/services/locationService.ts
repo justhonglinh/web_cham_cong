@@ -9,11 +9,13 @@ export const locationService = {
   },
 
   create: async (data: LocationInput) => {
-    return await getAuthInstance().post<Location>('/locations', { ...data })
+    const res = await getAuthInstance().post<{ data: Location }>('/locations', { ...data })
+    return res.data
   },
 
   update: async (id: number, data: LocationInput) => {
-    return await getAuthInstance().put<Location>(`/locations/${id}`, { ...data })
+    const res = await getAuthInstance().put<{ data: Location }>(`/locations/${id}`, { ...data })
+    return res.data
   },
 
   delete: async (id: number) => {

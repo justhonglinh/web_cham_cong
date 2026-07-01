@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { leaveService } from '~/services/leaveService'
+
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 const router = useRouter()
 
 const form = reactive({
@@ -36,7 +38,8 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await api.post('/employees/leave', { ...form }, { success: 'Gửi đơn nghỉ phép thành công.' })
+    await leaveService.create({ ...form })
+    toast.success('Gửi đơn nghỉ phép thành công.')
     success.value = true
     setTimeout(() => {
       router.push('/employees/leave/history')

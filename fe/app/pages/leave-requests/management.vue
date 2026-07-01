@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL, LEAVE_TYPE_LABEL } from '~/constants'
+import { leaveService } from '~/services/leaveService'
 import type { LeaveRequest } from '~/types/leave'
 import { formatDate } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 
 const requests = ref<LeaveRequest[]>([])
 const loading = ref(false)
@@ -21,8 +22,8 @@ async function fetchRequests() {
   loading.value = true
   error.value = ''
   try {
-    const data = await api.get<{ data: LeaveRequest[] }>('/leave-requests/management')
-    requests.value = data.data ?? []
+    const res = await leaveService.getAll()
+    requests.value = Array.isArray(res) ? res : (res as any).data ?? []
     setTotal(requests.value.length)
   } catch {
     error.value = 'Không thể tải danh sách yêu cầu nghỉ phép.'
@@ -35,7 +36,8 @@ async function updateStatus(request: LeaveRequest, status: 'approved' | 'rejecte
   actionLoading.value[request.id] = true
   try {
     const label = status === 'approved' ? 'Đã duyệt đơn nghỉ phép.' : 'Đã từ chối đơn nghỉ phép.'
-    await api.patch(`/leave-requests/${request.id}/status`, { status }, { success: label })
+    await leaveService.updateStatus(request.id, status)
+    toast.success(label)
     await fetchRequests()
   } catch {
   } finally {

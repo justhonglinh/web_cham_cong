@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
+import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord } from '~/types/attendance'
 import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
 const authStore = useAuthStore()
-const api = useApi()
 
 const recentAttendance = ref<AttendanceRecord[]>([])
 const loadingAttendance = ref(false)
@@ -34,10 +34,7 @@ function statusClass(status: string) {
 async function fetchRecentAttendance() {
   loadingAttendance.value = true
   try {
-    const data = await api.get<{ data: AttendanceRecord[] } | AttendanceRecord[]>(
-      '/employees/attendance/history',
-      { limit: 5, per_page: 5, page: 1 },
-    )
+    const data = await attendanceService.getHistory({ limit: 5, per_page: 5, page: 1 })
     if (Array.isArray(data)) {
       recentAttendance.value = data.slice(0, 5)
     } else {

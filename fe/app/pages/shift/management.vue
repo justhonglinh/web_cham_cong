@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { SHIFT_STATUS_BADGE, SHIFT_STATUS_LABEL } from '~/constants'
+import { shiftService } from '~/services/shiftService'
 import type { Shift, ShiftInput as ShiftForm } from '~/types/shift'
 import { formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const api = useApi()
+const toast = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -27,7 +28,7 @@ async function fetchShifts() {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get<{ data: Shift[] } | Shift[]>('/shift/management')
+    const res = await shiftService.getAll()
     shifts.value = Array.isArray(res) ? res : (res as any).data ?? []
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải danh sách ca làm việc.'
@@ -77,12 +78,14 @@ async function saveShift() {
       end_time: form.value.end_time,
     }
     if (editingId.value) {
-      const updated = await api.put<Shift>(`/shift/management/${editingId.value}`, payload, { success: 'Cập nhật ca làm việc thành công.' })
+      const updated = await shiftService.update(editingId.value, payload)
       const idx = shifts.value.findIndex(s => s.id === editingId.value)
       if (idx !== -1) shifts.value[idx] = updated
+      toast.success('Cập nhật ca làm việc thành công.')
     } else {
-      const created = await api.post<Shift>('/shift/management', payload, { success: 'Thêm ca làm việc thành công.' })
+      const created = await shiftService.create(payload)
       shifts.value.unshift(created)
+      toast.success('Thêm ca làm việc thành công.')
     }
     closeModal()
   } catch (e: any) {
@@ -102,9 +105,10 @@ async function deleteShift() {
   if (!deletingId.value) return
   deleting.value = true
   try {
-    await api.del(`/shift/management/${deletingId.value}`, { success: 'Xóa ca làm việc thành công.' })
+    await shiftService.delete(deletingId.value)
     shifts.value = shifts.value.filter(s => s.id !== deletingId.value)
     showDeleteConfirm.value = false
+    toast.success('Xóa ca làm việc thành công.')
   } catch (e: any) {
     error.value = e?.data?.message || 'Xóa thất bại. Vui lòng thử lại.'
     showDeleteConfirm.value = false
@@ -288,94 +292,59 @@ onMounted(fetchShifts)
     </div>
 
     <!-- Add/Edit Modal -->
-    <Teleport to="body">
-      <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-900">
-              {{ editingId ? 'Chỉnh sửa ca làm việc' : 'Thêm ca làm việc mới' }}
-            </h2>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors" @click="closeModal">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <BaseModal
+      :model-value="showModal"
+      :title="editingId ? 'Chỉnh sửa ca làm việc' : 'Thêm ca làm việc mới'"
+      @update:model-value="closeModal"
+    >
+      <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+        {{ saveError }}
+      </div>
 
-          <div class="px-6 py-4 space-y-4">
-            <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
-              {{ saveError }}
-            </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tên ca <span class="text-red-500">*</span></label>
+        <input v-model="form.name" type="text" class="input-field" placeholder="VD: Ca sáng, Ca chiều..." />
+      </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Tên ca <span class="text-red-500">*</span></label>
-              <input v-model="form.name" type="text" class="input-field" placeholder="VD: Ca sáng, Ca chiều..." />
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                <input v-model="form.start_time" type="time" class="input-field" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
-                <input v-model="form.end_time" type="time" class="input-field" />
-              </div>
-            </div>
-
-            <div v-if="form.start_time && form.end_time" class="bg-blue-50 rounded-lg px-3 py-2 text-sm text-blue-700 flex items-center gap-2">
-              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Thời lượng: {{ calcDuration(form.start_time, form.end_time) }}
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
-            <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
-            <button class="btn-primary" :disabled="saving" @click="saveShift">
-              <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              {{ editingId ? 'Lưu thay đổi' : 'Thêm ca' }}
-            </button>
-          </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
+          <input v-model="form.start_time" type="time" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
+          <input v-model="form.end_time" type="time" class="input-field" />
         </div>
       </div>
-    </Teleport>
+
+      <div v-if="form.start_time && form.end_time" class="bg-blue-50 rounded-lg px-3 py-2 text-sm text-blue-700 flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Thời lượng: {{ calcDuration(form.start_time, form.end_time) }}
+      </div>
+
+      <template #footer>
+        <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
+        <button class="btn-primary" :disabled="saving" @click="saveShift">
+          <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          {{ editingId ? 'Lưu thay đổi' : 'Thêm ca' }}
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Delete Confirm Modal -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-900">Xác nhận xóa</h3>
-              <p class="text-sm text-gray-500">Hành động này không thể hoàn tác.</p>
-            </div>
-          </div>
-          <p class="text-sm text-gray-700 mb-6">
-            Bạn có chắc muốn xóa ca làm việc <strong>{{ deletingName }}</strong>?
-            Dữ liệu liên quan có thể bị ảnh hưởng.
-          </p>
-          <div class="flex gap-3 justify-end">
-            <button class="btn-secondary" :disabled="deleting" @click="showDeleteConfirm = false">Hủy</button>
-            <button class="btn-danger" :disabled="deleting" @click="deleteShift">
-              <svg v-if="deleting" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-              Xóa ca làm việc
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <ConfirmModal
+      v-model="showDeleteConfirm"
+      confirm-text="Xóa ca làm việc"
+      :loading="deleting"
+      @confirm="deleteShift"
+    >
+      Bạn có chắc muốn xóa ca làm việc <strong>{{ deletingName }}</strong>?
+      Dữ liệu liên quan có thể bị ảnh hưởng.
+    </ConfirmModal>
   </div>
 </template>
