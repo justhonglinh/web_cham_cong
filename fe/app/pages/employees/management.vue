@@ -1,11 +1,21 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { userService } from '~/services/userService'
 import type { User, CreateUserInput as UserForm } from '~/types/user'
 import { ROLE_BADGE, ROLE_LABEL } from '~/constants'
 
 definePageMeta({ layout: 'default' })
 
-const toast = useToast()
+const columns: TableColumn<User>[] = [
+  { accessorKey: 'name', header: 'Tên' },
+  { accessorKey: 'email', header: 'Email' },
+  { accessorKey: 'phone', header: 'Số điện thoại' },
+  { accessorKey: 'role', header: 'Vai trò' },
+  { accessorKey: 'status', header: 'Trạng thái' },
+  { id: 'actions', header: '', meta: { class: { th: 'text-right', td: 'text-right' } } },
+]
+
+const toast = useAppToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -15,6 +25,7 @@ const saveError = ref<string | null>(null)
 
 const users = ref<User[]>([])
 const search = ref('')
+let searchDebounce: ReturnType<typeof setTimeout> | undefined
 
 const showModal = ref(false)
 const editingId = ref<number | null>(null)
@@ -30,30 +41,23 @@ const showDeleteConfirm = ref(false)
 const deletingId = ref<number | null>(null)
 const deletingName = ref('')
 
-const { currentPage, lastPage, total, perPage, setTotal, paginateArray, goToPage, visiblePages, summaryFrom, summaryTo } = usePagination(20)
+const { currentPage, lastPage, total, perPage, setFromResponse, goToPage: goToPageFn, visiblePages, summaryFrom, summaryTo } = usePagination(20)
 
-const filteredUsers = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  if (!q) return users.value
-  return users.value.filter(u =>
-    u.name.toLowerCase().includes(q) ||
-    u.email.toLowerCase().includes(q) ||
-    (u.phone ?? '').toLowerCase().includes(q)
-  )
+function goToPage(page: number) {
+  goToPageFn(page, fetchUsers)
+}
+
+watch(search, () => {
+  clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => fetchUsers(1), 300)
 })
 
-const pagedUsers = computed(() => paginateArray(filteredUsers.value))
-
-watch(search, () => { currentPage.value = 1 })
-watch(filteredUsers, (val) => setTotal(val.length))
-
-async function fetchUsers() {
+async function fetchUsers(page = 1) {
   loading.value = true
   error.value = null
   try {
-    const res = await userService.getAll()
-    users.value = Array.isArray(res) ? res : (res as any).data ?? []
-    setTotal(users.value.length)
+    const res = await userService.getAll({ page, per_page: perPage.value, search: search.value.trim() || undefined })
+    users.value = setFromResponse(res)
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải danh sách nhân viên.'
   } finally {
@@ -114,9 +118,9 @@ async function saveUser() {
       if (idx !== -1) users.value[idx] = updated
       toast.success('Cập nhật nhân viên thành công.')
     } else {
-      const created = await userService.create(payload as any)
-      users.value.unshift(created)
+      await userService.create(payload as any)
       toast.success('Thêm nhân viên thành công.')
+      await fetchUsers(1)
     }
     closeModal()
   } catch (e: any) {
@@ -138,9 +142,9 @@ async function deleteUser() {
   deleting.value = true
   try {
     await userService.delete(deletingId.value)
-    users.value = users.value.filter(u => u.id !== deletingId.value)
     showDeleteConfirm.value = false
     toast.success('Xóa nhân viên thành công.')
+    await fetchUsers(currentPage.value)
   } catch (e: any) {
     toast.error(e?.data?.message || 'Xóa thất bại. Vui lòng thử lại.')
     showDeleteConfirm.value = false
@@ -150,11 +154,18 @@ async function deleteUser() {
 }
 
 function roleBadge(role: string) {
-  return ROLE_BADGE[role] ?? 'badge-success'
+  return ROLE_BADGE[role] ?? 'success'
 }
 
 function roleLabel(role: string) {
   return ROLE_LABEL[role] ?? role
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
 
 onMounted(fetchUsers)
@@ -165,114 +176,87 @@ onMounted(fetchUsers)
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Quản lý nhân viên</h1>
-        <p class="text-sm text-gray-500 mt-0.5">Danh sách toàn bộ nhân viên trong hệ thống</p>
+        <h1 class="text-2xl font-bold text-ink">Quản lý nhân viên</h1>
+        <p class="text-sm text-muted mt-0.5">Danh sách toàn bộ nhân viên trong hệ thống</p>
       </div>
-      <button class="btn-primary gap-2" @click="openAdd">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+      <UButton icon="i-heroicons-plus" @click="openAdd">
         Thêm nhân viên
-      </button>
+      </UButton>
     </div>
 
     <!-- Error Banner -->
-    <div v-if="error" class="card p-4 border-l-4 border-red-500 flex items-center justify-between">
-      <p class="text-sm text-red-700">{{ error }}</p>
-      <button class="text-red-500 hover:text-red-700 ml-4" @click="error = null">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="soft"
+      :description="error"
+      close
+      @update:open="error = null"
+    />
 
     <!-- Toolbar -->
-    <div class="card p-4">
-      <div class="relative max-w-sm">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
+    <UCard>
+      <div class="max-w-sm">
+        <UInput
           v-model="search"
           type="text"
           placeholder="Tìm theo tên, email, số điện thoại..."
-          class="input-field pl-9"
+          icon="i-heroicons-magnifying-glass"
+          class="w-full"
         />
       </div>
-    </div>
+    </UCard>
 
     <!-- Table -->
-    <div class="card overflow-hidden">
-      <div v-if="loading" class="flex items-center justify-center py-16">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        <span class="ml-3 text-gray-500">Đang tải...</span>
-      </div>
-
-      <div v-else-if="filteredUsers.length === 0" class="text-center py-16">
-        <svg class="mx-auto w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <p class="text-gray-500">Không tìm thấy nhân viên nào</p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tên</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Số điện thoại</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Vai trò</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Trạng thái</th>
-              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Hành động</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-50">
-            <tr v-for="user in pagedUsers" :key="user.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm shrink-0">
-                    {{ user.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="text-sm font-medium text-gray-900">{{ user.name }}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">{{ user.email }}</td>
-              <td class="px-6 py-4 text-sm text-gray-600">{{ user.phone || '—' }}</td>
-              <td class="px-6 py-4">
-                <span :class="roleBadge(user.role)">{{ roleLabel(user.role) }}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span :class="user.status === 'inactive' ? 'badge-danger' : 'badge-success'">
-                  {{ user.status === 'inactive' ? 'Ngừng hoạt động' : 'Hoạt động' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-right">
-                <div class="flex items-center justify-end gap-2">
-                  <button
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                    @click="openEdit(user)"
-                  >
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Sửa
-                  </button>
-                  <button
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                    @click="confirmDelete(user)"
-                  >
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Xóa
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <UCard :ui="{ body: 'p-0 sm:p-0' }">
+      <UTable
+        :data="users"
+        :columns="columns"
+        :loading="loading"
+        empty="Không tìm thấy nhân viên nào"
+      >
+        <template #name-cell="{ row }">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-neutral-soft flex items-center justify-center text-body font-semibold text-xs shrink-0">
+              {{ initials(row.original.name) }}
+            </div>
+            <span class="text-sm font-medium text-ink">{{ row.original.name }}</span>
+          </div>
+        </template>
+        <template #phone-cell="{ row }">
+          <span class="text-body">{{ row.original.phone || '—' }}</span>
+        </template>
+        <template #role-cell="{ row }">
+          <StatusChip :color="roleBadge(row.original.role)">{{ roleLabel(row.original.role) }}</StatusChip>
+        </template>
+        <template #status-cell="{ row }">
+          <StatusChip :color="row.original.status === 'inactive' ? 'error' : 'success'">
+            {{ row.original.status === 'inactive' ? 'Ngừng hoạt động' : 'Hoạt động' }}
+          </StatusChip>
+        </template>
+        <template #actions-cell="{ row }">
+          <div class="flex items-center justify-end gap-2">
+            <UButton
+              color="neutral"
+              variant="soft"
+              size="xs"
+              icon="i-heroicons-pencil-square"
+              @click="openEdit(row.original)"
+            >
+              Sửa
+            </UButton>
+            <UButton
+              color="error"
+              variant="soft"
+              size="xs"
+              icon="i-heroicons-trash"
+              @click="confirmDelete(row.original)"
+            >
+              Xóa
+            </UButton>
+          </div>
+        </template>
+      </UTable>
 
       <!-- Pagination -->
       <PaginationBar
@@ -282,7 +266,7 @@ onMounted(fetchUsers)
         :visible-pages="visiblePages"
         @go-to-page="goToPage"
       />
-    </div>
+    </UCard>
 
     <!-- Add/Edit Modal -->
     <BaseModal
@@ -290,50 +274,47 @@ onMounted(fetchUsers)
       :title="editingId ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'"
       @update:model-value="closeModal"
     >
-      <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+      <div v-if="saveError" class="bg-danger-soft rounded-lg px-3 py-2 text-sm text-danger">
         {{ saveError }}
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
-        <input v-model="form.name" type="text" class="input-field" placeholder="Nguyễn Văn A" />
+        <label class="block text-sm font-medium text-body mb-1">Họ và tên <span class="text-danger">*</span></label>
+        <UInput v-model="form.name" type="text" class="w-full" placeholder="Nguyễn Văn A" />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
-        <input v-model="form.email" type="email" class="input-field" placeholder="nhanvien@example.com" />
+        <label class="block text-sm font-medium text-body mb-1">Email <span class="text-danger">*</span></label>
+        <UInput v-model="form.email" type="email" class="w-full" placeholder="nhanvien@example.com" />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-        <input v-model="form.phone" type="tel" class="input-field" placeholder="0901234567" />
+        <label class="block text-sm font-medium text-body mb-1">Số điện thoại</label>
+        <UInput v-model="form.phone" type="tel" class="w-full" placeholder="0901234567" />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Vai trò <span class="text-red-500">*</span></label>
-        <select v-model="form.role" class="input-field">
-          <option value="employee">Nhân viên</option>
-          <option value="manager">Quản lý</option>
-        </select>
+        <label class="block text-sm font-medium text-body mb-1">Vai trò <span class="text-danger">*</span></label>
+        <USelect
+          v-model="form.role"
+          :items="[{ label: 'Nhân viên', value: 'employee' }, { label: 'Quản lý', value: 'manager' }]"
+          class="w-full"
+        />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-          Mật khẩu <span v-if="!editingId" class="text-red-500">*</span>
-          <span v-else class="text-gray-400 font-normal">(để trống nếu không đổi)</span>
+        <label class="block text-sm font-medium text-body mb-1">
+          Mật khẩu <span v-if="!editingId" class="text-danger">*</span>
+          <span v-else class="text-faint font-normal">(để trống nếu không đổi)</span>
         </label>
-        <input v-model="form.password" type="password" class="input-field" placeholder="••••••••" />
+        <UInput v-model="form.password" type="password" class="w-full" placeholder="••••••••" />
       </div>
 
       <template #footer>
-        <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
-        <button class="btn-primary" :disabled="saving" @click="saveUser">
-          <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
+        <UButton color="neutral" variant="soft" :disabled="saving" @click="closeModal">Hủy</UButton>
+        <UButton :loading="saving" @click="saveUser">
           {{ editingId ? 'Lưu thay đổi' : 'Thêm nhân viên' }}
-        </button>
+        </UButton>
       </template>
     </BaseModal>
 

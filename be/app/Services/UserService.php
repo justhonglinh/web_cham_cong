@@ -9,12 +9,16 @@ use Illuminate\Support\Facades\Hash;
 
 class UserService implements UserServiceInterface
 {
-    public function getEmployees(int $managerId): LengthAwarePaginator
+    public function getEmployees(int $managerId, ?string $search = null): LengthAwarePaginator
     {
         return User::where('role', 'employee')
             ->where('manager', $managerId)
             ->with('details')
-            ->paginate(15);
+            ->when($search, fn($q) => $q->where(fn($q2) => $q2
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+            ))
+            ->paginate(20);
     }
 
     public function create(array $data, int $managerId): User

@@ -11,6 +11,7 @@ use App\Http\Resources\OvertimeRequestResource;
 use App\Http\Resources\OvertimeShiftResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class OvertimeController extends Controller
 {
@@ -25,13 +26,11 @@ class OvertimeController extends Controller
         ]);
     }
 
-    public function managementRequests(Request $request): JsonResponse
+    public function managementRequests(Request $request): AnonymousResourceCollection
     {
-        $requests = $this->overtimeService->getRequests($request->user()->id);
-
-        return response()->json([
-            'data' => OvertimeRequestResource::collection($requests),
-        ]);
+        return OvertimeRequestResource::collection(
+            $this->overtimeService->getRequests($request->user()->id)
+        );
     }
 
     public function store(StoreOvertimeShiftRequest $request): JsonResponse

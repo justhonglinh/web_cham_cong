@@ -21,7 +21,7 @@ function extractErrorMessage(err: unknown): string {
 
 export function useApi() {
   const authStore = useAuthStore()
-  const toast = useToast()
+  const toast = useAppToast()
   const config = useRuntimeConfig()
 
   function getHeaders(): Record<string, string> {

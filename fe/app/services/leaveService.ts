@@ -1,12 +1,13 @@
 import { getAuthInstance } from '~/utils/api'
+import type { PaginatedResponse } from '~/composables/usePagination'
 import type { LeaveRequest, CreateLeaveInput } from '~/types/leave'
 
 export type { LeaveRequest, CreateLeaveInput }
 
 export const leaveService = {
   // Manager
-  getAll: async () => {
-    return await getAuthInstance().get<{ data: LeaveRequest[] } | LeaveRequest[]>('/leave-requests/management')
+  getAll: async (params?: { page?: number; per_page?: number }) => {
+    return await getAuthInstance().get<PaginatedResponse<LeaveRequest> | LeaveRequest[]>('/leave-requests/management', params)
   },
 
   updateStatus: async (id: number, status: 'approved' | 'rejected') => {

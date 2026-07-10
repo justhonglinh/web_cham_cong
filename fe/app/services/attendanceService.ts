@@ -5,8 +5,8 @@ export type { AttendanceRecord, PaginatedAttendance, UpdateAttendanceInput }
 
 export const attendanceService = {
   // Manager
-  getManagement: async (params?: { month?: number; year?: number }) => {
-    return await getAuthInstance().get<{ data: AttendanceRecord[] } | AttendanceRecord[]>('/attendance/management', params)
+  getManagement: async (params?: { month?: number; year?: number; page?: number; per_page?: number }) => {
+    return await getAuthInstance().get<PaginatedAttendance | AttendanceRecord[]>('/attendance/management', params)
   },
 
   updateManagement: async (id: number, data: UpdateAttendanceInput) => {

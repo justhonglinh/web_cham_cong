@@ -5,38 +5,23 @@ export default defineNuxtConfig({
   srcDir: 'app/',
 
   modules: [
-    '@nuxtjs/tailwindcss',
+    '@nuxt/ui',
     '@pinia/nuxt',
     '@vueuse/nuxt',
-    '@nuxt/icon',
   ],
 
+  css: ['~/assets/css/main.css'],
+
   icon: {
+    mode: 'svg',
     serverBundle: {
       collections: ['heroicons', 'lucide'],
     },
   },
 
-  tailwindcss: {
-    cssPath: '~/assets/css/main.css',
-  },
-
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000',
-    },
-  },
-
-  nitro: {
-    devProxy: {
-      '/api': {
-        target: 'http://localhost:8000/api',
-        changeOrigin: true,
-      },
-      '/sanctum': {
-        target: 'http://localhost:8000/sanctum',
-        changeOrigin: true,
-      },
     },
   },
 

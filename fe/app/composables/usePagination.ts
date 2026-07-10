@@ -1,9 +1,13 @@
-export interface PaginatedResponse<T> {
-  data: T[]
+export interface PaginationMeta {
   current_page: number
   last_page: number
   per_page: number
   total: number
+}
+
+export interface PaginatedResponse<T> extends Partial<PaginationMeta> {
+  data: T[]
+  meta?: PaginationMeta
 }
 
 export function usePagination(defaultPerPage = 10) {
@@ -12,7 +16,9 @@ export function usePagination(defaultPerPage = 10) {
   const total = ref(0)
   const perPage = ref(defaultPerPage)
 
-  // Server-side: parse API response
+  // Server-side: parse API response.
+  // Laravel's paginate() returns pagination fields flat; wrapping it in a
+  // JsonResource::collection() nests them under `meta` instead. Support both.
   function setFromResponse<T>(res: PaginatedResponse<T> | T[]): T[] {
     if (Array.isArray(res)) {
       currentPage.value = 1
@@ -20,10 +26,11 @@ export function usePagination(defaultPerPage = 10) {
       total.value = res.length
       return res
     }
-    currentPage.value = res.current_page ?? 1
-    lastPage.value = res.last_page ?? 1
-    total.value = res.total ?? 0
-    perPage.value = res.per_page ?? perPage.value
+    const meta = res.meta ?? res
+    currentPage.value = meta.current_page ?? 1
+    lastPage.value = meta.last_page ?? 1
+    total.value = meta.total ?? 0
+    perPage.value = meta.per_page ?? perPage.value
     return res.data ?? []
   }
 

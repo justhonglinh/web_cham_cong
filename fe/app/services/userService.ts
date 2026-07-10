@@ -1,11 +1,12 @@
 import { getAuthInstance } from '~/utils/api'
+import type { PaginatedResponse } from '~/composables/usePagination'
 import type { User, CreateUserInput, UpdateUserInput } from '~/types/user'
 
 export type { User, CreateUserInput, UpdateUserInput }
 
 export const userService = {
-  getAll: async () => {
-    return await getAuthInstance().get<{ data: User[] } | User[]>('/users')
+  getAll: async (params?: { page?: number; per_page?: number; search?: string }) => {
+    return await getAuthInstance().get<PaginatedResponse<User> | User[]>('/users', params)
   },
 
   create: async (data: CreateUserInput) => {

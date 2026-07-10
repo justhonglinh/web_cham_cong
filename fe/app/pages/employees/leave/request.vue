@@ -3,7 +3,7 @@ import { leaveService } from '~/services/leaveService'
 
 definePageMeta({ layout: 'default' })
 
-const toast = useToast()
+const toast = useAppToast()
 const router = useRouter()
 
 const form = reactive({
@@ -65,123 +65,122 @@ function resetForm() {
   <div class="max-w-2xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-4">
-      <NuxtLink
+      <UButton
         to="/employees/leave/history"
-        class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        color="neutral"
+        variant="link"
+        icon="i-heroicons-arrow-left"
+        class="px-0"
       >
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
         Lịch sử nghỉ phép
-      </NuxtLink>
+      </UButton>
     </div>
 
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Đăng ký nghỉ phép</h1>
-      <p class="text-sm text-gray-500 mt-1">Điền thông tin yêu cầu nghỉ phép bên dưới</p>
+      <h1 class="text-2xl font-bold text-ink">Đăng ký nghỉ phép</h1>
+      <p class="text-sm text-muted mt-1">Điền thông tin yêu cầu nghỉ phép bên dưới</p>
     </div>
 
     <!-- Success Alert -->
-    <div v-if="success" class="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-4">
-      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <div>
-        <p class="font-medium">Đăng ký thành công!</p>
-        <p class="text-sm mt-0.5">Yêu cầu của bạn đang chờ phê duyệt. Đang chuyển hướng...</p>
-      </div>
-    </div>
+    <UAlert
+      v-if="success"
+      color="success"
+      variant="soft"
+      icon="i-heroicons-check-circle"
+      title="Đăng ký thành công!"
+      description="Yêu cầu của bạn đang chờ phê duyệt. Đang chuyển hướng..."
+    />
 
     <!-- Form Card -->
-    <div v-else class="card p-6 space-y-5">
-      <!-- Error -->
-      <div v-if="error" class="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-        </svg>
-        <span>{{ error }}</span>
+    <UCard v-else>
+      <div class="space-y-5">
+        <!-- Error -->
+        <UAlert
+          v-if="error"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          :description="error"
+        />
+
+        <form @submit.prevent="handleSubmit" class="space-y-5">
+          <!-- Leave Type -->
+          <div>
+            <label class="block text-sm font-medium text-body mb-1">
+              Loại nghỉ phép <span class="text-danger">*</span>
+            </label>
+            <USelect
+              v-model="form.leave_type"
+              :items="leaveTypes"
+              placeholder="-- Chọn loại nghỉ phép --"
+              class="w-full"
+              :disabled="loading"
+            />
+          </div>
+
+          <!-- Date Range -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-body mb-1">
+                Từ ngày <span class="text-danger">*</span>
+              </label>
+              <UInput
+                v-model="form.start_date"
+                type="date"
+                class="w-full"
+                :disabled="loading"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-body mb-1">
+                Đến ngày <span class="text-danger">*</span>
+              </label>
+              <UInput
+                v-model="form.end_date"
+                type="date"
+                class="w-full"
+                :min="form.start_date"
+                :disabled="loading"
+              />
+            </div>
+          </div>
+
+          <!-- Duration info -->
+          <div v-if="form.start_date && form.end_date && form.end_date >= form.start_date" class="flex items-center gap-2 text-sm text-accent bg-accent-soft border border-border rounded-lg px-3 py-2">
+            <UIcon name="i-heroicons-calendar" class="w-4 h-4 shrink-0" />
+            <span>
+              Thời gian nghỉ:
+              <strong>
+                {{
+                  Math.round((new Date(form.end_date).getTime() - new Date(form.start_date).getTime()) / (1000 * 60 * 60 * 24) + 1)
+                }}
+              </strong> ngày
+            </span>
+          </div>
+
+          <!-- Reason -->
+          <div>
+            <label class="block text-sm font-medium text-body mb-1">Lý do</label>
+            <UTextarea
+              v-model="form.reason"
+              class="w-full"
+              :rows="4"
+              placeholder="Nhập lý do nghỉ phép (không bắt buộc)..."
+              :disabled="loading"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <UButton type="button" color="neutral" variant="soft" :disabled="loading" @click="resetForm">
+              Xoá trắng
+            </UButton>
+            <UButton type="submit" :disabled="loading" :loading="loading">
+              {{ loading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
+            </UButton>
+          </div>
+        </form>
       </div>
-
-      <form @submit.prevent="handleSubmit" class="space-y-5">
-        <!-- Leave Type -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Loại nghỉ phép <span class="text-red-500">*</span>
-          </label>
-          <select v-model="form.leave_type" class="input-field" :disabled="loading">
-            <option value="">-- Chọn loại nghỉ phép --</option>
-            <option v-for="lt in leaveTypes" :key="lt.value" :value="lt.value">{{ lt.label }}</option>
-          </select>
-        </div>
-
-        <!-- Date Range -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Từ ngày <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.start_date"
-              type="date"
-              class="input-field"
-              :disabled="loading"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Đến ngày <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.end_date"
-              type="date"
-              class="input-field"
-              :min="form.start_date"
-              :disabled="loading"
-            />
-          </div>
-        </div>
-
-        <!-- Duration info -->
-        <div v-if="form.start_date && form.end_date && form.end_date >= form.start_date" class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>
-            Thời gian nghỉ:
-            <strong>
-              {{
-                Math.round((new Date(form.end_date).getTime() - new Date(form.start_date).getTime()) / (1000 * 60 * 60 * 24) + 1)
-              }}
-            </strong> ngày
-          </span>
-        </div>
-
-        <!-- Reason -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Lý do</label>
-          <textarea
-            v-model="form.reason"
-            class="input-field resize-none"
-            rows="4"
-            placeholder="Nhập lý do nghỉ phép (không bắt buộc)..."
-            :disabled="loading"
-          />
-        </div>
-
-        <!-- Actions -->
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <button type="button" class="btn-secondary" :disabled="loading" @click="resetForm">
-            Xoá trắng
-          </button>
-          <button type="submit" class="btn-primary" :disabled="loading">
-            <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            {{ loading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
-          </button>
-        </div>
-      </form>
-    </div>
+    </UCard>
   </div>
 </template>

@@ -11,18 +11,21 @@
   },
   "dependencies": {
     "@nuxt/icon": "^2.2.4",
+    "@nuxt/ui": "^4.9.0",
     "@pinia/nuxt": "^0.11.0",
     "@vueuse/core": "^13.0.0",
     "@vueuse/nuxt": "^13.0.0",
     "nuxt": "^4.4.8",
     "pinia": "^3.0.0",
+    "tailwindcss": "^4.3.2",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.13.2",
-    "@tailwindcss/forms": "^0.5.10",
+    "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/lucide": "^1.2.116",
+    "@tailwindcss/forms": "^0.5.11",
     "typescript": "^5.8.3"
   }
 }

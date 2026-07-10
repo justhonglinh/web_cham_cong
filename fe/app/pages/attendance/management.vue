@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
 import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord } from '~/types/attendance'
@@ -6,7 +7,17 @@ import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const toast = useToast()
+const columns: TableColumn<AttendanceRecord>[] = [
+  { accessorKey: 'employee_name', header: 'Nhân viên' },
+  { accessorKey: 'date', header: 'Ngày' },
+  { accessorKey: 'check_in', header: 'Giờ vào' },
+  { accessorKey: 'check_out', header: 'Giờ ra' },
+  { accessorKey: 'shift_name', header: 'Ca làm' },
+  { accessorKey: 'status', header: 'Trạng thái' },
+  { id: 'actions', header: '', meta: { class: { th: 'text-right', td: 'text-right' } } },
+]
+
+const toast = useAppToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -23,18 +34,18 @@ const showModal = ref(false)
 const editingRecord = ref<AttendanceRecord | null>(null)
 const editForm = ref({ check_in: '', check_out: '' })
 
-const { currentPage, lastPage, total, perPage, setTotal, paginateArray, goToPage, visiblePages, summaryFrom, summaryTo } = usePagination(20)
+const { currentPage, lastPage, total, perPage, setFromResponse, goToPage: goToPageFn, visiblePages, summaryFrom, summaryTo } = usePagination(20)
 
-const pagedRecords = computed(() => paginateArray(records.value))
-watch([filterMonth, filterYear], () => { currentPage.value = 1 })
+function goToPage(page: number) {
+  goToPageFn(page, fetchAttendance)
+}
 
-async function fetchAttendance() {
+async function fetchAttendance(page = 1) {
   loading.value = true
   error.value = null
   try {
-    const res = await attendanceService.getManagement({ month: Number(filterMonth.value), year: Number(filterYear.value) })
-    records.value = Array.isArray(res) ? res : (res as any).data ?? []
-    setTotal(records.value.length)
+    const res = await attendanceService.getManagement({ month: Number(filterMonth.value), year: Number(filterYear.value), page, per_page: perPage.value })
+    records.value = setFromResponse(res)
   } catch (e: any) {
     error.value = e?.data?.message || 'Không thể tải dữ liệu chấm công.'
   } finally {
@@ -79,7 +90,7 @@ async function saveAttendance() {
 }
 
 function statusBadge(status: string) {
-  return ATTENDANCE_STATUS_BADGE[status] ?? 'badge-danger'
+  return ATTENDANCE_STATUS_BADGE[status] ?? 'error'
 }
 
 function statusLabel(status: string) {
@@ -114,111 +125,84 @@ onMounted(fetchAttendance)
   <div class="max-w-7xl mx-auto space-y-6">
     <!-- Header -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Quản lý chấm công</h1>
-      <p class="text-sm text-gray-500 mt-0.5">Xem và chỉnh sửa dữ liệu chấm công của nhân viên</p>
+      <h1 class="text-2xl font-bold text-ink">Quản lý chấm công</h1>
+      <p class="text-sm text-muted mt-0.5">Xem và chỉnh sửa dữ liệu chấm công của nhân viên</p>
     </div>
 
     <!-- Error Banner -->
-    <div v-if="error" class="card p-4 border-l-4 border-red-500 flex items-center justify-between">
-      <p class="text-sm text-red-700">{{ error }}</p>
-      <button class="text-red-500 hover:text-red-700 ml-4" @click="error = null">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="soft"
+      :description="error"
+      close
+      @update:open="error = null"
+    />
 
     <!-- Filters -->
-    <div class="card p-4">
+    <UCard>
       <div class="flex flex-wrap items-end gap-3">
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Tháng</label>
-          <select v-model="filterMonth" class="input-field w-32">
-            <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
-          </select>
+          <label class="block text-xs font-medium text-muted mb-1">Tháng</label>
+          <USelect v-model="filterMonth" :items="months" value-key="value" class="w-32" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">Năm</label>
-          <select v-model="filterYear" class="input-field w-28">
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
+          <label class="block text-xs font-medium text-muted mb-1">Năm</label>
+          <USelect v-model="filterYear" :items="years" class="w-28" />
         </div>
-        <button class="btn-primary" @click="fetchAttendance">
-          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
+        <UButton icon="i-heroicons-funnel" @click="fetchAttendance(1)">
           Lọc
-        </button>
+        </UButton>
       </div>
-    </div>
+    </UCard>
 
     <!-- Table -->
-    <div class="card overflow-hidden">
-      <div v-if="loading" class="flex items-center justify-center py-16">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        <span class="ml-3 text-gray-500">Đang tải...</span>
-      </div>
-
-      <div v-else-if="records.length === 0" class="text-center py-16">
-        <svg class="mx-auto w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <p class="text-gray-500">Không có dữ liệu chấm công cho tháng này</p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Nhân viên</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Ngày</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Giờ vào</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Giờ ra</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Ca làm</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Trạng thái</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Hành động</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-50">
-            <tr v-for="record in pagedRecords" :key="record.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-5 py-3">
-                <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-semibold text-xs shrink-0">
-                    {{ record.employee_name.charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="text-sm font-medium text-gray-900">{{ record.employee_name }}</span>
-                </div>
-              </td>
-              <td class="px-5 py-3 text-sm text-gray-600">{{ formatDate(record.date) }}</td>
-              <td class="px-5 py-3">
-                <span class="text-sm font-medium" :class="record.check_in ? 'text-green-700' : 'text-gray-400'">
-                  {{ formatTime(record.check_in) }}
-                </span>
-              </td>
-              <td class="px-5 py-3">
-                <span class="text-sm font-medium" :class="record.check_out ? 'text-blue-700' : 'text-gray-400'">
-                  {{ formatTime(record.check_out) }}
-                </span>
-              </td>
-              <td class="px-5 py-3 text-sm text-gray-600">{{ record.shift_name || '—' }}</td>
-              <td class="px-5 py-3">
-                <span :class="statusBadge(record.status)">{{ statusLabel(record.status) }}</span>
-              </td>
-              <td class="px-5 py-3 text-right">
-                <button
-                  class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                  @click="openEdit(record)"
-                >
-                  <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Sửa
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <UCard :ui="{ body: 'p-0 sm:p-0' }" class="overflow-hidden">
+      <UTable
+        :data="records"
+        :columns="columns"
+        :loading="loading"
+        empty="Không có dữ liệu chấm công cho tháng này"
+      >
+        <template #employee_name-cell="{ row }">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-neutral-soft flex items-center justify-center text-body font-semibold text-xs shrink-0">
+              {{ (row.original.employee_name ?? '?').charAt(0).toUpperCase() }}
+            </div>
+            <span class="text-sm font-medium text-ink">{{ row.original.employee_name }}</span>
+          </div>
+        </template>
+        <template #date-cell="{ row }">
+          <span class="text-body">{{ formatDate(row.original.date) }}</span>
+        </template>
+        <template #check_in-cell="{ row }">
+          <span class="text-sm font-medium" :class="row.original.check_in ? 'text-success' : 'text-faint'">
+            {{ formatTime(row.original.check_in) }}
+          </span>
+        </template>
+        <template #check_out-cell="{ row }">
+          <span class="text-sm font-medium" :class="row.original.check_out ? 'text-accent' : 'text-faint'">
+            {{ formatTime(row.original.check_out) }}
+          </span>
+        </template>
+        <template #shift_name-cell="{ row }">
+          <span class="text-body">{{ row.original.shift_name || '—' }}</span>
+        </template>
+        <template #status-cell="{ row }">
+          <StatusChip :color="statusBadge(row.original.status)">{{ statusLabel(row.original.status) }}</StatusChip>
+        </template>
+        <template #actions-cell="{ row }">
+          <UButton
+            color="primary"
+            variant="soft"
+            size="xs"
+            icon="i-heroicons-pencil-square"
+            @click="openEdit(row.original)"
+          >
+            Sửa
+          </UButton>
+        </template>
+      </UTable>
 
       <!-- Pagination -->
       <PaginationBar
@@ -228,7 +212,7 @@ onMounted(fetchAttendance)
         :visible-pages="visiblePages"
         @go-to-page="goToPage"
       />
-    </div>
+    </UCard>
 
     <!-- Edit Modal -->
     <BaseModal
@@ -237,31 +221,25 @@ onMounted(fetchAttendance)
       :subtitle="editingRecord ? `${editingRecord.employee_name} • ${formatDate(editingRecord.date)}` : undefined"
       @update:model-value="closeModal"
     >
-      <div v-if="saveError" class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+      <div v-if="saveError" class="bg-danger-soft border border-border-strong rounded-lg px-3 py-2 text-sm text-danger">
         {{ saveError }}
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Giờ vào</label>
-        <input v-model="editForm.check_in" type="time" class="input-field" />
-        <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ vào</p>
+        <label class="block text-sm font-medium text-body mb-1">Giờ vào</label>
+        <UInput v-model="editForm.check_in" type="time" class="w-full" />
+        <p class="text-xs text-faint mt-1">Để trống nếu chưa có giờ vào</p>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Giờ ra</label>
-        <input v-model="editForm.check_out" type="time" class="input-field" />
-        <p class="text-xs text-gray-400 mt-1">Để trống nếu chưa có giờ ra</p>
+        <label class="block text-sm font-medium text-body mb-1">Giờ ra</label>
+        <UInput v-model="editForm.check_out" type="time" class="w-full" />
+        <p class="text-xs text-faint mt-1">Để trống nếu chưa có giờ ra</p>
       </div>
 
       <template #footer>
-        <button class="btn-secondary" :disabled="saving" @click="closeModal">Hủy</button>
-        <button class="btn-primary" :disabled="saving" @click="saveAttendance">
-          <svg v-if="saving" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          Lưu thay đổi
-        </button>
+        <UButton color="neutral" variant="soft" :disabled="saving" @click="closeModal">Hủy</UButton>
+        <UButton :loading="saving" @click="saveAttendance">Lưu thay đổi</UButton>
       </template>
     </BaseModal>
   </div>

@@ -50,7 +50,7 @@ class LeaveRequestService implements LeaveRequestServiceInterface
     {
         return LeaveRequest::where('user_id', $userId)
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate(20);
     }
 
     public function delete(int $id, int $userId): void

@@ -88,17 +88,14 @@ onMounted(fetchUser)
   <div class="max-w-3xl mx-auto space-y-6">
     <!-- Page Header -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Hồ sơ cá nhân</h1>
-      <p class="text-gray-500 text-sm mt-1">Xem và cập nhật thông tin tài khoản của bạn.</p>
+      <h1 class="text-2xl font-bold text-ink">Hồ sơ cá nhân</h1>
+      <p class="text-muted text-sm mt-1">Xem và cập nhật thông tin tài khoản của bạn.</p>
     </div>
 
     <!-- User Info Card -->
-    <div class="card p-6">
-      <div v-if="loadingUser" class="flex items-center gap-3 text-gray-400">
-        <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+    <UCard>
+      <div v-if="loadingUser" class="flex items-center gap-3 text-faint">
+        <UIcon name="i-heroicons-arrow-path" class="animate-spin h-5 w-5" />
         <span class="text-sm">Đang tải thông tin...</span>
       </div>
       <div v-else-if="userInfo" class="flex items-center gap-5">
@@ -106,88 +103,80 @@ onMounted(fetchUser)
           {{ userInfo.name.charAt(0).toUpperCase() }}
         </div>
         <div>
-          <h2 class="text-xl font-semibold text-gray-900">{{ userInfo.name }}</h2>
-          <p class="text-gray-500 text-sm">{{ userInfo.email }}</p>
-          <span class="badge-info mt-1">{{ roleLabel }}</span>
+          <h2 class="text-xl font-semibold text-ink">{{ userInfo.name }}</h2>
+          <p class="text-muted text-sm">{{ userInfo.email }}</p>
+          <StatusChip color="info" class="mt-1">{{ roleLabel }}</StatusChip>
         </div>
       </div>
-    </div>
+    </UCard>
 
     <!-- Update Profile Card -->
-    <div class="card p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-5">Cập nhật thông tin</h3>
+    <UCard>
+      <h3 class="text-lg font-semibold text-ink mb-5">Cập nhật thông tin</h3>
 
       <form @submit.prevent="updateProfile" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
-          <input v-model="profileName" type="text" class="input-field" placeholder="Nhập họ và tên" :disabled="profileLoading" />
+          <label class="block text-sm font-medium text-body mb-1">Họ và tên</label>
+          <UInput v-model="profileName" type="text" class="w-full" placeholder="Nhập họ và tên" :disabled="profileLoading" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input :value="userInfo?.email" type="email" class="input-field bg-gray-50 cursor-not-allowed" disabled />
-          <p class="text-xs text-gray-400 mt-1">Email không thể thay đổi.</p>
+          <label class="block text-sm font-medium text-body mb-1">Email</label>
+          <UInput :value="userInfo?.email" type="email" class="w-full bg-neutral-soft cursor-not-allowed" disabled />
+          <p class="text-xs text-faint mt-1">Email không thể thay đổi.</p>
         </div>
         <div class="flex justify-end">
-          <button type="submit" class="btn-primary" :disabled="profileLoading">
-            <svg v-if="profileLoading" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+          <UButton type="submit" :disabled="profileLoading" :loading="profileLoading">
             {{ profileLoading ? 'Đang lưu...' : 'Lưu thay đổi' }}
-          </button>
+          </UButton>
         </div>
       </form>
-    </div>
+    </UCard>
 
     <!-- Change Password Card -->
-    <div class="card p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-5">Đổi mật khẩu</h3>
+    <UCard>
+      <h3 class="text-lg font-semibold text-ink mb-5">Đổi mật khẩu</h3>
 
       <form @submit.prevent="changePassword" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
-          <input
+          <label class="block text-sm font-medium text-body mb-1">Mật khẩu hiện tại</label>
+          <UInput
             v-model="currentPassword"
             type="password"
-            class="input-field"
+            class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="current-password"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
-          <input
+          <label class="block text-sm font-medium text-body mb-1">Mật khẩu mới</label>
+          <UInput
             v-model="newPassword"
             type="password"
-            class="input-field"
+            class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="new-password"
           />
-          <p class="text-xs text-gray-400 mt-1">Ít nhất 8 ký tự.</p>
+          <p class="text-xs text-faint mt-1">Ít nhất 8 ký tự.</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
-          <input
+          <label class="block text-sm font-medium text-body mb-1">Xác nhận mật khẩu mới</label>
+          <UInput
             v-model="passwordConfirmation"
             type="password"
-            class="input-field"
+            class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="new-password"
           />
         </div>
         <div class="flex justify-end">
-          <button type="submit" class="btn-primary" :disabled="passwordLoading">
-            <svg v-if="passwordLoading" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+          <UButton type="submit" :disabled="passwordLoading" :loading="passwordLoading">
             {{ passwordLoading ? 'Đang đổi...' : 'Đổi mật khẩu' }}
-          </button>
+          </UButton>
         </div>
       </form>
-    </div>
+    </UCard>
   </div>
 </template>

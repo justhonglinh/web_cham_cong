@@ -1,4 +1,5 @@
 import { getAuthInstance } from '~/utils/api'
+import type { PaginatedResponse } from '~/composables/usePagination'
 import type { OvertimeShift, OvertimeRequest, OvertimeShiftInput } from '~/types/overtime'
 
 export type { OvertimeShift, OvertimeRequest, OvertimeShiftInput }
@@ -9,8 +10,8 @@ export const overtimeService = {
     return await getAuthInstance().get<{ data: OvertimeShift[] } | OvertimeShift[]>('/overtime/management')
   },
 
-  getRequests: async () => {
-    return await getAuthInstance().get<{ data: OvertimeRequest[] } | OvertimeRequest[]>('/overtime/management/requests')
+  getRequests: async (params?: { page?: number; per_page?: number }) => {
+    return await getAuthInstance().get<PaginatedResponse<OvertimeRequest> | OvertimeRequest[]>('/overtime/management/requests', params)
   },
 
   createShift: async (data: OvertimeShiftInput) => {

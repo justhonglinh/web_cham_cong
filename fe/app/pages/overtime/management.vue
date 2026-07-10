@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL } from '~/constants'
 import { overtimeService } from '~/services/overtimeService'
 import type { OvertimeShift, OvertimeRequest } from '~/types/overtime'
@@ -6,7 +7,24 @@ import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
-const toast = useToast()
+const shiftColumns: TableColumn<OvertimeShift>[] = [
+  { accessorKey: 'name', header: 'Tên ca' },
+  { accessorKey: 'start_time', header: 'Giờ bắt đầu' },
+  { accessorKey: 'end_time', header: 'Giờ kết thúc' },
+  { accessorKey: 'date', header: 'Ngày' },
+  { accessorKey: 'registration_count', header: 'Số đăng ký' },
+  { id: 'actions', header: 'Hành động' },
+]
+
+const requestColumns: TableColumn<OvertimeRequest>[] = [
+  { accessorKey: 'employee_name', header: 'Nhân viên' },
+  { accessorKey: 'shift_name', header: 'Ca tăng ca' },
+  { accessorKey: 'shift_date', header: 'Ngày' },
+  { accessorKey: 'status', header: 'Trạng thái' },
+  { id: 'actions', header: 'Hành động' },
+]
+
+const toast = useAppToast()
 
 // --- Shifts state ---
 const shifts = ref<OvertimeShift[]>([])
@@ -17,6 +35,17 @@ const shiftsError = ref('')
 const requests = ref<OvertimeRequest[]>([])
 const requestsLoading = ref(false)
 const requestsError = ref('')
+
+const {
+  currentPage: requestsPage, lastPage: requestsLastPage, total: requestsTotal,
+  perPage: requestsPerPage, setFromResponse: setRequestsFromResponse,
+  goToPage: goToRequestsPageFn, visiblePages: requestsVisiblePages,
+  summaryFrom: requestsSummaryFrom, summaryTo: requestsSummaryTo,
+} = usePagination(20)
+
+function goToRequestsPage(page: number) {
+  goToRequestsPageFn(page, fetchRequests)
+}
 
 // --- Modal state ---
 const showModal = ref(false)
@@ -50,12 +79,12 @@ async function fetchShifts() {
 }
 
 // --- Fetch requests ---
-async function fetchRequests() {
+async function fetchRequests(page = 1) {
   requestsLoading.value = true
   requestsError.value = ''
   try {
-    const res = await overtimeService.getRequests()
-    requests.value = Array.isArray(res) ? res : (res as any).data ?? []
+    const res = await overtimeService.getRequests({ page, per_page: requestsPerPage.value })
+    requests.value = setRequestsFromResponse(res)
   } catch {
     requestsError.value = 'Không thể tải danh sách yêu cầu tăng ca.'
   } finally {
@@ -133,7 +162,7 @@ async function updateRequestStatus(request: OvertimeRequest, status: 'approved' 
     const label = status === 'approved' ? 'Đã duyệt yêu cầu tăng ca.' : 'Đã từ chối yêu cầu tăng ca.'
     await overtimeService.updateRequestStatus(request.id, status)
     toast.success(label)
-    await fetchRequests()
+    await fetchRequests(requestsPage.value)
   } catch {
   } finally {
     delete actionLoading.value[request.id]
@@ -142,7 +171,7 @@ async function updateRequestStatus(request: OvertimeRequest, status: 'approved' 
 
 
 function statusBadgeClass(status: string) {
-  return REQUEST_STATUS_BADGE[status] ?? 'badge-warning'
+  return REQUEST_STATUS_BADGE[status] ?? 'warning'
 }
 
 function statusLabel(status: string) {
@@ -160,204 +189,174 @@ onMounted(() => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Quản lý tăng ca</h1>
-        <p class="text-sm text-gray-500 mt-1">Quản lý ca tăng ca và phê duyệt yêu cầu nhân viên</p>
+        <h1 class="text-2xl font-bold text-ink">Quản lý tăng ca</h1>
+        <p class="text-sm text-muted mt-1">Quản lý ca tăng ca và phê duyệt yêu cầu nhân viên</p>
       </div>
     </div>
 
     <!-- Section 1: Overtime Shifts -->
-    <div class="card p-6">
+    <UCard>
       <div class="flex items-center justify-between mb-5">
-        <h2 class="text-lg font-semibold text-gray-800">Danh sách ca tăng ca</h2>
-        <button class="btn-primary" @click="openAddModal">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
+        <h2 class="text-lg font-semibold text-ink">Danh sách ca tăng ca</h2>
+        <UButton icon="i-heroicons-plus" @click="openAddModal">
           Thêm ca tăng ca
-        </button>
+        </UButton>
       </div>
 
       <!-- Error -->
-      <div v-if="shiftsError" class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+      <div v-if="shiftsError" class="mb-4 bg-danger-soft text-danger rounded-lg px-4 py-3 text-sm">
         {{ shiftsError }}
       </div>
 
       <!-- Loading -->
       <div v-if="shiftsLoading" class="flex justify-center py-12">
-        <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8 text-accent" />
       </div>
 
       <!-- Table -->
-      <div v-else-if="shifts.length > 0" class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên ca</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giờ bắt đầu</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giờ kết thúc</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số đăng ký</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <tr v-for="shift in shifts" :key="shift.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ shift.name }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ formatTime(shift.start_time) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ formatTime(shift.end_time) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(shift.date) }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">
-                {{ shift.registration_count ?? 0 }} / {{ shift.max_registrations }}
-              </td>
-              <td class="px-4 py-3 text-sm space-x-2 whitespace-nowrap">
-                <button class="btn-secondary text-xs" @click="openEditModal(shift)">Sửa</button>
-                <button
-                  class="btn-danger text-xs"
-                  :disabled="actionLoading[shift.id]"
-                  @click="deleteShift(shift)"
-                >
-                  {{ actionLoading[shift.id] ? 'Đang xoá...' : 'Xoá' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else-if="shifts.length > 0">
+        <UTable :data="shifts" :columns="shiftColumns">
+          <template #start_time-cell="{ row }">
+            {{ formatTime(row.original.start_time) }}
+          </template>
+          <template #end_time-cell="{ row }">
+            {{ formatTime(row.original.end_time) }}
+          </template>
+          <template #date-cell="{ row }">
+            {{ formatDate(row.original.date) }}
+          </template>
+          <template #registration_count-cell="{ row }">
+            {{ row.original.registration_count ?? 0 }} / {{ row.original.max_registrations }}
+          </template>
+          <template #actions-cell="{ row }">
+            <div class="flex items-center gap-2">
+              <UButton color="neutral" variant="soft" size="xs" @click="openEditModal(row.original)">Sửa</UButton>
+              <UButton
+                color="error"
+                size="xs"
+                :loading="actionLoading[row.original.id]"
+                @click="deleteShift(row.original)"
+              >
+                Xoá
+              </UButton>
+            </div>
+          </template>
+        </UTable>
       </div>
 
       <!-- Empty -->
-      <div v-else class="text-center py-12 text-gray-400">
-        <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+      <div v-else class="text-center py-12 text-faint">
+        <UIcon name="i-heroicons-inbox" class="mx-auto h-12 w-12 mb-3" />
         <p class="text-sm">Chưa có ca tăng ca nào</p>
       </div>
-    </div>
+    </UCard>
 
     <!-- Section 2: Overtime Requests -->
-    <div class="card p-6">
+    <UCard>
       <div class="flex items-center justify-between mb-5">
-        <h2 class="text-lg font-semibold text-gray-800">Yêu cầu tăng ca từ nhân viên</h2>
-        <button class="btn-secondary text-sm" @click="fetchRequests">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+        <h2 class="text-lg font-semibold text-ink">Yêu cầu tăng ca từ nhân viên</h2>
+        <UButton color="neutral" variant="soft" size="sm" icon="i-heroicons-arrow-path" @click="fetchRequests(requestsPage)">
           Làm mới
-        </button>
+        </UButton>
       </div>
 
       <!-- Error -->
-      <div v-if="requestsError" class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+      <div v-if="requestsError" class="mb-4 bg-danger-soft text-danger rounded-lg px-4 py-3 text-sm">
         {{ requestsError }}
       </div>
 
       <!-- Loading -->
       <div v-if="requestsLoading" class="flex justify-center py-12">
-        <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8 text-accent" />
       </div>
 
       <!-- Table -->
-      <div v-else-if="requests.length > 0" class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhân viên</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ca tăng ca</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <tr v-for="req in requests" :key="req.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ req.employee_name }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ req.shift_name }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(req.shift_date) }}</td>
-              <td class="px-4 py-3 text-sm">
-                <span :class="statusBadgeClass(req.status)">{{ statusLabel(req.status) }}</span>
-              </td>
-              <td class="px-4 py-3 text-sm space-x-2 whitespace-nowrap">
-                <template v-if="req.status === 'pending'">
-                  <button
-                    class="btn-primary text-xs"
-                    :disabled="actionLoading[req.id]"
-                    @click="updateRequestStatus(req, 'approved')"
-                  >
-                    {{ actionLoading[req.id] ? '...' : 'Duyệt' }}
-                  </button>
-                  <button
-                    class="btn-danger text-xs"
-                    :disabled="actionLoading[req.id]"
-                    @click="updateRequestStatus(req, 'rejected')"
-                  >
-                    {{ actionLoading[req.id] ? '...' : 'Từ chối' }}
-                  </button>
-                </template>
-                <span v-else class="text-gray-400 text-xs">—</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else-if="requests.length > 0">
+        <UTable :data="requests" :columns="requestColumns">
+          <template #shift_date-cell="{ row }">
+            {{ formatDate(row.original.shift_date) }}
+          </template>
+          <template #status-cell="{ row }">
+            <StatusChip :color="statusBadgeClass(row.original.status)">{{ statusLabel(row.original.status) }}</StatusChip>
+          </template>
+          <template #actions-cell="{ row }">
+            <div v-if="row.original.status === 'pending'" class="flex items-center gap-2">
+              <UButton
+                size="xs"
+                icon="i-heroicons-check"
+                :loading="actionLoading[row.original.id]"
+                @click="updateRequestStatus(row.original, 'approved')"
+              >
+                Duyệt
+              </UButton>
+              <UButton
+                color="error"
+                size="xs"
+                icon="i-heroicons-x-mark"
+                :loading="actionLoading[row.original.id]"
+                @click="updateRequestStatus(row.original, 'rejected')"
+              >
+                Từ chối
+              </UButton>
+            </div>
+            <span v-else class="text-faint text-xs">—</span>
+          </template>
+        </UTable>
+
+        <!-- Pagination -->
+        <PaginationBar
+          :current-page="requestsPage" :last-page="requestsLastPage"
+          :total="requestsTotal" :summary-from="requestsSummaryFrom" :summary-to="requestsSummaryTo"
+          :visible-pages="requestsVisiblePages"
+          @go-to-page="goToRequestsPage"
+        />
       </div>
 
       <!-- Empty -->
-      <div v-else class="text-center py-12 text-gray-400">
-        <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
+      <div v-else class="text-center py-12 text-faint">
+        <UIcon name="i-heroicons-inbox" class="mx-auto h-12 w-12 mb-3" />
         <p class="text-sm">Chưa có yêu cầu tăng ca nào</p>
       </div>
-    </div>
+    </UCard>
 
     <!-- Add/Edit Modal -->
     <BaseModal
       v-model="showModal"
       :title="editingShift ? 'Chỉnh sửa ca tăng ca' : 'Thêm ca tăng ca mới'"
     >
-      <div v-if="modalError" class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+      <div v-if="modalError" class="bg-danger-soft text-danger rounded-lg px-4 py-3 text-sm">
         {{ modalError }}
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tên ca <span class="text-red-500">*</span></label>
-        <input v-model="form.name" type="text" class="input-field" placeholder="VD: Ca tăng ca chiều" />
+        <label class="block text-sm font-medium text-body mb-1">Tên ca <span class="text-danger">*</span></label>
+        <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Ca tăng ca chiều" />
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
-          <input v-model="form.start_time" type="time" class="input-field" />
+          <label class="block text-sm font-medium text-body mb-1">Giờ bắt đầu <span class="text-danger">*</span></label>
+          <UInput v-model="form.start_time" type="time" class="w-full" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
-          <input v-model="form.end_time" type="time" class="input-field" />
+          <label class="block text-sm font-medium text-body mb-1">Giờ kết thúc <span class="text-danger">*</span></label>
+          <UInput v-model="form.end_time" type="time" class="w-full" />
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày <span class="text-red-500">*</span></label>
-        <input v-model="form.date" type="date" class="input-field" />
+        <label class="block text-sm font-medium text-body mb-1">Ngày <span class="text-danger">*</span></label>
+        <UInput v-model="form.date" type="date" class="w-full" />
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Số đăng ký tối đa</label>
-        <input v-model.number="form.max_registrations" type="number" min="1" class="input-field" />
+        <label class="block text-sm font-medium text-body mb-1">Số đăng ký tối đa</label>
+        <UInput v-model.number="form.max_registrations" type="number" min="1" class="w-full" />
       </div>
 
       <template #footer>
-        <button class="btn-secondary" :disabled="modalLoading" @click="showModal = false">Huỷ</button>
-        <button class="btn-primary" :disabled="modalLoading" @click="submitModal">
-          <svg v-if="modalLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          {{ modalLoading ? 'Đang lưu...' : 'Lưu' }}
-        </button>
+        <UButton color="neutral" variant="soft" :disabled="modalLoading" @click="showModal = false">Huỷ</UButton>
+        <UButton :loading="modalLoading" @click="submitModal">Lưu</UButton>
       </template>
     </BaseModal>
   </div>

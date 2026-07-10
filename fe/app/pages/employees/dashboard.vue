@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
 import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord } from '~/types/attendance'
 import { formatDate, formatTime } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
+
+const columns: TableColumn<AttendanceRecord>[] = [
+  { accessorKey: 'date', header: 'Ngày' },
+  { accessorKey: 'check_in', header: 'Giờ vào' },
+  { accessorKey: 'check_out', header: 'Giờ ra' },
+  { accessorKey: 'shift_name', header: 'Ca làm' },
+  { accessorKey: 'status', header: 'Trạng thái' },
+]
 
 const authStore = useAuthStore()
 
@@ -27,8 +36,8 @@ function statusLabel(status: string) {
   return ATTENDANCE_STATUS_LABEL[status] ?? status
 }
 
-function statusClass(status: string) {
-  return ATTENDANCE_STATUS_BADGE[status] ?? 'badge-info'
+function statusColor(status: string) {
+  return ATTENDANCE_STATUS_BADGE[status] ?? 'info'
 }
 
 async function fetchRecentAttendance() {
@@ -51,38 +60,38 @@ const quickActions = [
   {
     title: 'Chấm công',
     description: 'Điểm danh hôm nay',
-    icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+    icon: 'i-heroicons-clock',
     link: '/employees/attendance',
     color: 'from-blue-500 to-blue-600',
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
+    bg: 'bg-accent-soft',
+    text: 'text-accent',
   },
   {
     title: 'Lịch sử',
     description: 'Xem lịch sử chấm công',
-    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+    icon: 'i-heroicons-clipboard-document-list',
     link: '/employees/attendance/history',
     color: 'from-purple-500 to-purple-600',
-    bg: 'bg-purple-50',
-    text: 'text-purple-700',
+    bg: 'bg-accent-soft',
+    text: 'text-accent',
   },
   {
     title: 'Tăng ca',
     description: 'Đăng ký tăng ca',
-    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+    icon: 'i-heroicons-bolt',
     link: '/overtime/employee',
     color: 'from-orange-500 to-orange-600',
-    bg: 'bg-orange-50',
-    text: 'text-orange-700',
+    bg: 'bg-warning-soft',
+    text: 'text-warning',
   },
   {
     title: 'Nghỉ phép',
     description: 'Quản lý nghỉ phép',
-    icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+    icon: 'i-heroicons-calendar',
     link: '/employees/leave/history',
     color: 'from-green-500 to-green-600',
-    bg: 'bg-green-50',
-    text: 'text-green-700',
+    bg: 'bg-success-soft',
+    text: 'text-success',
   },
 ]
 
@@ -103,10 +112,7 @@ onMounted(fetchRecentAttendance)
         <p class="text-blue-100 text-base">{{ today }}</p>
 
         <div class="mt-6 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-sm font-medium">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <UIcon name="i-heroicons-clock" class="w-4 h-4" />
           Chúc bạn một ngày làm việc hiệu quả!
         </div>
       </div>
@@ -114,32 +120,30 @@ onMounted(fetchRecentAttendance)
 
     <!-- Quick Actions -->
     <div>
-      <h2 class="text-lg font-semibold text-gray-800 mb-3">Truy cập nhanh</h2>
+      <h2 class="text-lg font-semibold text-ink mb-3">Truy cập nhanh</h2>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <NuxtLink
           v-for="action in quickActions"
           :key="action.title"
           :to="action.link"
-          class="card p-5 flex flex-col items-center text-center gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+          class="bg-white rounded-2xl shadow-lg border border-border p-5 flex flex-col items-center text-center gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
         >
           <div :class="['w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br', action.color]">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="action.icon" />
-            </svg>
+            <UIcon :name="action.icon" class="w-6 h-6 text-white" />
           </div>
           <div>
-            <p class="font-semibold text-gray-800 text-sm group-hover:text-blue-600 transition-colors">{{ action.title }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">{{ action.description }}</p>
+            <p class="font-semibold text-ink text-sm group-hover:text-accent transition-colors">{{ action.title }}</p>
+            <p class="text-xs text-faint mt-0.5">{{ action.description }}</p>
           </div>
         </NuxtLink>
       </div>
     </div>
 
     <!-- Recent Attendance -->
-    <div class="card overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-800">Chấm công gần đây</h2>
-        <NuxtLink to="/employees/attendance/history" class="text-sm text-blue-600 hover:underline font-medium">
+    <UCard :ui="{ body: 'p-0' }">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 class="text-lg font-semibold text-ink">Chấm công gần đây</h2>
+        <NuxtLink to="/employees/attendance/history" class="text-sm text-accent hover:underline font-medium">
           Xem tất cả
         </NuxtLink>
       </div>
@@ -147,48 +151,38 @@ onMounted(fetchRecentAttendance)
       <!-- Loading -->
       <div v-if="loadingAttendance" class="p-6 space-y-3">
         <div v-for="i in 3" :key="i" class="animate-pulse flex gap-4 items-center">
-          <div class="h-4 bg-gray-200 rounded w-24" />
-          <div class="h-4 bg-gray-200 rounded w-16" />
-          <div class="h-4 bg-gray-200 rounded w-16" />
-          <div class="h-4 bg-gray-200 rounded flex-1" />
-          <div class="h-5 bg-gray-200 rounded-full w-16" />
+          <div class="h-4 bg-neutral-soft rounded w-24" />
+          <div class="h-4 bg-neutral-soft rounded w-16" />
+          <div class="h-4 bg-neutral-soft rounded w-16" />
+          <div class="h-4 bg-neutral-soft rounded flex-1" />
+          <div class="h-5 bg-neutral-soft rounded-full w-16" />
         </div>
       </div>
 
       <!-- Empty -->
       <div v-else-if="recentAttendance.length === 0" class="p-12 text-center">
-        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <p class="text-gray-400 text-sm">Chưa có dữ liệu chấm công.</p>
+        <UIcon name="i-heroicons-clipboard-document-list" class="w-12 h-12 text-faint mx-auto mb-3" />
+        <p class="text-faint text-sm">Chưa có dữ liệu chấm công.</p>
       </div>
 
       <!-- Table -->
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Giờ vào</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Giờ ra</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ca làm</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-50">
-            <tr v-for="record in recentAttendance" :key="record.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 text-sm text-gray-700 font-medium whitespace-nowrap">{{ formatDate(record.date) }}</td>
-              <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ formatTime(record.check_in) }}</td>
-              <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ formatTime(record.check_out) }}</td>
-              <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ record.shift_name ?? '—' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="statusClass(record.status)">{{ statusLabel(record.status) }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <UTable v-else :data="recentAttendance" :columns="columns">
+        <template #date-cell="{ row }">
+          <span class="font-medium">{{ formatDate(row.original.date) }}</span>
+        </template>
+        <template #check_in-cell="{ row }">
+          {{ formatTime(row.original.check_in) }}
+        </template>
+        <template #check_out-cell="{ row }">
+          {{ formatTime(row.original.check_out) }}
+        </template>
+        <template #shift_name-cell="{ row }">
+          {{ row.original.shift_name ?? '—' }}
+        </template>
+        <template #status-cell="{ row }">
+          <StatusChip :color="statusColor(row.original.status)">{{ statusLabel(row.original.status) }}</StatusChip>
+        </template>
+      </UTable>
+    </UCard>
   </div>
 </template>

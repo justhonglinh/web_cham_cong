@@ -19,12 +19,12 @@ class OvertimeService implements OvertimeServiceInterface
             ->get();
     }
 
-    public function getRequests(int $managerId): Collection
+    public function getRequests(int $managerId): LengthAwarePaginator
     {
         return OvertimeRequest::whereHas('user', fn($q) => $q->where('manager', $managerId))
             ->with(['user', 'overtimeShift'])
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(20);
     }
 
     public function createShift(array $data, int $managerId): OvertimeShift

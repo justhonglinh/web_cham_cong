@@ -32,7 +32,7 @@ const maxWeeklyCount = computed(() => {
 })
 
 function statusBadge(status: string) {
-  return ATTENDANCE_STATUS_BADGE[status] ?? REQUEST_STATUS_BADGE[status] ?? 'badge-info'
+  return ATTENDANCE_STATUS_BADGE[status] ?? REQUEST_STATUS_BADGE[status] ?? 'info'
 }
 
 function statusLabel(status: string) {
@@ -46,226 +46,216 @@ onMounted(fetchDashboard)
 <template>
   <div class="max-w-7xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-xl">
-      <h1 class="text-3xl font-bold">Dashboard</h1>
-      <p class="mt-1 text-blue-100 text-lg">Tổng quan hệ thống quản lý chấm công</p>
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-ink tracking-tight">Trang chủ</h1>
+        <p class="text-sm text-muted mt-1">Tổng quan hoạt động chấm công của toàn hệ thống</p>
+      </div>
+      <UButton color="neutral" variant="soft" icon="i-heroicons-arrow-path" :loading="loading" @click="fetchDashboard">
+        Làm mới
+      </UButton>
     </div>
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-20">
-      <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-      <span class="ml-3 text-gray-500">Đang tải dữ liệu...</span>
+      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 text-accent animate-spin" />
+      <span class="ml-3 text-muted">Đang tải dữ liệu...</span>
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="card p-6 border-l-4 border-red-500 flex items-start gap-3">
-      <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <div>
-        <p class="font-semibold text-red-700">Lỗi tải dữ liệu</p>
-        <p class="text-sm text-red-600">{{ error }}</p>
-        <button class="mt-2 btn-primary text-sm" @click="fetchDashboard">Thử lại</button>
-      </div>
-    </div>
+    <UAlert
+      v-else-if="error"
+      color="error"
+      variant="soft"
+      title="Lỗi tải dữ liệu"
+      :description="error"
+    >
+      <template #actions>
+        <UButton size="sm" @click="fetchDashboard">Thử lại</UButton>
+      </template>
+    </UAlert>
 
     <template v-else-if="data">
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Tổng nhân viên</p>
-              <p class="mt-1 text-3xl font-bold text-gray-900">{{ data.employeesCount }}</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+        <UCard>
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="text-[11px] font-semibold text-faint uppercase tracking-wide">Tổng nhân viên</p>
+            <div class="w-7 h-7 rounded-lg bg-accent-soft flex items-center justify-center">
+              <UIcon name="i-heroicons-users" class="w-3.5 h-3.5 text-accent" />
             </div>
           </div>
-        </div>
+          <p class="text-[26px] font-semibold text-ink tabular-nums tracking-tight">{{ data.employeesCount }}</p>
+        </UCard>
 
-        <div class="card p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ca làm việc</p>
-              <p class="mt-1 text-3xl font-bold text-gray-900">{{ data.shiftsCount }}</p>
-              <p class="text-xs text-gray-400 mt-1">{{ data.activeShifts }} đang dùng</p>
-            </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        <UCard>
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="text-[11px] font-semibold text-faint uppercase tracking-wide">Ca làm việc</p>
+            <div class="w-7 h-7 rounded-lg bg-accent-soft flex items-center justify-center">
+              <UIcon name="i-heroicons-calendar-days" class="w-3.5 h-3.5 text-accent" />
             </div>
           </div>
-        </div>
+          <p class="text-[26px] font-semibold text-ink tabular-nums tracking-tight">{{ data.shiftsCount }}</p>
+          <p class="text-xs text-faint mt-1">{{ data.activeShifts }} đang dùng</p>
+        </UCard>
 
-        <div class="card p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ca tăng ca</p>
-              <p class="mt-1 text-3xl font-bold text-gray-900">{{ data.overtimesCount }}</p>
-              <p class="text-xs text-gray-400 mt-1">{{ data.approvedOvertimeRequests }} đã duyệt</p>
-            </div>
-            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        <UCard>
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="text-[11px] font-semibold text-faint uppercase tracking-wide">Ca tăng ca</p>
+            <div class="w-7 h-7 rounded-lg bg-warning-soft flex items-center justify-center">
+              <UIcon name="i-heroicons-bolt" class="w-3.5 h-3.5 text-warning" />
             </div>
           </div>
-        </div>
+          <p class="text-[26px] font-semibold text-ink tabular-nums tracking-tight">{{ data.overtimesCount }}</p>
+          <p class="text-xs text-faint mt-1">{{ data.approvedOvertimeRequests }} đã duyệt</p>
+        </UCard>
 
-        <div class="card p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Chấm công hôm nay</p>
-              <p class="mt-1 text-3xl font-bold text-gray-900">{{ data.attendancesCount }}</p>
-              <p class="text-xs text-gray-400 mt-1">{{ data.lateAttendances }} đi trễ</p>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
+        <UCard>
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="text-[11px] font-semibold text-faint uppercase tracking-wide">Chấm công hôm nay</p>
+            <div class="w-7 h-7 rounded-lg bg-success-soft flex items-center justify-center">
+              <UIcon name="i-heroicons-clipboard-document-check" class="w-3.5 h-3.5 text-success" />
             </div>
           </div>
-        </div>
+          <p class="text-[26px] font-semibold text-ink tabular-nums tracking-tight">{{ data.attendancesCount }}</p>
+          <p class="text-xs text-faint mt-1">{{ data.lateAttendances }} đi trễ</p>
+        </UCard>
       </div>
 
       <!-- Alert Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div v-if="data.pendingOvertimeRequests > 0" class="card p-4 border-l-4 border-orange-400 flex items-center gap-3">
-          <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+      <div v-if="data.pendingOvertimeRequests > 0 || data.pendingLeaveRequests > 0 || data.lateAttendances > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <UCard v-if="data.pendingOvertimeRequests > 0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-warning-soft rounded-lg flex items-center justify-center shrink-0">
+              <UIcon name="i-heroicons-bolt" class="w-4.5 h-4.5 text-warning" />
+            </div>
+            <div>
+              <p class="font-semibold text-ink text-sm">Tăng ca chờ duyệt</p>
+              <p class="text-xs text-muted mt-0.5">{{ data.pendingOvertimeRequests }} yêu cầu cần xem xét</p>
+            </div>
           </div>
-          <div>
-            <p class="font-semibold text-gray-800">Tăng ca chờ duyệt</p>
-            <p class="text-sm text-gray-500">{{ data.pendingOvertimeRequests }} yêu cầu cần xem xét</p>
-          </div>
-        </div>
+        </UCard>
 
-        <div v-if="data.pendingLeaveRequests > 0" class="card p-4 border-l-4 border-yellow-400 flex items-center gap-3">
-          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <UCard v-if="data.pendingLeaveRequests > 0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-warning-soft rounded-lg flex items-center justify-center shrink-0">
+              <UIcon name="i-heroicons-document-text" class="w-4.5 h-4.5 text-warning" />
+            </div>
+            <div>
+              <p class="font-semibold text-ink text-sm">Nghỉ phép chờ duyệt</p>
+              <p class="text-xs text-muted mt-0.5">{{ data.pendingLeaveRequests }} yêu cầu cần xem xét</p>
+            </div>
           </div>
-          <div>
-            <p class="font-semibold text-gray-800">Nghỉ phép chờ duyệt</p>
-            <p class="text-sm text-gray-500">{{ data.pendingLeaveRequests }} yêu cầu cần xem xét</p>
-          </div>
-        </div>
+        </UCard>
 
-        <div v-if="data.lateAttendances > 0" class="card p-4 border-l-4 border-red-400 flex items-center gap-3">
-          <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <UCard v-if="data.lateAttendances > 0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-danger-soft rounded-lg flex items-center justify-center shrink-0">
+              <UIcon name="i-heroicons-exclamation-triangle" class="w-4.5 h-4.5 text-danger" />
+            </div>
+            <div>
+              <p class="font-semibold text-ink text-sm">Nhân viên đi trễ</p>
+              <p class="text-xs text-muted mt-0.5">{{ data.lateAttendances }} người đi trễ hôm nay</p>
+            </div>
           </div>
-          <div>
-            <p class="font-semibold text-gray-800">Nhân viên đi trễ</p>
-            <p class="text-sm text-gray-500">{{ data.lateAttendances }} người đi trễ hôm nay</p>
-          </div>
-        </div>
+        </UCard>
       </div>
 
       <!-- Weekly Bar Chart + Recent Overtime -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- Weekly Attendance Chart -->
-        <div class="card p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">Chấm công tuần này</h2>
-          <div v-if="data.weeklyStats && data.weeklyStats.length" class="flex items-end gap-3 h-40">
+        <UCard>
+          <h2 class="text-sm font-semibold text-ink mb-4">Chấm công tuần này</h2>
+          <div v-if="data.weeklyStats && data.weeklyStats.length" class="flex items-end gap-3 h-36">
             <div
               v-for="stat in data.weeklyStats"
               :key="stat.day"
-              class="flex-1 flex flex-col items-center gap-1"
+              class="flex-1 flex flex-col items-center gap-1.5"
             >
-              <span class="text-xs font-medium text-gray-600">{{ stat.count }}</span>
+              <span class="text-xs font-semibold text-body tabular-nums">{{ stat.count }}</span>
               <div
-                class="w-full bg-blue-500 rounded-t-md transition-all duration-500"
-                :style="{ height: `${Math.max((stat.count / maxWeeklyCount) * 120, 4)}px` }"
+                class="w-full bg-accent-soft rounded-t-[4px] rounded-b-[2px] transition-all duration-500"
+                :style="{ height: `${Math.max((stat.count / maxWeeklyCount) * 110, 4)}px` }"
               ></div>
-              <span class="text-xs text-gray-400">{{ stat.day }}</span>
+              <span class="text-[11px] font-medium text-faint">{{ stat.day }}</span>
             </div>
           </div>
-          <div v-else class="flex items-center justify-center h-40 text-gray-400 text-sm">
+          <div v-else class="flex items-center justify-center h-36 text-faint text-sm">
             Không có dữ liệu tuần này
           </div>
-        </div>
+        </UCard>
 
         <!-- Recent Overtime Requests -->
-        <div class="card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-800">Tăng ca gần đây</h2>
-            <NuxtLink to="/overtime/management" class="text-sm text-blue-600 hover:underline">Xem tất cả</NuxtLink>
+        <UCard :ui="{ body: 'p-0' }">
+          <div class="flex items-center justify-between px-5 pt-4 pb-3">
+            <h2 class="text-sm font-semibold text-ink">Tăng ca gần đây</h2>
+            <NuxtLink to="/overtime/management" class="text-xs font-medium text-accent hover:text-accent-ink">Xem tất cả</NuxtLink>
           </div>
-          <div v-if="data.recentOvertimeRequests && data.recentOvertimeRequests.length" class="space-y-3">
+          <div v-if="data.recentOvertimeRequests && data.recentOvertimeRequests.length">
             <div
               v-for="req in data.recentOvertimeRequests"
               :key="req.id"
-              class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+              class="flex items-center justify-between gap-3 px-5 py-2.5 border-t border-border"
             >
-              <div>
-                <p class="text-sm font-medium text-gray-800">{{ req.employee_name }}</p>
-                <p class="text-xs text-gray-400">{{ req.date }} &bull; {{ req.hours }}h</p>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-ink truncate">{{ req.employee_name }}</p>
+                <p class="text-xs text-faint">{{ req.date }} &bull; {{ req.hours }}h</p>
               </div>
-              <span :class="statusBadge(req.status)">{{ statusLabel(req.status) }}</span>
+              <StatusChip :color="statusBadge(req.status)">{{ statusLabel(req.status) }}</StatusChip>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-gray-400 text-sm">Không có yêu cầu tăng ca</div>
-        </div>
+          <div v-else class="text-center py-8 text-faint text-sm border-t border-border">Không có yêu cầu tăng ca</div>
+        </UCard>
       </div>
 
       <!-- Recent Attendances + Recent Leave Requests -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- Recent Attendances -->
-        <div class="card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-800">Chấm công gần đây</h2>
-            <NuxtLink to="/attendance/management" class="text-sm text-blue-600 hover:underline">Xem tất cả</NuxtLink>
+        <UCard :ui="{ body: 'p-0' }">
+          <div class="flex items-center justify-between px-5 pt-4 pb-3">
+            <h2 class="text-sm font-semibold text-ink">Chấm công gần đây</h2>
+            <NuxtLink to="/attendance/management" class="text-xs font-medium text-accent hover:text-accent-ink">Xem tất cả</NuxtLink>
           </div>
-          <div v-if="data.recentAttendances && data.recentAttendances.length" class="space-y-3">
+          <div v-if="data.recentAttendances && data.recentAttendances.length">
             <div
               v-for="att in data.recentAttendances"
               :key="att.id"
-              class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+              class="flex items-center justify-between gap-3 px-5 py-2.5 border-t border-border"
             >
-              <div>
-                <p class="text-sm font-medium text-gray-800">{{ att.employee_name }}</p>
-                <p class="text-xs text-gray-400">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-ink truncate">{{ att.employee_name }}</p>
+                <p class="text-xs text-faint">
                   {{ formatDate(att.date) }} &bull; Vào: {{ formatTime(att.check_in) }} / Ra: {{ formatTime(att.check_out) }}
                 </p>
               </div>
-              <span :class="statusBadge(att.status)">{{ statusLabel(att.status) }}</span>
+              <StatusChip :color="statusBadge(att.status)">{{ statusLabel(att.status) }}</StatusChip>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-gray-400 text-sm">Không có dữ liệu chấm công</div>
-        </div>
+          <div v-else class="text-center py-8 text-faint text-sm border-t border-border">Không có dữ liệu chấm công</div>
+        </UCard>
 
         <!-- Recent Leave Requests -->
-        <div class="card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-800">Nghỉ phép gần đây</h2>
-            <NuxtLink to="/leave-requests/management" class="text-sm text-blue-600 hover:underline">Xem tất cả</NuxtLink>
+        <UCard :ui="{ body: 'p-0' }">
+          <div class="flex items-center justify-between px-5 pt-4 pb-3">
+            <h2 class="text-sm font-semibold text-ink">Nghỉ phép gần đây</h2>
+            <NuxtLink to="/leave-requests/management" class="text-xs font-medium text-accent hover:text-accent-ink">Xem tất cả</NuxtLink>
           </div>
-          <div v-if="data.recentLeaveRequests && data.recentLeaveRequests.length" class="space-y-3">
+          <div v-if="data.recentLeaveRequests && data.recentLeaveRequests.length">
             <div
               v-for="leave in data.recentLeaveRequests"
               :key="leave.id"
-              class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+              class="flex items-center justify-between gap-3 px-5 py-2.5 border-t border-border"
             >
-              <div>
-                <p class="text-sm font-medium text-gray-800">{{ leave.employee_name }}</p>
-                <p class="text-xs text-gray-400">{{ leave.start_date }} → {{ leave.end_date }}</p>
-                <p class="text-xs text-gray-400 truncate max-w-[200px]">{{ leave.reason }}</p>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-ink truncate">{{ leave.employee_name }}</p>
+                <p class="text-xs text-faint">{{ leave.start_date }} → {{ leave.end_date }}</p>
+                <p class="text-xs text-faint truncate max-w-[200px]">{{ leave.reason }}</p>
               </div>
-              <span :class="statusBadge(leave.status)">{{ statusLabel(leave.status) }}</span>
+              <StatusChip :color="statusBadge(leave.status)">{{ statusLabel(leave.status) }}</StatusChip>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-gray-400 text-sm">Không có yêu cầu nghỉ phép</div>
-        </div>
+          <div v-else class="text-center py-8 text-faint text-sm border-t border-border">Không có yêu cầu nghỉ phép</div>
+        </UCard>
       </div>
     </template>
   </div>

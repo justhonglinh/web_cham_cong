@@ -50,7 +50,7 @@ class AttendanceService implements AttendanceServiceInterface
         return Attendance::with('shift')
             ->where('user_id', $userId)
             ->orderByDesc('date')
-            ->paginate(15);
+            ->paginate(20);
     }
 
     public function processCheckIn(int $userId): Attendance

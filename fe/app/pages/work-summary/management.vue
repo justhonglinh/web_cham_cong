@@ -1,9 +1,20 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { WORK_SUMMARY_STATUS_BADGE, WORK_SUMMARY_STATUS_LABEL } from '~/constants'
 import { workSummaryService } from '~/services/workSummaryService'
 import type { WorkSummary } from '~/types/workSummary'
 
 definePageMeta({ layout: 'default' })
+
+const columns: TableColumn<WorkSummary>[] = [
+  { accessorKey: 'employee_name', header: 'Nhân viên' },
+  { accessorKey: 'month', header: 'Tháng' },
+  { accessorKey: 'total_work_days', header: 'Tổng ngày làm', meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'total_work_hours', header: 'Tổng giờ làm', meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'leave_days', header: 'Ngày nghỉ', meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'overtime_hours', header: 'Tăng ca (giờ)', meta: { class: { th: 'text-right', td: 'text-right' } } },
+  { accessorKey: 'status', header: 'Trạng thái' },
+]
 
 const summaries = ref<WorkSummary[]>([])
 const loading = ref(false)
@@ -29,18 +40,24 @@ const years = computed(() => {
   return [y - 2, y - 1, y, y + 1]
 })
 
-const filteredSummaries = computed(() => {
-  if (!searchName.value.trim()) return summaries.value
-  const q = searchName.value.trim().toLowerCase()
-  return summaries.value.filter(s => s.employee_name.toLowerCase().includes(q))
-})
+const { currentPage, lastPage, total, perPage, setFromResponse, goToPage: goToPageFn, visiblePages, summaryFrom, summaryTo } = usePagination(20)
 
-async function fetchSummaries() {
+function goToPage(page: number) {
+  goToPageFn(page, fetchSummaries)
+}
+
+async function fetchSummaries(page = 1) {
   loading.value = true
   error.value = ''
   try {
-    const res = await workSummaryService.getAll({ month: filterMonth.value, year: filterYear.value })
-    summaries.value = Array.isArray(res) ? res : (res as any).data ?? []
+    const res = await workSummaryService.getAll({
+      month: filterMonth.value,
+      year: filterYear.value,
+      page,
+      per_page: perPage.value,
+      search: searchName.value.trim() || undefined,
+    })
+    summaries.value = setFromResponse(res)
   } catch {
     error.value = 'Không thể tải báo cáo tổng hợp. Vui lòng thử lại.'
   } finally {
@@ -65,15 +82,15 @@ async function exportExcel() {
 }
 
 function statusBadgeClass(status: string) {
-  return WORK_SUMMARY_STATUS_BADGE[status] ?? 'badge-info'
+  return WORK_SUMMARY_STATUS_BADGE[status] ?? 'info'
 }
 
 function statusLabel(status: string) {
   return WORK_SUMMARY_STATUS_LABEL[status] ?? status
 }
 
-watch([filterMonth, filterYear], fetchSummaries)
-onMounted(fetchSummaries)
+watch([filterMonth, filterYear], () => fetchSummaries(1))
+onMounted(() => fetchSummaries(1))
 </script>
 
 <template>
@@ -81,148 +98,127 @@ onMounted(fetchSummaries)
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Báo cáo tổng hợp công việc</h1>
-        <p class="text-sm text-gray-500 mt-1">Xem tổng hợp công việc của tất cả nhân viên</p>
+        <h1 class="text-2xl font-bold text-ink">Báo cáo tổng hợp công việc</h1>
+        <p class="text-sm text-muted mt-1">Xem tổng hợp công việc của tất cả nhân viên</p>
       </div>
-      <button
-        class="btn-primary"
+      <UButton
+        :loading="exportLoading"
         :disabled="exportLoading || loading"
         @click="exportExcel"
       >
-        <svg v-if="exportLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
+        <UIcon v-if="!exportLoading" name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
         {{ exportLoading ? 'Đang xuất...' : 'Xuất Excel' }}
-      </button>
+      </UButton>
     </div>
 
     <!-- Filters -->
-    <div class="card p-4">
+    <UCard>
       <div class="flex flex-wrap gap-4 items-end">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Tháng</label>
-          <select v-model.number="filterMonth" class="input-field w-36">
-            <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
-          </select>
+          <label class="block text-xs font-medium text-body mb-1">Tháng</label>
+          <USelect v-model="filterMonth" :items="months" value-key="value" label-key="label" class="w-36" />
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Năm</label>
-          <select v-model.number="filterYear" class="input-field w-28">
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
+          <label class="block text-xs font-medium text-body mb-1">Năm</label>
+          <USelect v-model="filterYear" :items="years" class="w-28" />
         </div>
         <div class="flex-1 min-w-48">
-          <label class="block text-xs font-medium text-gray-600 mb-1">Tìm theo tên nhân viên</label>
-          <div class="relative">
-            <input
-              v-model="searchName"
-              type="text"
-              class="input-field pl-9"
-              placeholder="Nhập tên nhân viên..."
-            />
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+          <label class="block text-xs font-medium text-body mb-1">Tìm theo tên nhân viên</label>
+          <UInput
+            v-model="searchName"
+            type="text"
+            icon="i-heroicons-magnifying-glass"
+            class="w-full"
+            placeholder="Nhập tên nhân viên..."
+          />
         </div>
-        <button class="btn-secondary" :disabled="loading" @click="fetchSummaries">
-          <svg v-if="loading" class="animate-spin h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+        <UButton color="neutral" variant="soft" :loading="loading" :disabled="loading" @click="fetchSummaries(1)">
           {{ loading ? 'Đang tải...' : 'Tìm kiếm' }}
-        </button>
+        </UButton>
       </div>
-    </div>
+    </UCard>
 
     <!-- Card -->
-    <div class="card p-6">
+    <UCard>
       <!-- Error -->
-      <div v-if="error" class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-        {{ error }}
-      </div>
+      <UAlert
+        v-if="error"
+        class="mb-4"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-exclamation-triangle"
+        :description="error"
+      />
 
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-16">
-        <svg class="animate-spin h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
+        <UIcon name="i-heroicons-arrow-path" class="animate-spin w-10 h-10 text-accent" />
       </div>
 
       <!-- Table -->
-      <div v-else-if="filteredSummaries.length > 0" class="overflow-x-auto">
-        <div class="mb-3 text-sm text-gray-500">
-          Hiển thị <strong>{{ filteredSummaries.length }}</strong> nhân viên —
+      <div v-else-if="summaries.length > 0">
+        <div class="mb-3 text-sm text-muted">
+          Hiển thị <strong>{{ summaries.length }}</strong> nhân viên —
           Tháng {{ filterMonth }}/{{ filterYear }}
         </div>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhân viên</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tháng</th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng ngày làm</th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng giờ làm</th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày nghỉ</th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tăng ca (giờ)</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <tr v-for="s in filteredSummaries" :key="s.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{{ s.employee_name }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ s.month }}/{{ s.year }}</td>
-              <td class="px-4 py-3 text-sm text-gray-700 text-right font-medium">{{ s.total_work_days ?? 0 }}</td>
-              <td class="px-4 py-3 text-sm text-gray-700 text-right font-medium">{{ s.total_work_hours ?? 0 }}h</td>
-              <td class="px-4 py-3 text-sm text-right">
-                <span :class="(s.leave_days ?? 0) > 0 ? 'text-amber-600 font-medium' : 'text-gray-600'">
-                  {{ s.leave_days ?? 0 }}
-                </span>
+        <UTable :data="summaries" :columns="columns">
+          <template #month-cell="{ row }">
+            {{ row.original.month }}/{{ row.original.year }}
+          </template>
+          <template #total_work_days-cell="{ row }">
+            <span class="font-medium">{{ row.original.total_work_days ?? 0 }}</span>
+          </template>
+          <template #total_work_hours-cell="{ row }">
+            <span class="font-medium">{{ row.original.total_work_hours ?? 0 }}h</span>
+          </template>
+          <template #leave_days-cell="{ row }">
+            <span :class="(row.original.leave_days ?? 0) > 0 ? 'text-warning font-medium' : ''">
+              {{ row.original.leave_days ?? 0 }}
+            </span>
+          </template>
+          <template #overtime_hours-cell="{ row }">
+            <span :class="(row.original.overtime_hours ?? 0) > 0 ? 'text-accent font-medium' : ''">
+              {{ row.original.overtime_hours ?? 0 }}h
+            </span>
+          </template>
+          <template #status-cell="{ row }">
+            <StatusChip :color="statusBadgeClass(row.original.status)">{{ statusLabel(row.original.status) }}</StatusChip>
+          </template>
+          <template #body-bottom>
+            <tr class="bg-neutral-soft border-t-2 border-border-strong">
+              <td class="px-4 py-3 text-sm font-semibold text-body" colspan="2">Tổng cộng</td>
+              <td class="px-4 py-3 text-sm font-semibold text-ink text-right">
+                {{ summaries.reduce((acc, s) => acc + (s.total_work_days ?? 0), 0) }}
               </td>
-              <td class="px-4 py-3 text-sm text-right">
-                <span :class="(s.overtime_hours ?? 0) > 0 ? 'text-blue-600 font-medium' : 'text-gray-600'">
-                  {{ s.overtime_hours ?? 0 }}h
-                </span>
+              <td class="px-4 py-3 text-sm font-semibold text-ink text-right">
+                {{ summaries.reduce((acc, s) => acc + (s.total_work_hours ?? 0), 0) }}h
               </td>
-              <td class="px-4 py-3 text-sm whitespace-nowrap">
-                <span :class="statusBadgeClass(s.status)">{{ statusLabel(s.status) }}</span>
+              <td class="px-4 py-3 text-sm font-semibold text-warning text-right">
+                {{ summaries.reduce((acc, s) => acc + (s.leave_days ?? 0), 0) }}
               </td>
-            </tr>
-          </tbody>
-          <!-- Totals row -->
-          <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-            <tr>
-              <td class="px-4 py-3 text-sm font-semibold text-gray-700" colspan="2">Tổng cộng</td>
-              <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">
-                {{ filteredSummaries.reduce((acc, s) => acc + (s.total_work_days ?? 0), 0) }}
-              </td>
-              <td class="px-4 py-3 text-sm font-semibold text-gray-900 text-right">
-                {{ filteredSummaries.reduce((acc, s) => acc + (s.total_work_hours ?? 0), 0) }}h
-              </td>
-              <td class="px-4 py-3 text-sm font-semibold text-amber-600 text-right">
-                {{ filteredSummaries.reduce((acc, s) => acc + (s.leave_days ?? 0), 0) }}
-              </td>
-              <td class="px-4 py-3 text-sm font-semibold text-blue-600 text-right">
-                {{ filteredSummaries.reduce((acc, s) => acc + (s.overtime_hours ?? 0), 0) }}h
+              <td class="px-4 py-3 text-sm font-semibold text-accent text-right">
+                {{ summaries.reduce((acc, s) => acc + (s.overtime_hours ?? 0), 0) }}h
               </td>
               <td class="px-4 py-3"></td>
             </tr>
-          </tfoot>
-        </table>
+          </template>
+        </UTable>
+
+        <!-- Pagination -->
+        <PaginationBar
+          :current-page="currentPage" :last-page="lastPage"
+          :total="total" :summary-from="summaryFrom" :summary-to="summaryTo"
+          :visible-pages="visiblePages"
+          @go-to-page="goToPage"
+        />
       </div>
 
       <!-- Empty -->
-      <div v-else class="text-center py-16 text-gray-400">
-        <svg class="mx-auto h-14 w-14 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <p class="font-medium text-gray-500">Không có dữ liệu cho tháng {{ filterMonth }}/{{ filterYear }}</p>
+      <div v-else class="text-center py-16 text-faint">
+        <UIcon name="i-heroicons-inbox" class="mx-auto h-14 w-14 mb-4" />
+        <p class="font-medium text-muted">Không có dữ liệu cho tháng {{ filterMonth }}/{{ filterYear }}</p>
         <p class="text-sm mt-1">Thử chọn tháng hoặc năm khác</p>
       </div>
-    </div>
+    </UCard>
   </div>
 </template>

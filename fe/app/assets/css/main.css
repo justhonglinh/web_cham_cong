@@ -1,39 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@nuxt/ui";
+@plugin "@tailwindcss/forms";
+
+@theme {
+  --font-sans: 'Figtree', ui-sans-serif, system-ui;
+
+  --color-ink: #101828;
+  --color-body: #475467;
+  --color-muted: #667085;
+  --color-faint: #98a2b3;
+  --color-border: #e4e7ec;
+  --color-border-strong: #d0d5dd;
+  --color-canvas: #f9fafb;
+  --color-accent: #2f5ff6;
+  --color-accent-ink: #1e3fc4;
+  --color-accent-soft: #eef2ff;
+  --color-success: #12b76a;
+  --color-success-soft: #ecfdf3;
+  --color-warning: #f79009;
+  --color-warning-soft: #fffaeb;
+  --color-danger: #f04438;
+  --color-danger-soft: #fef3f2;
+  --color-neutral-soft: #f2f4f7;
+}
 
 @layer base {
   body {
-    @apply font-sans antialiased bg-gray-100;
+    @apply font-sans antialiased bg-canvas text-body;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150;
+  .status-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap;
   }
-  .btn-secondary {
-    @apply inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-150;
-  }
-  .btn-danger {
-    @apply inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-150;
-  }
-  .input-field {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm;
-  }
-  .card {
-    @apply bg-white rounded-2xl shadow-lg border border-gray-100;
-  }
-  .badge-success {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800;
-  }
-  .badge-warning {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800;
-  }
-  .badge-danger {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
-  }
-  .badge-info {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800;
+  .status-chip .dot {
+    @apply w-1.5 h-1.5 rounded-full shrink-0;
   }
 }

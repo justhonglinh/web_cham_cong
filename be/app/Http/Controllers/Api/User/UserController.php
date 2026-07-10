@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         return UserResource::collection(
-            $this->userService->getEmployees($request->user()->id)
+            $this->userService->getEmployees($request->user()->id, $request->input('search'))
         );
     }
 
