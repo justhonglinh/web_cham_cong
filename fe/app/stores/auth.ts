@@ -65,5 +65,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isAuthenticated, isManager, isEmployee, fetchUser, register, login, logout }
+  async function forgotPassword(email: string) {
+    const data = await $fetch<{ message: string }>(`${config.public.apiBase}/api/forgot-password`, {
+      method: 'POST',
+      body: { email },
+    })
+    return data.message
+  }
+
+  async function resetPassword(payload: { token: string; email: string; password: string; passwordConfirmation: string }) {
+    const data = await $fetch<{ message: string }>(`${config.public.apiBase}/api/reset-password`, {
+      method: 'POST',
+      body: {
+        token: payload.token,
+        email: payload.email,
+        password: payload.password,
+        password_confirmation: payload.passwordConfirmation,
+      },
+    })
+    return data.message
+  }
+
+  return { user, token, isAuthenticated, isManager, isEmployee, fetchUser, register, login, logout, forgotPassword, resetPassword }
 })

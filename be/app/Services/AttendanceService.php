@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Contracts\Services\AttendanceServiceInterface;
 use App\Exceptions\Api\AttendanceAlreadyDoneException;
+use App\Exceptions\Api\LocationRequiredException;
+use App\Exceptions\Api\OutsideCheckInRadiusException;
 use App\Models\Attendance;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -53,8 +56,26 @@ class AttendanceService implements AttendanceServiceInterface
             ->paginate(20);
     }
 
-    public function processCheckIn(int $userId): Attendance
+    public function processCheckIn(int $userId, ?float $latitude, ?float $longitude): Attendance
     {
+        $user = User::findOrFail($userId);
+
+        $activeLocations = Location::where('user_id', $user->manager)->active()->get();
+
+        if ($activeLocations->isNotEmpty()) {
+            if ($latitude === null || $longitude === null) {
+                throw new LocationRequiredException();
+            }
+
+            $withinRadius = $activeLocations->contains(
+                fn (Location $location) => $location->isWithinRadius($latitude, $longitude)
+            );
+
+            if (!$withinRadius) {
+                throw new OutsideCheckInRadiusException();
+            }
+        }
+
         $attendance = Attendance::firstOrNew([
             'user_id' => $userId,
             'date'    => now()->toDateString(),

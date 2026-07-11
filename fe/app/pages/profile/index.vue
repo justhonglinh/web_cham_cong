@@ -1,25 +1,42 @@
 <script setup lang="ts">
+import * as z from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { authService } from '~/services/authService'
-import { toast } from 'vue-sonner'
 import type { User as AuthUser } from '~/types/auth'
 import { ROLE_LABEL } from '~/constants'
 
 definePageMeta({ layout: 'default' })
 
 const authStore = useAuthStore()
+const toast = useAppToast()
 
 // ---- State ----
 const loadingUser = ref(false)
 const userInfo = ref<AuthUser | null>(null)
 
-// Profile form
-const profileName = ref('')
+// ---- Profile form ----
+const profileSchema = z.object({
+  profileName: z.string().min(1, 'Vui lòng nhập họ và tên'),
+})
+type ProfileSchema = z.output<typeof profileSchema>
+
+const profileState = reactive({ profileName: '' })
+const profileFormRef = useTemplateRef('profileFormRef')
 const profileLoading = ref(false)
 
-// Password form
-const currentPassword = ref('')
-const newPassword = ref('')
-const passwordConfirmation = ref('')
+// ---- Password form ----
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Vui lòng nhập mật khẩu hiện tại'),
+  newPassword: z.string().min(8, 'Mật khẩu mới tối thiểu 8 ký tự'),
+  passwordConfirmation: z.string().min(1, 'Vui lòng xác nhận mật khẩu mới'),
+}).refine((data) => data.newPassword === data.passwordConfirmation, {
+  message: 'Xác nhận mật khẩu không khớp',
+  path: ['passwordConfirmation'],
+})
+type PasswordSchema = z.output<typeof passwordSchema>
+
+const passwordState = reactive({ currentPassword: '', newPassword: '', passwordConfirmation: '' })
+const passwordFormRef = useTemplateRef('passwordFormRef')
 const passwordLoading = ref(false)
 
 // ---- Fetch user info ----
@@ -28,49 +45,72 @@ async function fetchUser() {
   try {
     const data = await authService.getUser()
     userInfo.value = data.user
-    profileName.value = data.user.name
+    profileState.profileName = data.user.name
   } catch {
     userInfo.value = authStore.user ? { ...authStore.user } : null
-    profileName.value = authStore.user?.name ?? ''
+    profileState.profileName = authStore.user?.name ?? ''
   } finally {
     loadingUser.value = false
   }
 }
 
 // ---- Update profile ----
-async function updateProfile() {
-  if (!profileName.value.trim()) return
+async function onSubmitProfile(event: FormSubmitEvent<ProfileSchema>) {
   profileLoading.value = true
   try {
-    const data = await authService.updateProfile({ name: profileName.value.trim() })
+    const data = await authService.updateProfile({ name: event.data.profileName.trim() })
     userInfo.value = data.user
     if (authStore.user) authStore.user.name = data.user.name
+    profileState.profileName = data.user.name
     toast.success('Cập nhật hồ sơ thành công.')
-  } catch {
-    // toast error hiển thị tự động
+  } catch (err: unknown) {
+    const error = err as { data?: { message?: string; errors?: Record<string, string[]> } }
+    if (error?.data?.errors) {
+      const fieldMap: Record<string, string> = { name: 'profileName' }
+      profileFormRef.value?.setErrors(
+        Object.entries(error.data.errors).map(([name, messages]) => ({
+          name: fieldMap[name] ?? name,
+          message: messages[0],
+        }))
+      )
+    } else {
+      toast.error(error?.data?.message || 'Cập nhật hồ sơ thất bại. Vui lòng thử lại.')
+    }
   } finally {
     profileLoading.value = false
   }
 }
 
 // ---- Change password ----
-async function changePassword() {
-  if (!currentPassword.value || !newPassword.value || !passwordConfirmation.value) return
-  if (newPassword.value !== passwordConfirmation.value) return
-  if (newPassword.value.length < 8) return
+async function onSubmitPassword(event: FormSubmitEvent<PasswordSchema>) {
   passwordLoading.value = true
   try {
     await authService.updatePassword({
-      current_password: currentPassword.value,
-      password: newPassword.value,
-      password_confirmation: passwordConfirmation.value,
+      current_password: event.data.currentPassword,
+      password: event.data.newPassword,
+      password_confirmation: event.data.passwordConfirmation,
     })
-    currentPassword.value = ''
-    newPassword.value = ''
-    passwordConfirmation.value = ''
+    passwordState.currentPassword = ''
+    passwordState.newPassword = ''
+    passwordState.passwordConfirmation = ''
     toast.success('Đổi mật khẩu thành công.')
-  } catch {
-    // toast error hiển thị tự động
+  } catch (err: unknown) {
+    const error = err as { data?: { message?: string; errors?: Record<string, string[]> } }
+    if (error?.data?.errors) {
+      const fieldMap: Record<string, string> = {
+        current_password: 'currentPassword',
+        password: 'newPassword',
+        password_confirmation: 'passwordConfirmation',
+      }
+      passwordFormRef.value?.setErrors(
+        Object.entries(error.data.errors).map(([name, messages]) => ({
+          name: fieldMap[name] ?? name,
+          message: messages[0],
+        }))
+      )
+    } else {
+      toast.error(error?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.')
+    }
   } finally {
     passwordLoading.value = false
   }
@@ -114,11 +154,10 @@ onMounted(fetchUser)
     <UCard>
       <h3 class="text-lg font-semibold text-ink mb-5">Cập nhật thông tin</h3>
 
-      <form @submit.prevent="updateProfile" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Họ và tên</label>
-          <UInput v-model="profileName" type="text" class="w-full" placeholder="Nhập họ và tên" :disabled="profileLoading" />
-        </div>
+      <UForm ref="profileFormRef" :schema="profileSchema" :state="profileState" class="space-y-4" @submit="onSubmitProfile">
+        <UFormField name="profileName" label="Họ và tên" required>
+          <UInput v-model="profileState.profileName" type="text" class="w-full" placeholder="Nhập họ và tên" :disabled="profileLoading" />
+        </UFormField>
         <div>
           <label class="block text-sm font-medium text-body mb-1">Email</label>
           <UInput :value="userInfo?.email" type="email" class="w-full bg-neutral-soft cursor-not-allowed" disabled />
@@ -129,54 +168,50 @@ onMounted(fetchUser)
             {{ profileLoading ? 'Đang lưu...' : 'Lưu thay đổi' }}
           </UButton>
         </div>
-      </form>
+      </UForm>
     </UCard>
 
     <!-- Change Password Card -->
     <UCard>
       <h3 class="text-lg font-semibold text-ink mb-5">Đổi mật khẩu</h3>
 
-      <form @submit.prevent="changePassword" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Mật khẩu hiện tại</label>
+      <UForm ref="passwordFormRef" :schema="passwordSchema" :state="passwordState" class="space-y-4" @submit="onSubmitPassword">
+        <UFormField name="currentPassword" label="Mật khẩu hiện tại" required>
           <UInput
-            v-model="currentPassword"
+            v-model="passwordState.currentPassword"
             type="password"
             class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="current-password"
           />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Mật khẩu mới</label>
+        </UFormField>
+        <UFormField name="newPassword" label="Mật khẩu mới" required help="Ít nhất 8 ký tự">
           <UInput
-            v-model="newPassword"
+            v-model="passwordState.newPassword"
             type="password"
             class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="new-password"
           />
-          <p class="text-xs text-faint mt-1">Ít nhất 8 ký tự.</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Xác nhận mật khẩu mới</label>
+        </UFormField>
+        <UFormField name="passwordConfirmation" label="Xác nhận mật khẩu mới" required>
           <UInput
-            v-model="passwordConfirmation"
+            v-model="passwordState.passwordConfirmation"
             type="password"
             class="w-full"
             placeholder="••••••••"
             :disabled="passwordLoading"
             autocomplete="new-password"
           />
-        </div>
+        </UFormField>
         <div class="flex justify-end">
           <UButton type="submit" :disabled="passwordLoading" :loading="passwordLoading">
             {{ passwordLoading ? 'Đang đổi...' : 'Đổi mật khẩu' }}
           </UButton>
         </div>
-      </form>
+      </UForm>
     </UCard>
   </div>
 </template>

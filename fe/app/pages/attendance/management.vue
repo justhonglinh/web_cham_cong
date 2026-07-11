@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import * as z from 'zod'
+import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { ATTENDANCE_STATUS_BADGE, ATTENDANCE_STATUS_LABEL } from '~/constants'
 import { attendanceService } from '~/services/attendanceService'
 import type { AttendanceRecord } from '~/types/attendance'
@@ -33,6 +34,14 @@ const filterYear = ref(String(now.getFullYear()))
 const showModal = ref(false)
 const editingRecord = ref<AttendanceRecord | null>(null)
 const editForm = ref({ check_in: '', check_out: '' })
+
+const schema = z.object({
+  check_in: z.string().optional(),
+  check_out: z.string().optional(),
+})
+type Schema = z.output<typeof schema>
+
+const formRef = useTemplateRef('formRef')
 
 const { currentPage, lastPage, total, perPage, setFromResponse, goToPage: goToPageFn, visiblePages, summaryFrom, summaryTo } = usePagination(20)
 
@@ -69,14 +78,14 @@ function closeModal() {
   saveError.value = null
 }
 
-async function saveAttendance() {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!editingRecord.value) return
   saving.value = true
   saveError.value = null
   try {
     const updated = await attendanceService.updateManagement(editingRecord.value.id, {
-      check_in: editForm.value.check_in || null,
-      check_out: editForm.value.check_out || null,
+      check_in: event.data.check_in || null,
+      check_out: event.data.check_out || null,
     })
     const idx = records.value.findIndex(r => r.id === editingRecord.value!.id)
     if (idx !== -1) records.value[idx] = updated
@@ -103,20 +112,10 @@ const years = computed(() => {
   return [y - 1, y, y + 1].map(String)
 })
 
-const months = [
-  { value: '01', label: 'Tháng 1' },
-  { value: '02', label: 'Tháng 2' },
-  { value: '03', label: 'Tháng 3' },
-  { value: '04', label: 'Tháng 4' },
-  { value: '05', label: 'Tháng 5' },
-  { value: '06', label: 'Tháng 6' },
-  { value: '07', label: 'Tháng 7' },
-  { value: '08', label: 'Tháng 8' },
-  { value: '09', label: 'Tháng 9' },
-  { value: '10', label: 'Tháng 10' },
-  { value: '11', label: 'Tháng 11' },
-  { value: '12', label: 'Tháng 12' },
-]
+const months = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i + 1).padStart(2, '0'),
+  label: `Tháng ${i + 1}`,
+}))
 
 onMounted(fetchAttendance)
 </script>
@@ -221,25 +220,27 @@ onMounted(fetchAttendance)
       :subtitle="editingRecord ? `${editingRecord.employee_name} • ${formatDate(editingRecord.date)}` : undefined"
       @update:model-value="closeModal"
     >
-      <div v-if="saveError" class="bg-danger-soft border border-border-strong rounded-lg px-3 py-2 text-sm text-danger">
-        {{ saveError }}
-      </div>
+      <UForm ref="formRef" :schema="schema" :state="editForm" class="space-y-4" @submit="onSubmit">
+        <UAlert
+          v-if="saveError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          :description="saveError"
+        />
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Giờ vào</label>
-        <UInput v-model="editForm.check_in" type="time" class="w-full" />
-        <p class="text-xs text-faint mt-1">Để trống nếu chưa có giờ vào</p>
-      </div>
+        <UFormField label="Giờ vào" name="check_in" help="Để trống nếu chưa có giờ vào">
+          <UInput v-model="editForm.check_in" type="time" class="w-full" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Giờ ra</label>
-        <UInput v-model="editForm.check_out" type="time" class="w-full" />
-        <p class="text-xs text-faint mt-1">Để trống nếu chưa có giờ ra</p>
-      </div>
+        <UFormField label="Giờ ra" name="check_out" help="Để trống nếu chưa có giờ ra">
+          <UInput v-model="editForm.check_out" type="time" class="w-full" />
+        </UFormField>
+      </UForm>
 
       <template #footer>
         <UButton color="neutral" variant="soft" :disabled="saving" @click="closeModal">Hủy</UButton>
-        <UButton :loading="saving" @click="saveAttendance">Lưu thay đổi</UButton>
+        <UButton :loading="saving" @click="formRef?.submit()">Lưu thay đổi</UButton>
       </template>
     </BaseModal>
   </div>

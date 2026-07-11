@@ -29,25 +29,4 @@ class OvertimeRequest extends Model
     {
         return $this->belongsTo(OvertimeShift::class, 'overtime_shift_id');
     }
-
-    // Helper methods
-    public function getStatusTextAttribute()
-    {
-        return match($this->status) {
-            'pending' => 'Chờ duyệt',
-            'approved' => 'Đã phê duyệt',
-            'rejected' => 'Đã từ chối',
-            default => 'Không xác định'
-        };
-    }
-
-    public function getStatusColorAttribute()
-    {
-        return match($this->status) {
-            'pending' => 'yellow',
-            'approved' => 'green',
-            'rejected' => 'red',
-            default => 'gray'
-        };
-    }
 }

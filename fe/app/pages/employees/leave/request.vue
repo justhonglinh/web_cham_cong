@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import * as z from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { leaveService } from '~/services/leaveService'
 
 definePageMeta({ layout: 'default' })
 
 const toast = useAppToast()
 const router = useRouter()
+
+const schema = z.object({
+  leave_type: z.string().min(1, 'Vui lòng chọn loại nghỉ phép'),
+  start_date: z.string().min(1, 'Vui lòng chọn ngày bắt đầu'),
+  end_date: z.string().min(1, 'Vui lòng chọn ngày kết thúc'),
+  reason: z.string().optional(),
+}).refine((data) => !data.start_date || !data.end_date || data.end_date >= data.start_date, {
+  message: 'Ngày kết thúc phải sau ngày bắt đầu',
+  path: ['end_date'],
+})
+type Schema = z.output<typeof schema>
 
 const form = reactive({
   leave_type: '',
@@ -24,21 +37,11 @@ const leaveTypes = [
   { value: 'other', label: 'Khác' },
 ]
 
-function validateForm() {
-  if (!form.leave_type) return 'Vui lòng chọn loại nghỉ phép.'
-  if (!form.start_date) return 'Vui lòng chọn ngày bắt đầu.'
-  if (!form.end_date) return 'Vui lòng chọn ngày kết thúc.'
-  if (form.end_date < form.start_date) return 'Ngày kết thúc phải sau ngày bắt đầu.'
-  return ''
-}
-
-async function handleSubmit() {
-  error.value = validateForm()
-  if (error.value) return
-
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true
+  error.value = ''
   try {
-    await leaveService.create({ ...form })
+    await leaveService.create({ ...event.data })
     toast.success('Gửi đơn nghỉ phép thành công.')
     success.value = true
     setTimeout(() => {
@@ -103,12 +106,9 @@ function resetForm() {
           :description="error"
         />
 
-        <form @submit.prevent="handleSubmit" class="space-y-5">
+        <UForm :schema="schema" :state="form" class="space-y-5" @submit="onSubmit">
           <!-- Leave Type -->
-          <div>
-            <label class="block text-sm font-medium text-body mb-1">
-              Loại nghỉ phép <span class="text-danger">*</span>
-            </label>
+          <UFormField label="Loại nghỉ phép" name="leave_type" required>
             <USelect
               v-model="form.leave_type"
               :items="leaveTypes"
@@ -116,25 +116,19 @@ function resetForm() {
               class="w-full"
               :disabled="loading"
             />
-          </div>
+          </UFormField>
 
           <!-- Date Range -->
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-body mb-1">
-                Từ ngày <span class="text-danger">*</span>
-              </label>
+            <UFormField label="Từ ngày" name="start_date" required>
               <UInput
                 v-model="form.start_date"
                 type="date"
                 class="w-full"
                 :disabled="loading"
               />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-body mb-1">
-                Đến ngày <span class="text-danger">*</span>
-              </label>
+            </UFormField>
+            <UFormField label="Đến ngày" name="end_date" required>
               <UInput
                 v-model="form.end_date"
                 type="date"
@@ -142,7 +136,7 @@ function resetForm() {
                 :min="form.start_date"
                 :disabled="loading"
               />
-            </div>
+            </UFormField>
           </div>
 
           <!-- Duration info -->
@@ -159,8 +153,7 @@ function resetForm() {
           </div>
 
           <!-- Reason -->
-          <div>
-            <label class="block text-sm font-medium text-body mb-1">Lý do</label>
+          <UFormField label="Lý do" name="reason">
             <UTextarea
               v-model="form.reason"
               class="w-full"
@@ -168,7 +161,7 @@ function resetForm() {
               placeholder="Nhập lý do nghỉ phép (không bắt buộc)..."
               :disabled="loading"
             />
-          </div>
+          </UFormField>
 
           <!-- Actions -->
           <div class="flex items-center justify-end gap-3 pt-2">
@@ -179,7 +172,7 @@ function resetForm() {
               {{ loading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
             </UButton>
           </div>
-        </form>
+        </UForm>
       </div>
     </UCard>
   </div>

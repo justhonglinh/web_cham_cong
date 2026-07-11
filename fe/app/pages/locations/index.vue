@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import * as z from 'zod'
+import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { locationService } from '~/services/locationService'
 import type { Location } from '~/types/location'
 
@@ -26,6 +27,18 @@ const showModal = ref(false)
 const editingLocation = ref<Location | null>(null)
 const modalLoading = ref(false)
 const modalError = ref('')
+
+const schema = z.object({
+  name: z.string().min(1, 'Vui lòng nhập tên vị trí'),
+  address: z.string().min(1, 'Vui lòng nhập địa chỉ'),
+  latitude: z.coerce.number('Vui lòng nhập vĩ độ hợp lệ').min(-90, 'Vĩ độ phải từ -90 đến 90').max(90, 'Vĩ độ phải từ -90 đến 90'),
+  longitude: z.coerce.number('Vui lòng nhập kinh độ hợp lệ').min(-180, 'Kinh độ phải từ -180 đến 180').max(180, 'Kinh độ phải từ -180 đến 180'),
+  radius: z.coerce.number('Vui lòng nhập bán kính hợp lệ').positive('Bán kính phải lớn hơn 0'),
+  description: z.string().optional(),
+})
+type Schema = z.output<typeof schema>
+
+const formRef = useTemplateRef('formRef')
 
 const form = reactive({
   name: '',
@@ -73,37 +86,16 @@ function openEditModal(loc: Location) {
   showModal.value = true
 }
 
-function validateForm() {
-  if (!form.name.trim()) return 'Vui lòng nhập tên vị trí.'
-  if (!form.address.trim()) return 'Vui lòng nhập địa chỉ.'
-  if (form.latitude === '' || isNaN(Number(form.latitude))) return 'Vui lòng nhập vĩ độ hợp lệ.'
-  if (form.longitude === '' || isNaN(Number(form.longitude))) return 'Vui lòng nhập kinh độ hợp lệ.'
-  if (!form.radius || Number(form.radius) <= 0) return 'Bán kính phải lớn hơn 0.'
-  return ''
-}
-
-async function submitModal() {
-  modalError.value = validateForm()
-  if (modalError.value) return
-
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   modalLoading.value = true
   modalError.value = ''
 
-  const payload = {
-    name: form.name,
-    address: form.address,
-    latitude: Number(form.latitude),
-    longitude: Number(form.longitude),
-    radius: Number(form.radius),
-    description: form.description,
-  }
-
   try {
     if (editingLocation.value) {
-      await locationService.update(editingLocation.value.id, payload)
+      await locationService.update(editingLocation.value.id, event.data)
       toast.success('Cập nhật vị trí thành công.')
     } else {
-      await locationService.create(payload)
+      await locationService.create(event.data)
       toast.success('Thêm vị trí thành công.')
     }
     showModal.value = false
@@ -232,83 +224,67 @@ onMounted(fetchLocations)
       max-width="max-w-lg"
       scrollable
     >
-      <div v-if="modalError" class="bg-danger-soft border border-border-strong text-danger rounded-lg px-4 py-3 text-sm">
-        {{ modalError }}
-      </div>
-
-      <!-- Name -->
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">
-          Tên vị trí <span class="text-danger">*</span>
-        </label>
-        <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Văn phòng chính" />
-      </div>
-
-      <!-- Address -->
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">
-          Địa chỉ <span class="text-danger">*</span>
-        </label>
-        <UInput v-model="form.address" type="text" class="w-full" placeholder="Số nhà, đường, quận, thành phố..." />
-      </div>
-
-      <!-- Lat / Lng -->
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">
-            Vĩ độ (Latitude) <span class="text-danger">*</span>
-          </label>
-          <UInput
-            v-model="form.latitude"
-            type="number"
-            step="0.000001"
-            class="w-full"
-            placeholder="VD: 10.762622"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">
-            Kinh độ (Longitude) <span class="text-danger">*</span>
-          </label>
-          <UInput
-            v-model="form.longitude"
-            type="number"
-            step="0.000001"
-            class="w-full"
-            placeholder="VD: 106.660172"
-          />
-        </div>
-      </div>
-
-      <!-- Radius -->
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">
-          Bán kính cho phép (mét) <span class="text-danger">*</span>
-        </label>
-        <UInput
-          v-model.number="form.radius"
-          type="number"
-          min="1"
-          class="w-full"
-          placeholder="VD: 100"
+      <UForm ref="formRef" :schema="schema" :state="form" class="space-y-4" @submit="onSubmit">
+        <UAlert
+          v-if="modalError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          :description="modalError"
         />
-        <p class="text-xs text-faint mt-1">Nhân viên phải ở trong bán kính này mới được chấm công</p>
-      </div>
 
-      <!-- Description -->
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Mô tả</label>
-        <UTextarea
-          v-model="form.description"
-          class="w-full"
-          :rows="3"
-          placeholder="Mô tả thêm về vị trí (không bắt buộc)..."
-        />
-      </div>
+        <UFormField label="Tên vị trí" name="name" required>
+          <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Văn phòng chính" />
+        </UFormField>
+
+        <UFormField label="Địa chỉ" name="address" required>
+          <UInput v-model="form.address" type="text" class="w-full" placeholder="Số nhà, đường, quận, thành phố..." />
+        </UFormField>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="Vĩ độ (Latitude)" name="latitude" required>
+            <UInput
+              v-model="form.latitude"
+              type="number"
+              step="0.000001"
+              class="w-full"
+              placeholder="VD: 10.762622"
+            />
+          </UFormField>
+          <UFormField label="Kinh độ (Longitude)" name="longitude" required>
+            <UInput
+              v-model="form.longitude"
+              type="number"
+              step="0.000001"
+              class="w-full"
+              placeholder="VD: 106.660172"
+            />
+          </UFormField>
+        </div>
+
+        <UFormField label="Bán kính cho phép (mét)" name="radius" required help="Nhân viên phải ở trong bán kính này mới được chấm công">
+          <UInput
+            v-model.number="form.radius"
+            type="number"
+            min="1"
+            class="w-full"
+            placeholder="VD: 100"
+          />
+        </UFormField>
+
+        <UFormField label="Mô tả" name="description">
+          <UTextarea
+            v-model="form.description"
+            class="w-full"
+            :rows="3"
+            placeholder="Mô tả thêm về vị trí (không bắt buộc)..."
+          />
+        </UFormField>
+      </UForm>
 
       <template #footer>
         <UButton color="neutral" variant="soft" :disabled="modalLoading" @click="showModal = false">Huỷ</UButton>
-        <UButton :loading="modalLoading" :disabled="modalLoading" @click="submitModal">
+        <UButton :loading="modalLoading" :disabled="modalLoading" @click="formRef?.submit()">
           {{ modalLoading ? 'Đang lưu...' : 'Lưu vị trí' }}
         </UButton>
       </template>

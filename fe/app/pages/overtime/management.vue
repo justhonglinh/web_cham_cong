@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import * as z from 'zod'
+import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { REQUEST_STATUS_BADGE, REQUEST_STATUS_LABEL } from '~/constants'
 import { overtimeService } from '~/services/overtimeService'
 import type { OvertimeShift, OvertimeRequest } from '~/types/overtime'
@@ -51,7 +52,17 @@ function goToRequestsPage(page: number) {
 const showModal = ref(false)
 const editingShift = ref<OvertimeShift | null>(null)
 const modalLoading = ref(false)
-const modalError = ref('')
+
+const schema = z.object({
+  name: z.string().min(1, 'Vui lòng nhập tên ca tăng ca'),
+  start_time: z.string().min(1, 'Vui lòng nhập giờ bắt đầu'),
+  end_time: z.string().min(1, 'Vui lòng nhập giờ kết thúc'),
+  date: z.string().min(1, 'Vui lòng chọn ngày'),
+  max_registrations: z.coerce.number('Vui lòng nhập số hợp lệ').positive('Số lượng đăng ký phải lớn hơn 0'),
+})
+type Schema = z.output<typeof schema>
+
+const formRef = useTemplateRef('formRef')
 
 const form = reactive({
   name: '',
@@ -100,7 +111,6 @@ function openAddModal() {
   form.end_time = ''
   form.date = ''
   form.max_registrations = 10
-  modalError.value = ''
   showModal.value = true
 }
 
@@ -112,30 +122,24 @@ function openEditModal(shift: OvertimeShift) {
   form.end_time = shift.end_time
   form.date = shift.date
   form.max_registrations = shift.max_registrations
-  modalError.value = ''
   showModal.value = true
 }
 
 // --- Submit modal ---
-async function submitModal() {
-  if (!form.name || !form.start_time || !form.end_time || !form.date) {
-    modalError.value = 'Vui lòng điền đầy đủ thông tin.'
-    return
-  }
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   modalLoading.value = true
-  modalError.value = ''
   try {
     if (editingShift.value) {
-      await overtimeService.updateShift(editingShift.value.id, { ...form })
+      await overtimeService.updateShift(editingShift.value.id, event.data)
       toast.success('Cập nhật ca tăng ca thành công.')
     } else {
-      await overtimeService.createShift({ ...form })
+      await overtimeService.createShift(event.data)
       toast.success('Thêm ca tăng ca thành công.')
     }
     showModal.value = false
     await fetchShifts()
-  } catch {
-    modalError.value = 'Lưu thất bại. Vui lòng thử lại.'
+  } catch (e: any) {
+    toast.error(e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.')
   } finally {
     modalLoading.value = false
   }
@@ -324,39 +328,32 @@ onMounted(() => {
       v-model="showModal"
       :title="editingShift ? 'Chỉnh sửa ca tăng ca' : 'Thêm ca tăng ca mới'"
     >
-      <div v-if="modalError" class="bg-danger-soft text-danger rounded-lg px-4 py-3 text-sm">
-        {{ modalError }}
-      </div>
+      <UForm ref="formRef" :schema="schema" :state="form" class="space-y-4" @submit="onSubmit">
+        <UFormField name="name" label="Tên ca tăng ca" required>
+          <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Ca tăng ca chiều" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Tên ca <span class="text-danger">*</span></label>
-        <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Ca tăng ca chiều" />
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Giờ bắt đầu <span class="text-danger">*</span></label>
-          <UInput v-model="form.start_time" type="time" class="w-full" />
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField name="start_time" label="Giờ bắt đầu" required>
+            <UInput v-model="form.start_time" type="time" class="w-full" />
+          </UFormField>
+          <UFormField name="end_time" label="Giờ kết thúc" required>
+            <UInput v-model="form.end_time" type="time" class="w-full" />
+          </UFormField>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Giờ kết thúc <span class="text-danger">*</span></label>
-          <UInput v-model="form.end_time" type="time" class="w-full" />
-        </div>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Ngày <span class="text-danger">*</span></label>
-        <UInput v-model="form.date" type="date" class="w-full" />
-      </div>
+        <UFormField name="date" label="Ngày" required>
+          <UInput v-model="form.date" type="date" class="w-full" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Số đăng ký tối đa</label>
-        <UInput v-model.number="form.max_registrations" type="number" min="1" class="w-full" />
-      </div>
+        <UFormField name="max_registrations" label="Số lượng đăng ký tối đa" required>
+          <UInput v-model.number="form.max_registrations" type="number" min="1" class="w-full" />
+        </UFormField>
+      </UForm>
 
       <template #footer>
         <UButton color="neutral" variant="soft" :disabled="modalLoading" @click="showModal = false">Huỷ</UButton>
-        <UButton :loading="modalLoading" @click="submitModal">Lưu</UButton>
+        <UButton :loading="modalLoading" @click="formRef?.submit()">Lưu</UButton>
       </template>
     </BaseModal>
   </div>

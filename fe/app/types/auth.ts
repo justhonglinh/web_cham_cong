@@ -6,11 +6,6 @@ export interface User {
   avatar?: string
 }
 
-export interface AuthResponse {
-  token: string
-  user: User
-}
-
 export interface UpdateProfileInput {
   name: string
 }

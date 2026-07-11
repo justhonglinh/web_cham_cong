@@ -52,7 +52,11 @@ class AttendanceController extends Controller
 
     public function processAttendance(Request $request): JsonResponse
     {
-        $attendance = $this->attendanceService->processCheckIn($request->user()->id);
+        $attendance = $this->attendanceService->processCheckIn(
+            $request->user()->id,
+            $request->filled('latitude') ? (float) $request->input('latitude') : null,
+            $request->filled('longitude') ? (float) $request->input('longitude') : null,
+        );
 
         return response()->json([
             'message' => __('messages.attendance.checked'),

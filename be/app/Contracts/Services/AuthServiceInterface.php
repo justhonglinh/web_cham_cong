@@ -11,4 +11,6 @@ interface AuthServiceInterface
     public function logout(User $user): void;
     public function updateProfile(User $user, array $data): User;
     public function updatePassword(User $user, string $currentPassword, string $newPassword): void;
+    public function sendResetLink(string $email): void;
+    public function resetPassword(array $data): void;
 }

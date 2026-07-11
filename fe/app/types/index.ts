@@ -1,4 +1,4 @@
-export type { User as AuthUser, AuthResponse, UpdateProfileInput, UpdatePasswordInput } from './auth'
+export type { User as AuthUser, UpdateProfileInput, UpdatePasswordInput } from './auth'
 export type { User, CreateUserInput, UpdateUserInput } from './user'
 export type { AttendanceRecord, PaginatedAttendance, UpdateAttendanceInput } from './attendance'
 export type { Shift, ShiftInput } from './shift'

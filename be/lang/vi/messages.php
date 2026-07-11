@@ -3,11 +3,15 @@
 return [
 
     'auth' => [
-        'invalid_credentials' => 'Thông tin đăng nhập không chính xác.',
-        'logout_success'      => 'Đăng xuất thành công.',
-        'profile_updated'     => 'Cập nhật thông tin thành công.',
-        'password_incorrect'  => 'Mật khẩu hiện tại không đúng.',
-        'password_updated'    => 'Đổi mật khẩu thành công.',
+        'invalid_credentials'  => 'Thông tin đăng nhập không chính xác.',
+        'logout_success'       => 'Đăng xuất thành công.',
+        'profile_updated'      => 'Cập nhật thông tin thành công.',
+        'password_incorrect'   => 'Mật khẩu hiện tại không đúng.',
+        'password_updated'     => 'Đổi mật khẩu thành công.',
+        'reset_link_sent'      => 'Đã gửi liên kết đặt lại mật khẩu tới email của bạn.',
+        'reset_link_failed'    => 'Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại sau.',
+        'password_reset'       => 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập.',
+        'invalid_reset_token'  => 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.',
     ],
 
     'user' => [
@@ -24,9 +28,11 @@ return [
     ],
 
     'attendance' => [
-        'updated'      => 'Cập nhật chấm công thành công.',
-        'checked'      => 'Chấm công thành công.',
-        'already_done' => 'Đã chấm công đầy đủ cho ngày hôm nay.',
+        'updated'          => 'Cập nhật chấm công thành công.',
+        'checked'          => 'Chấm công thành công.',
+        'already_done'     => 'Đã chấm công đầy đủ cho ngày hôm nay.',
+        'location_required' => 'Vui lòng bật định vị (GPS) để chấm công.',
+        'outside_radius'   => 'Bạn đang ở ngoài phạm vi cho phép chấm công.',
     ],
 
     'overtime' => [

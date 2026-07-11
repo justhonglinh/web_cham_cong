@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Contracts\Services\AuthServiceInterface;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Requests\Api\Auth\RegisterRequest;
+use App\Http\Requests\Api\Auth\ResetPasswordRequest;
 use App\Http\Requests\Api\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Api\Auth\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
@@ -69,5 +71,19 @@ class AuthController extends Controller
         );
 
         return response()->json(['message' => __('messages.auth.password_updated')]);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $this->authService->sendResetLink($request->email);
+
+        return response()->json(['message' => __('messages.auth.reset_link_sent')]);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $this->authService->resetPassword($request->validated());
+
+        return response()->json(['message' => __('messages.auth.password_reset')]);
     }
 }

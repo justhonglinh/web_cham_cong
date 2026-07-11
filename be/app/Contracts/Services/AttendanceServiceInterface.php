@@ -11,5 +11,5 @@ interface AttendanceServiceInterface
     public function update(int $id, array $data): Attendance;
     public function today(int $userId): ?Attendance;
     public function history(int $userId): LengthAwarePaginator;
-    public function processCheckIn(int $userId): Attendance;
+    public function processCheckIn(int $userId, ?float $latitude, ?float $longitude): Attendance;
 }

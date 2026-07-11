@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import * as z from 'zod'
+import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { SHIFT_STATUS_BADGE, SHIFT_STATUS_LABEL } from '~/constants'
 import { shiftService } from '~/services/shiftService'
 import type { Shift, ShiftInput as ShiftForm } from '~/types/shift'
@@ -23,7 +24,15 @@ const loading = ref(true)
 const saving = ref(false)
 const deleting = ref(false)
 const error = ref<string | null>(null)
-const saveError = ref<string | null>(null)
+
+const schema = z.object({
+  name: z.string().min(1, 'Vui lòng nhập tên ca làm việc'),
+  start_time: z.string().min(1, 'Vui lòng nhập giờ bắt đầu'),
+  end_time: z.string().min(1, 'Vui lòng nhập giờ kết thúc'),
+})
+type Schema = z.output<typeof schema>
+
+const formRef = useTemplateRef('formRef')
 
 const shifts = ref<Shift[]>([])
 
@@ -51,7 +60,6 @@ async function fetchShifts() {
 function openAdd() {
   editingId.value = null
   form.value = { name: '', start_time: '', end_time: '' }
-  saveError.value = null
   showModal.value = true
 }
 
@@ -62,45 +70,29 @@ function openEdit(shift: Shift) {
     start_time: shift.start_time?.slice(0, 5) ?? '',
     end_time: shift.end_time?.slice(0, 5) ?? '',
   }
-  saveError.value = null
   showModal.value = true
 }
 
 function closeModal() {
   showModal.value = false
-  saveError.value = null
 }
 
-async function saveShift() {
-  if (!form.value.name.trim()) {
-    saveError.value = 'Vui lòng nhập tên ca làm việc.'
-    return
-  }
-  if (!form.value.start_time || !form.value.end_time) {
-    saveError.value = 'Vui lòng nhập giờ bắt đầu và giờ kết thúc.'
-    return
-  }
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   saving.value = true
-  saveError.value = null
   try {
-    const payload = {
-      name: form.value.name,
-      start_time: form.value.start_time,
-      end_time: form.value.end_time,
-    }
     if (editingId.value) {
-      const updated = await shiftService.update(editingId.value, payload)
+      const updated = await shiftService.update(editingId.value, event.data)
       const idx = shifts.value.findIndex(s => s.id === editingId.value)
       if (idx !== -1) shifts.value[idx] = updated
       toast.success('Cập nhật ca làm việc thành công.')
     } else {
-      const created = await shiftService.create(payload)
+      const created = await shiftService.create(event.data)
       shifts.value.unshift(created)
       toast.success('Thêm ca làm việc thành công.')
     }
     closeModal()
   } catch (e: any) {
-    saveError.value = e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.'
+    toast.error(e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.')
   } finally {
     saving.value = false
   }
@@ -284,34 +276,29 @@ onMounted(fetchShifts)
       :title="editingId ? 'Chỉnh sửa ca làm việc' : 'Thêm ca làm việc mới'"
       @update:model-value="closeModal"
     >
-      <div v-if="saveError" class="bg-danger-soft rounded-lg px-3 py-2 text-sm text-danger">
-        {{ saveError }}
-      </div>
+      <UForm ref="formRef" :schema="schema" :state="form" class="space-y-4" @submit="onSubmit">
+        <UFormField name="name" label="Tên ca làm việc" required>
+          <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Ca sáng, Ca chiều..." />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Tên ca <span class="text-danger">*</span></label>
-        <UInput v-model="form.name" type="text" class="w-full" placeholder="VD: Ca sáng, Ca chiều..." />
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Giờ bắt đầu <span class="text-danger">*</span></label>
-          <UInput v-model="form.start_time" type="time" class="w-full" />
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField name="start_time" label="Giờ bắt đầu" required>
+            <UInput v-model="form.start_time" type="time" class="w-full" />
+          </UFormField>
+          <UFormField name="end_time" label="Giờ kết thúc" required>
+            <UInput v-model="form.end_time" type="time" class="w-full" />
+          </UFormField>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-body mb-1">Giờ kết thúc <span class="text-danger">*</span></label>
-          <UInput v-model="form.end_time" type="time" class="w-full" />
-        </div>
-      </div>
 
-      <div v-if="form.start_time && form.end_time" class="bg-accent-soft rounded-lg px-3 py-2 text-sm text-accent-ink flex items-center gap-2">
-        <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
-        Thời lượng: {{ calcDuration(form.start_time, form.end_time) }}
-      </div>
+        <div v-if="form.start_time && form.end_time" class="bg-accent-soft rounded-lg px-3 py-2 text-sm text-accent-ink flex items-center gap-2">
+          <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
+          Thời lượng: {{ calcDuration(form.start_time, form.end_time) }}
+        </div>
+      </UForm>
 
       <template #footer>
         <UButton color="neutral" variant="soft" :disabled="saving" @click="closeModal">Hủy</UButton>
-        <UButton :loading="saving" @click="saveShift">
+        <UButton :loading="saving" @click="formRef?.submit()">
           {{ editingId ? 'Lưu thay đổi' : 'Thêm ca' }}
         </UButton>
       </template>

@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Contracts\Services\AuthServiceInterface;
 use App\Exceptions\Api\InvalidCredentialsException;
+use App\Exceptions\Api\InvalidResetTokenException;
 use App\Models\User;
+use Illuminate\Auth\Passwords\PasswordBroker;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthService implements AuthServiceInterface
 {
@@ -57,5 +60,29 @@ class AuthService implements AuthServiceInterface
         }
 
         $user->update(['password' => Hash::make($newPassword)]);
+    }
+
+    public function sendResetLink(string $email): void
+    {
+        Password::sendResetLink(['email' => $email]);
+    }
+
+    public function resetPassword(array $data): void
+    {
+        $status = Password::reset(
+            [
+                'email'                 => $data['email'],
+                'token'                 => $data['token'],
+                'password'              => $data['password'],
+                'password_confirmation' => $data['password_confirmation'],
+            ],
+            function (User $user, string $password) {
+                $user->update(['password' => Hash::make($password)]);
+            }
+        );
+
+        if ($status !== PasswordBroker::PASSWORD_RESET) {
+            throw new InvalidResetTokenException();
+        }
     }
 }

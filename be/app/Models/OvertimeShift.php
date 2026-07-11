@@ -38,15 +38,4 @@ class OvertimeShift extends Model
     {
         return $this->hasMany(Attendance::class, 'overtime_id');
     }
-
-    // Helper methods
-    public function getAvailableSlotsAttribute()
-    {
-        return max(0, $this->max_registrations - $this->current_registrations);
-    }
-
-    public function isFullAttribute()
-    {
-        return $this->current_registrations >= $this->max_registrations;
-    }
 }

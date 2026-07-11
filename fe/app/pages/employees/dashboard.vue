@@ -56,43 +56,19 @@ async function fetchRecentAttendance() {
   }
 }
 
-const quickActions = [
-  {
-    title: 'Chấm công',
-    description: 'Điểm danh hôm nay',
-    icon: 'i-heroicons-clock',
-    link: '/employees/attendance',
-    color: 'from-blue-500 to-blue-600',
-    bg: 'bg-accent-soft',
-    text: 'text-accent',
-  },
-  {
-    title: 'Lịch sử',
-    description: 'Xem lịch sử chấm công',
-    icon: 'i-heroicons-clipboard-document-list',
-    link: '/employees/attendance/history',
-    color: 'from-purple-500 to-purple-600',
-    bg: 'bg-accent-soft',
-    text: 'text-accent',
-  },
-  {
-    title: 'Tăng ca',
-    description: 'Đăng ký tăng ca',
-    icon: 'i-heroicons-bolt',
-    link: '/overtime/employee',
-    color: 'from-orange-500 to-orange-600',
-    bg: 'bg-warning-soft',
-    text: 'text-warning',
-  },
-  {
-    title: 'Nghỉ phép',
-    description: 'Quản lý nghỉ phép',
-    icon: 'i-heroicons-calendar',
-    link: '/employees/leave/history',
-    color: 'from-green-500 to-green-600',
-    bg: 'bg-success-soft',
-    text: 'text-success',
-  },
+type Tone = 'accent' | 'warning' | 'success'
+
+const toneClasses: Record<Tone, { bg: string; text: string }> = {
+  accent: { bg: 'bg-accent-soft', text: 'text-accent' },
+  warning: { bg: 'bg-warning-soft', text: 'text-warning' },
+  success: { bg: 'bg-success-soft', text: 'text-success' },
+}
+
+const quickActions: { title: string; description: string; icon: string; link: string; tone: Tone }[] = [
+  { title: 'Chấm công', description: 'Điểm danh hôm nay', icon: 'i-heroicons-clock', link: '/employees/attendance', tone: 'accent' },
+  { title: 'Lịch sử', description: 'Xem lịch sử chấm công', icon: 'i-heroicons-clipboard-document-list', link: '/employees/attendance/history', tone: 'accent' },
+  { title: 'Tăng ca', description: 'Đăng ký tăng ca', icon: 'i-heroicons-bolt', link: '/overtime/employee', tone: 'warning' },
+  { title: 'Nghỉ phép', description: 'Quản lý nghỉ phép', icon: 'i-heroicons-calendar', link: '/employees/leave/history', tone: 'success' },
 ]
 
 onMounted(fetchRecentAttendance)
@@ -128,8 +104,8 @@ onMounted(fetchRecentAttendance)
           :to="action.link"
           class="bg-white rounded-2xl shadow-lg border border-border p-5 flex flex-col items-center text-center gap-3 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
         >
-          <div :class="['w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br', action.color]">
-            <UIcon :name="action.icon" class="w-6 h-6 text-white" />
+          <div :class="['w-12 h-12 rounded-xl flex items-center justify-center', toneClasses[action.tone].bg]">
+            <UIcon :name="action.icon" :class="['w-6 h-6', toneClasses[action.tone].text]" />
           </div>
           <div>
             <p class="font-semibold text-ink text-sm group-hover:text-accent transition-colors">{{ action.title }}</p>

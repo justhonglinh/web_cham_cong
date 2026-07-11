@@ -20,7 +20,8 @@
     "tailwindcss": "^4.3.2",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
-    "vue-sonner": "^2.0.9"
+    "vue-sonner": "^2.0.9",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",

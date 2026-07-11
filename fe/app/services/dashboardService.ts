@@ -7,8 +7,4 @@ export const dashboardService = {
   getManagerDashboard: async () => {
     return await getAuthInstance().get<DashboardData>('/dashboard')
   },
-
-  getEmployeeDashboard: async () => {
-    return await getAuthInstance().get('/employees/dashboard')
-  },
 }

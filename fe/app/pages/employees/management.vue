@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import * as z from 'zod'
+import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { userService } from '~/services/userService'
 import type { User, CreateUserInput as UserForm } from '~/types/user'
 import { ROLE_BADGE, ROLE_LABEL } from '~/constants'
@@ -21,7 +22,6 @@ const loading = ref(true)
 const saving = ref(false)
 const deleting = ref(false)
 const error = ref<string | null>(null)
-const saveError = ref<string | null>(null)
 
 const users = ref<User[]>([])
 const search = ref('')
@@ -36,6 +36,23 @@ const form = ref<UserForm>({
   role: 'employee',
   password: '',
 })
+
+function buildSchema(isEditing: boolean) {
+  return z.object({
+    name: z.string().min(1, 'Vui lòng nhập họ và tên'),
+    email: z.email('Email không hợp lệ').min(1, 'Vui lòng nhập email'),
+    phone: z.string().optional(),
+    role: z.string().min(1),
+    password: isEditing
+      ? z.string().optional()
+      : z.string().min(1, 'Vui lòng nhập mật khẩu cho nhân viên mới'),
+  })
+}
+
+const schema = computed(() => buildSchema(!!editingId.value))
+type Schema = z.output<ReturnType<typeof buildSchema>>
+
+const formRef = useTemplateRef('formRef')
 
 const showDeleteConfirm = ref(false)
 const deletingId = ref<number | null>(null)
@@ -68,7 +85,6 @@ async function fetchUsers(page = 1) {
 function openAdd() {
   editingId.value = null
   form.value = { name: '', email: '', phone: '', role: 'employee', password: '' }
-  saveError.value = null
   showModal.value = true
 }
 
@@ -81,35 +97,24 @@ function openEdit(user: User) {
     role: user.role,
     password: '',
   }
-  saveError.value = null
   showModal.value = true
 }
 
 function closeModal() {
   showModal.value = false
-  saveError.value = null
 }
 
-async function saveUser() {
-  if (!form.value.name.trim() || !form.value.email.trim()) {
-    saveError.value = 'Vui lòng nhập đầy đủ họ tên và email.'
-    return
-  }
-  if (!editingId.value && !form.value.password.trim()) {
-    saveError.value = 'Vui lòng nhập mật khẩu cho nhân viên mới.'
-    return
-  }
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   saving.value = true
-  saveError.value = null
   try {
     const payload: Record<string, unknown> = {
-      name: form.value.name,
-      email: form.value.email,
-      phone: form.value.phone,
-      role: form.value.role,
+      name: event.data.name,
+      email: event.data.email,
+      phone: event.data.phone,
+      role: event.data.role,
     }
-    if (form.value.password.trim()) {
-      payload.password = form.value.password
+    if (event.data.password?.trim()) {
+      payload.password = event.data.password
     }
 
     if (editingId.value) {
@@ -125,7 +130,6 @@ async function saveUser() {
     closeModal()
   } catch (e: any) {
     toast.error(e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.')
-    saveError.value = e?.data?.message || 'Lưu thất bại. Vui lòng thử lại.'
   } finally {
     saving.value = false
   }
@@ -274,45 +278,39 @@ onMounted(fetchUsers)
       :title="editingId ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'"
       @update:model-value="closeModal"
     >
-      <div v-if="saveError" class="bg-danger-soft rounded-lg px-3 py-2 text-sm text-danger">
-        {{ saveError }}
-      </div>
+      <UForm ref="formRef" :schema="schema" :state="form" class="space-y-4" @submit="onSubmit">
+        <UFormField label="Họ và tên" name="name" required>
+          <UInput v-model="form.name" type="text" class="w-full" placeholder="Nguyễn Văn A" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Họ và tên <span class="text-danger">*</span></label>
-        <UInput v-model="form.name" type="text" class="w-full" placeholder="Nguyễn Văn A" />
-      </div>
+        <UFormField label="Email" name="email" required>
+          <UInput v-model="form.email" type="text" class="w-full" placeholder="nhanvien@example.com" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Email <span class="text-danger">*</span></label>
-        <UInput v-model="form.email" type="email" class="w-full" placeholder="nhanvien@example.com" />
-      </div>
+        <UFormField label="Số điện thoại" name="phone">
+          <UInput v-model="form.phone" type="tel" class="w-full" placeholder="0901234567" />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Số điện thoại</label>
-        <UInput v-model="form.phone" type="tel" class="w-full" placeholder="0901234567" />
-      </div>
+        <UFormField label="Vai trò" name="role" required>
+          <USelect
+            v-model="form.role"
+            :items="[{ label: 'Nhân viên', value: 'employee' }, { label: 'Quản lý', value: 'manager' }]"
+            class="w-full"
+          />
+        </UFormField>
 
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">Vai trò <span class="text-danger">*</span></label>
-        <USelect
-          v-model="form.role"
-          :items="[{ label: 'Nhân viên', value: 'employee' }, { label: 'Quản lý', value: 'manager' }]"
-          class="w-full"
-        />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-body mb-1">
-          Mật khẩu <span v-if="!editingId" class="text-danger">*</span>
-          <span v-else class="text-faint font-normal">(để trống nếu không đổi)</span>
-        </label>
-        <UInput v-model="form.password" type="password" class="w-full" placeholder="••••••••" />
-      </div>
+        <UFormField
+          :label="editingId ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'"
+          name="password"
+          :required="!editingId"
+        >
+          <UInput v-model="form.password" type="password" class="w-full" placeholder="••••••••" />
+        </UFormField>
+      </UForm>
 
       <template #footer>
         <UButton color="neutral" variant="soft" :disabled="saving" @click="closeModal">Hủy</UButton>
-        <UButton :loading="saving" @click="saveUser">
+        <UButton :loading="saving" @click="formRef?.submit()">
           {{ editingId ? 'Lưu thay đổi' : 'Thêm nhân viên' }}
         </UButton>
       </template>

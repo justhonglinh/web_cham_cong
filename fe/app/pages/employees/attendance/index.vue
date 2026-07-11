@@ -49,12 +49,30 @@ async function fetchTodayAttendance() {
   }
 }
 
+function getCurrentPosition(): Promise<GeolocationPosition | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000 },
+    )
+  })
+}
+
 async function checkIn() {
   submitting.value = true
   successMessage.value = ''
   errorMessage.value = ''
   try {
-    todayRecord.value = await attendanceService.checkIn()
+    const position = await getCurrentPosition()
+    const payload = position
+      ? { latitude: position.coords.latitude, longitude: position.coords.longitude }
+      : {}
+    todayRecord.value = await attendanceService.checkIn(payload)
     successMessage.value = 'Chấm công thành công!'
     await fetchTodayAttendance()
   } catch (err: unknown) {
@@ -117,6 +135,7 @@ onUnmounted(() => clearInterval(clockInterval))
         </div>
         <h2 class="text-xl font-semibold text-ink">Sẵn sàng chấm công?</h2>
         <p class="text-faint text-sm mt-1">Nhấn nút bên dưới để ghi nhận thời gian của bạn.</p>
+        <p class="text-faint text-xs mt-1">Vui lòng cho phép truy cập vị trí nếu trình duyệt yêu cầu.</p>
       </div>
 
       <UButton

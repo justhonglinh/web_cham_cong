@@ -40,31 +40,4 @@ class Attendance extends Model
     {
         return $this->belongsTo(OvertimeShift::class, 'overtime_id');
     }
-
-    // Helper methods
-    public function getStatusTextAttribute()
-    {
-        return match($this->status) {
-            'present' => 'Có mặt',
-            'leave' => 'Nghỉ phép',
-            'absent' => 'Vắng mặt',
-            'late' => 'Đi muộn',
-            'early_leave' => 'Về sớm',
-            'pending' => 'Chờ chấm công',
-            default => 'Không xác định'
-        };
-    }
-
-    public function getStatusColorAttribute()
-    {
-        return match($this->status) {
-            'present' => 'green',
-            'leave' => 'blue',
-            'absent' => 'red',
-            'late' => 'yellow',
-            'early_leave' => 'orange',
-            'pending' => 'gray',
-            default => 'gray'
-        };
-    }
 }
